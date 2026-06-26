@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment · Chunk 7.4 — Authorization, Refresh &amp; Security Hardening</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #ede9fe;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .objective{background:#ede9fe;border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#5b21b6;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--task);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .deliverable{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .deliverable h2{border-color:#a7f3d0;color:#065f46;}
+  .check{list-style:none;padding-left:0;} .check li{padding-left:30px;position:relative;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:18px;color:var(--task);}
+  .checkpoint{background:#fffbeb;border:2px solid #f59e0b;}
+  .checkpoint h2{border-color:#fde68a;color:#92400e;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 7 — Authentication &amp; Security</div>
+    <h1>Chunk 7.4 — Lab: Roles, Refresh &amp; Hardening + 🏁 Checkpoint</h1>
+    <span class="badge">🧪 ASSIGNMENT</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 Your mission</h2>
+    <p>Lock the Tasks API down properly. You'll add a <strong>role-based admin endpoint</strong>, a <strong>refresh-token</strong> flow, move the <code>SECRET_KEY</code> into a git-ignored <code>.env</code> loaded by <code>pydantic-settings</code>, and tighten CORS. Then you'll complete the 🏁 <strong>Module 7 Checkpoint</strong>: prove that, end to end, users only ever see their own data and an admin can see everyone's.</p>
+  </section>
+
+  <section>
+    <h2>Before you start</h2>
+    <ul>
+      <li>Chunks 7.1–7.3 complete: hashing, JWT login + <code>get_current_user</code>, owner-scoped tasks, and the React auth frontend.</li>
+      <li>Backend venv active; React app from 7.3 available.</li>
+      <li>The <code>User</code> model already has a <code>role</code> column (default <code>"user"</code>).</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ Try it yourself first</div>
+      Work from the lecture. Only open <code>solution.html</code> when stuck or to compare.
+    </div>
+  </section>
+
+  <section>
+    <h2>Part A — Authorization (roles)</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Add a <code>require_role</code> dependency</h3>
+      <p>In <code>deps.py</code> write a <code>require_role(*roles)</code> dependency factory that returns the current user if their role is allowed, else raises <code>403</code>. Add a <code>get_current_admin = require_role("admin")</code> alias.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Add an admin-only endpoint</h3>
+      <p>Create <code>app/routers/admin.py</code> with <code>GET /admin/users</code> that returns all users (<code>list[UserOut]</code>), guarded by <code>get_current_admin</code>. Include the router in <code>main.py</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Make an admin user</h3>
+      <p>Register a user, then promote them in the DB (no self-service admin signup!):</p>
+      <pre><code>sqlite3 tasks.db "UPDATE users SET role='admin' WHERE email='admin@x.com';"</code></pre>
+    </div>
+  </section>
+
+  <section>
+    <h2>Part B — Refresh tokens &amp; expiry</h2>
+
+    <div class="step">
+      <h3><span class="num">4</span> Issue access + refresh on login</h3>
+      <p>Add <code>create_refresh_token</code> (longer expiry, <code>type="refresh"</code>) and a <code>type="access"</code> claim to access tokens. Return both from <code>/auth/login</code> (extend the <code>Token</code> schema with <code>refresh_token</code>).</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Add <code>POST /auth/refresh</code></h3>
+      <p>Accept a refresh token, verify it <em>and</em> confirm its <code>type</code> is <code>"refresh"</code> (reject access tokens here), then return a fresh access token. Reject expired/invalid tokens with <code>401</code>.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Part C — Secrets &amp; hardening</h2>
+
+    <div class="step">
+      <h3><span class="num">6</span> Move secrets to <code>.env</code></h3>
+      <p>Install <code>pydantic-settings</code>, create <code>app/config.py</code> with a <code>Settings</code> class reading <code>SECRET_KEY</code> + token expiries from <code>.env</code>, and use <code>settings.secret_key</code> in <code>security.py</code>. Add <code>.env</code>, <code>*.db</code>, and <code>.venv/</code> to <code>.gitignore</code>, and commit a <code>.env.example</code> with empty placeholders.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Tighten CORS &amp; validation</h3>
+      <p>Set <code>CORSMiddleware</code> <code>allow_origins</code> to your exact frontend origin (<code>http://localhost:5173</code>), not <code>"*"</code>. Confirm <code>UserCreate.password</code> has a server-side <code>min_length</code>. Confirm auth errors stay vague ("Invalid credentials").</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Part D — Frontend touch-ups (optional but recommended)</h2>
+    <div class="step">
+      <h3><span class="num">8</span> Store the refresh token &amp; auto-refresh</h3>
+      <p>Save the refresh token at login, and in <code>apiFetch</code>, when a call returns <code>401</code>, try <code>POST /auth/refresh</code> once; if it succeeds, save the new access token and retry the original request before giving up and logging out.</p>
+    </div>
+  </section>
+
+  <section class="checkpoint">
+    <h2>🏁 Module 7 Checkpoint — Secure full-stack app</h2>
+    <p>Tie the whole module together and <strong>prove</strong> the security properties. Run the backend and the React app, then verify each statement below by actually doing it:</p>
+    <ol>
+      <li><strong>Auth required:</strong> Logged out, the dashboard redirects to <code>/login</code>; <code>GET /tasks</code> with no token returns <code>401</code>.</li>
+      <li><strong>Data isolation:</strong> Register users A and B. A creates tasks; logged in as B the dashboard shows none of A's tasks, and <code>GET /tasks/{A-task-id}</code> returns <code>404</code>.</li>
+      <li><strong>Passwords safe:</strong> <code>sqlite3 tasks.db "SELECT email, hashed_password FROM users;"</code> shows only bcrypt hashes (<code>$2b$…</code>).</li>
+      <li><strong>Roles:</strong> A normal user calling <code>GET /admin/users</code> gets <code>403</code>; the admin gets the full list.</li>
+      <li><strong>Refresh:</strong> An expired access token is rejected (<code>401</code>), and <code>/auth/refresh</code> issues a working new one without re-login.</li>
+      <li><strong>Secrets:</strong> <code>git status</code> shows <code>.env</code> and <code>*.db</code> are <em>ignored</em>; the <code>SECRET_KEY</code> is nowhere in source.</li>
+    </ol>
+    <p>When all six hold, the module deliverable — a secure full-stack app where users only see their own data — is complete.</p>
+  </section>
+
+  <section class="deliverable">
+    <h2>✅ Deliverable — acceptance checklist</h2>
+    <ul class="check">
+      <li><code>require_role</code> / <code>get_current_admin</code> dependency; <code>GET /admin/users</code> returns <code>403</code> for normal users, data for admins.</li>
+      <li>Login returns access + refresh tokens; <code>POST /auth/refresh</code> issues a new access token and rejects non-refresh tokens.</li>
+      <li><code>SECRET_KEY</code> and expiries load from a git-ignored <code>.env</code> via <code>pydantic-settings</code>; <code>.env.example</code> committed.</li>
+      <li>CORS allowlists the real frontend origin; password length validated server-side; auth errors stay vague.</li>
+      <li>All six 🏁 Checkpoint statements verified by hand.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🚀 Stretch goals (optional)</h2>
+    <ul>
+      <li>Add an admin-only <code>DELETE /admin/users/{id}</code> and an endpoint to change a user's role.</li>
+      <li>Implement token <strong>revocation</strong>: keep a denylist of refresh-token IDs (<code>jti</code> claim) so logout truly ends a session.</li>
+      <li>Add basic <strong>login rate limiting</strong> (e.g. <code>slowapi</code>) to slow brute-force attempts.</li>
+      <li>Move the refresh token into an <code>httpOnly</code> cookie and add the matching backend handling — then note what CSRF protection you'd now need.</li>
+      <li>Hide admin-only UI in React based on <code>user.role</code> (defense in depth — the server still enforces it).</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a class="current">🧪 Assignment</a>
+    <a href="solution.html">✅ Solution →</a>
+  </div>
+</footer>
+</body>
+</html>

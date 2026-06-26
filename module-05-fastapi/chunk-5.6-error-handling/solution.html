@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk 5.6 — Error Handling &amp; API Best Practices</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  .checkpoint{background:#fffbeb;border:2px solid #f59e0b;}
+  .checkpoint h2{border-color:#fcd34d;color:#92400e;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .full{border:2px solid #16a34a;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 5 — Backend with FastAPI</div>
+    <h1>Chunk 5.6 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>We'll add an <code>errors.py</code>, paginate the list endpoint, version the routes, then reconnect the frontend and verify the full checkpoint. Final backend layout:</p>
+    <div class="filetree">tasks-api/
+├── README.md
+├── requirements.txt
+└── app/
+    ├── __init__.py
+    ├── main.py          (CORS + exception handlers + /api/v1)
+    ├── config.py
+    ├── schemas.py       (+ TaskPage)
+    ├── storage.py
+    ├── dependencies.py  (raises TaskNotFound; pagination)
+    ├── errors.py        (new)
+    └── routers/
+        ├── __init__.py
+        ├── health.py
+        └── tasks.py     (paginated list)</div>
+  </section>
+
+  <section>
+    <h2>Part A — Harden the backend</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> <code>app/errors.py</code></h3>
+      <pre><code>from fastapi import Request, status
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+
+class TaskNotFound(Exception):
+    def __init__(self, task_id: int):
+        self.task_id = task_id
+        super().__init__(f"Task {task_id} does not exist")
+
+
+def register_exception_handlers(app):
+    @app.exception_handler(TaskNotFound)
+    async def handle_task_not_found(request: Request, exc: TaskNotFound):
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"error": {"code": "task_not_found", "message": str(exc)}},
+        )
+
+    @app.exception_handler(StarletteHTTPException)
+    async def handle_http_exception(request: Request, exc: StarletteHTTPException):
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"error": {"code": "http_error", "message": exc.detail}},
+        )
+
+    @app.exception_handler(RequestValidationError)
+    async def handle_validation(request: Request, exc: RequestValidationError):
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            content={"error": {
+                "code": "validation_error",
+                "message": "Request validation failed",
+                "details": jsonable_encoder(exc.errors()),
+            }},
+        )</code></pre>
+      <div class="callout note">
+        <div class="label">📝 Why <code>StarletteHTTPException</code>?</div>
+        FastAPI's <code>HTTPException</code> subclasses Starlette's. Registering the handler on the Starlette base class catches both your <code>raise HTTPException(...)</code> calls and framework-raised ones (like 405s).
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Raise the custom exception — <code>app/dependencies.py</code></h3>
+      <pre><code>from fastapi import Query
+from app import storage
+from app.errors import TaskNotFound
+
+
+def get_task_or_404(task_id: int) -&gt; dict:
+    task = storage.get_by_id(task_id)
+    if task is None:
+        raise TaskNotFound(task_id)
+    return task
+
+
+def pagination_params(
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+) -&gt; dict:
+    return {"limit": limit, "offset": offset}</code></pre>
+      <p><code>Query(20, ge=1, le=100)</code> documents and enforces the bounds — a request with <code>limit=9999</code> now fails validation (and returns your consistent 422).</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Add <code>TaskPage</code> — append to <code>app/schemas.py</code></h3>
+      <pre><code>class TaskPage(BaseModel):
+    items: list[TaskRead]
+    total: int
+    limit: int
+    offset: int</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Paginate the list — <code>app/routers/tasks.py</code></h3>
+      <p>Only <code>list_tasks</code> changes; the rest of the router is unchanged from Chunk 5.4.</p>
+      <pre><code>from fastapi import APIRouter, Depends, status
+
+from app import storage
+from app.dependencies import get_task_or_404, pagination_params
+from app.schemas import TaskCreate, TaskPage, TaskRead, TaskUpdate
+
+router = APIRouter(prefix="/tasks", tags=["tasks"])
+
+
+@router.get("", response_model=TaskPage)
+def list_tasks(
+    completed: bool | None = None,
+    page: dict = Depends(pagination_params),
+):
+    items = storage.get_all()
+    if completed is not None:
+        items = [t for t in items if t["completed"] == completed]
+
+    total = len(items)
+    start = page["offset"]
+    window = items[start : start + page["limit"]]
+    return {
+        "items": window,
+        "total": total,
+        "limit": page["limit"],
+        "offset": page["offset"],
+    }
+
+
+@router.post("", response_model=TaskRead, status_code=status.HTTP_201_CREATED)
+def create_task(payload: TaskCreate):
+    return storage.add(payload.model_dump())
+
+
+@router.get("/{task_id}", response_model=TaskRead)
+def get_task(task: dict = Depends(get_task_or_404)):
+    return task
+
+
+@router.patch("/{task_id}", response_model=TaskRead)
+def update_task(payload: TaskUpdate, task: dict = Depends(get_task_or_404)):
+    task.update(payload.model_dump(exclude_unset=True))
+    return task
+
+
+@router.delete("/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_task(task: dict = Depends(get_task_or_404)):
+    storage.delete(task["id"])
+    return None</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Wire it up &amp; version — <code>app/main.py</code></h3>
+      <pre><code>from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.config import get_settings
+from app.errors import register_exception_handlers
+from app.routers import health, tasks
+
+settings = get_settings()
+app = FastAPI(title=settings.app_name)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+register_exception_handlers(app)
+
+app.include_router(health.router)                    # /health (unversioned)
+app.include_router(tasks.router, prefix="/api/v1")   # /api/v1/tasks</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Verify in <code>/docs</code></h3>
+      <table>
+        <tr><th>Request</th><th>Expected</th></tr>
+        <tr><td>GET <code>/api/v1/tasks?limit=2&amp;offset=0</code></td><td>200, <code>{items:[...], total, limit:2, offset:0}</code></td></tr>
+        <tr><td>GET <code>/api/v1/tasks/999</code></td><td>404, <code>{"error":{"code":"task_not_found","message":"Task 999 does not exist"}}</code></td></tr>
+        <tr><td>POST <code>/api/v1/tasks</code> with <code>{}</code></td><td>422, <code>{"error":{"code":"validation_error","details":[...]}}</code></td></tr>
+        <tr><td>GET <code>/api/v1/tasks?limit=9999</code></td><td>422, limit exceeds 100</td></tr>
+        <tr><td>GET <code>/health</code></td><td>200, <code>{"status":"ok"}</code> (still unversioned)</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Part B — Reconnect the frontend</h2>
+
+    <div class="step">
+      <h3><span class="num">7</span> Point at <code>/api/v1</code> &amp; read <code>items</code></h3>
+      <p>Update the frontend <code>.env</code> and restart Vite:</p>
+      <pre><code>VITE_API_URL=http://localhost:8000/api/v1</code></pre>
+      <p>Then update <code>src/api.js</code> so <code>getTasks</code> returns the array inside the envelope and every call surfaces the server's error message:</p>
+      <pre><code>const BASE_URL = import.meta.env.VITE_API_URL;
+
+async function errorMessage(res) {
+  try {
+    const data = await res.json();
+    return data?.error?.message || `Request failed (${res.status})`;
+  } catch {
+    return `Request failed (${res.status})`;
+  }
+}
+
+export async function getTasks() {
+  const res = await fetch(`${BASE_URL}/tasks`);
+  if (!res.ok) throw new Error(await errorMessage(res));
+  const data = await res.json();
+  return data.items;                 // unwrap the paginated envelope
+}
+
+export async function createTask(title) {
+  const res = await fetch(`${BASE_URL}/tasks`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title }),
+  });
+  if (!res.ok) throw new Error(await errorMessage(res));
+  return res.json();
+}
+
+export async function toggleTask(id, completed) {
+  const res = await fetch(`${BASE_URL}/tasks/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ completed }),
+  });
+  if (!res.ok) throw new Error(await errorMessage(res));
+  return res.json();
+}
+
+export async function deleteTask(id) {
+  const res = await fetch(`${BASE_URL}/tasks/${id}`, { method: "DELETE" });
+  if (!res.ok) throw new Error(await errorMessage(res));
+}</code></pre>
+      <p>Your <code>App.jsx</code> from Chunk 5.5 already shows <code>err.message</code>, so it now displays the backend's real messages (e.g. "Task 5 does not exist"). No other frontend changes needed.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">8</span> Add a <code>README.md</code> in <code>tasks-api</code></h3>
+      <pre><code># Tasks API
+
+In-memory CRUD API for tasks (FastAPI). Frontend: ../tasks-frontend (React + Vite).
+
+## Run the backend
+    python3 -m venv .venv
+    source .venv/bin/activate        # Windows: .venv\Scripts\Activate.ps1
+    pip install -r requirements.txt
+    uvicorn app.main:app --reload
+
+API docs: http://localhost:8000/docs
+Tasks:    http://localhost:8000/api/v1/tasks
+Health:   http://localhost:8000/health
+
+## Run the frontend
+    cd ../tasks-frontend
+    npm install
+    npm run dev        # http://localhost:5173
+
+Set tasks-frontend/.env -&gt; VITE_API_URL=http://localhost:8000/api/v1
+
+> Data is in-memory and resets on restart. SQLite persistence comes in Module 6.</code></pre>
+    </div>
+  </section>
+
+  <section class="checkpoint">
+    <h2>🏁 Module 5 Checkpoint — verify the whole loop</h2>
+    <p>With both servers running, walk the full path one more time:</p>
+    <table>
+      <tr><th>Step</th><th>Expected</th></tr>
+      <tr><td>Add a task in the React UI</td><td>Appears in the list (POST → 201)</td></tr>
+      <tr><td>Open <code>/docs</code> → GET <code>/api/v1/tasks</code></td><td>Same task is there, inside <code>items</code></td></tr>
+      <tr><td>Toggle + delete in the UI</td><td>PATCH 200 / DELETE 204; list stays in sync</td></tr>
+      <tr><td>Submit an empty title in the UI</td><td>Shows "Request validation failed" from the 422 envelope</td></tr>
+      <tr><td>Restart Uvicorn, refresh the app</td><td>Empty list — in-memory data reset (expected)</td></tr>
+    </table>
+    <p>If all five pass, your Module 5 deliverable is complete: a clean, documented, versioned, error-tolerant CRUD API driving a real React UI.</p>
+  </section>
+
+  <section>
+    <h2>🛠 Troubleshooting</h2>
+    <table>
+      <tr><th>Symptom</th><th>Fix</th></tr>
+      <tr><td>Frontend list is empty / <code>tasks.map is not a function</code></td><td><code>GET /tasks</code> now returns an object — return <code>data.items</code> from <code>getTasks()</code>.</td></tr>
+      <tr><td>All requests 404 after versioning</td><td>The frontend base URL must include <code>/api/v1</code>; update <code>.env</code> and restart Vite.</td></tr>
+      <tr><td>Validation handler not firing</td><td>Import <code>RequestValidationError</code> from <code>fastapi.exceptions</code> and call <code>register_exception_handlers(app)</code> in <code>main.py</code>.</td></tr>
+      <tr><td><code>TypeError: Object of type ... is not JSON serializable</code></td><td>Wrap <code>exc.errors()</code> with <code>jsonable_encoder(...)</code> in the validation handler.</td></tr>
+      <tr><td>404 still returns <code>{"detail": ...}</code></td><td><code>get_task_or_404</code> must raise <code>TaskNotFound</code>, and its handler must be registered.</td></tr>
+      <tr><td>422 on <code>limit</code></td><td>Expected if it's outside <code>1..100</code> — that's the <code>Query(ge=1, le=100)</code> guard working.</td></tr>
+    </table>
+  </section>
+
+  <section class="done">
+    <h2>🎉 Module 5 complete</h2>
+    <p>You built a real backend from scratch: venv + Uvicorn, routes and params, Pydantic validation, a clean package with routers and dependency injection, CORS, consistent error handling, pagination, and versioning — all driving a live React frontend. That's a genuine full-stack slice.</p>
+    <p>The one thing it still can't do is <strong>remember</strong> anything across restarts. That's exactly what's next.</p>
+    <p><strong>Up next → Module 6: Database with SQLite.</strong> You'll replace the in-memory store with SQLite via SQLAlchemy, add migrations, and make your Tasks API persistent — and thanks to your <code>storage.py</code> abstraction, your routes barely change. Your Pydantic schemas (with one <code>from_attributes=True</code> tweak) come right along.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment · Chunk 5.4 — Project Structure &amp; Routers</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #ede9fe;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .objective{background:#ede9fe;border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#5b21b6;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--task);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .deliverable{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .deliverable h2{border-color:#a7f3d0;color:#065f46;}
+  .check{list-style:none;padding-left:0;} .check li{padding-left:30px;position:relative;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:18px;color:var(--task);}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 5 — Backend with FastAPI</div>
+    <h1>Chunk 5.4 — Lab: Refactor into a Package</h1>
+    <span class="badge">🧪 ASSIGNMENT</span>
+    <span class="badge">⏱️ 45–75 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 Your mission</h2>
+    <p>Refactor your single-file Tasks API into a clean <code>app/</code> package: separate <code>schemas</code>, <code>storage</code>, <code>config</code>, <code>dependencies</code>, and <code>routers</code>. Behavior stays identical — this is a structure-only change that sets you up for the database and auth modules.</p>
+  </section>
+
+  <section>
+    <h2>Before you start</h2>
+    <ul>
+      <li>Work in your existing <code>tasks-api</code> project (venv active).</li>
+      <li>Install the new dependency: <code>pip install pydantic-settings</code>, then refresh <code>pip freeze &gt; requirements.txt</code>.</li>
+      <li>Target layout:</li>
+    </ul>
+    <div class="filetree">tasks-api/
+└── app/
+    ├── __init__.py
+    ├── main.py
+    ├── config.py
+    ├── schemas.py
+    ├── storage.py
+    ├── dependencies.py
+    └── routers/
+        ├── __init__.py
+        ├── health.py
+        └── tasks.py</div>
+    <div class="callout warning">
+      <div class="label">⚠️ Don't forget the <code>__init__.py</code> files</div>
+      You need one in <code>app/</code> and one in <code>app/routers/</code> (both can be empty) or imports like <code>from app.routers import tasks</code> will fail.
+    </div>
+  </section>
+
+  <section>
+    <h2>Tasks</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Create the package skeleton</h3>
+      <p>Make the <code>app/</code> folder and <code>app/routers/</code> subfolder with their <code>__init__.py</code> files. Create empty <code>config.py</code>, <code>schemas.py</code>, <code>storage.py</code>, <code>dependencies.py</code>, <code>main.py</code>, and the two router files.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Move the schemas</h3>
+      <p>Cut the four Pydantic models (<code>TaskBase</code>, <code>TaskCreate</code>, <code>TaskUpdate</code>, <code>TaskRead</code>) into <code>app/schemas.py</code>, keeping their imports.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Build the storage module</h3>
+      <p>In <code>app/storage.py</code>, hold the in-memory list and ID counter. Expose functions: <code>get_all()</code>, <code>get_by_id(task_id)</code>, <code>add(data)</code>, <code>update(task_id, changes)</code>, and <code>delete(task_id)</code>. Routers should call these instead of touching the list.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Add config</h3>
+      <p>In <code>app/config.py</code>, define a <code>Settings(BaseSettings)</code> with <code>app_name</code> and <code>cors_origins</code> (default <code>["http://localhost:5173"]</code>), plus a cached <code>get_settings()</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Add a dependency</h3>
+      <p>In <code>app/dependencies.py</code>, write <code>get_task_or_404(task_id)</code> that looks the task up in storage and raises a 404 if missing. (Optional: add a <code>pagination_params</code> dependency too.)</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Write the routers</h3>
+      <p><code>app/routers/health.py</code> holds a router with <code>GET /health</code>. <code>app/routers/tasks.py</code> holds an <code>APIRouter(prefix="/tasks", tags=["tasks"])</code> with all five CRUD routes — using <code>get_task_or_404</code> via <code>Depends</code> for the single-task routes.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Wire up <code>main.py</code></h3>
+      <p>In <code>app/main.py</code>, create the FastAPI app (title from settings) and <code>include_router</code> both routers. <code>main.py</code> should contain <em>no</em> route definitions of its own.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">8</span> Run and verify nothing broke</h3>
+      <p>From the project root run <code>uvicorn app.main:app --reload</code>. Open <code>/docs</code> — confirm endpoints are grouped under a "tasks" tag and every CRUD operation still behaves exactly as in Chunk 5.3.</p>
+    </div>
+  </section>
+
+  <section class="deliverable">
+    <h2>✅ Deliverable — acceptance checklist</h2>
+    <ul class="check">
+      <li>The <code>app/</code> package exists with all the listed files and both <code>__init__.py</code> files.</li>
+      <li>Schemas live in <code>schemas.py</code>; the store lives in <code>storage.py</code>.</li>
+      <li>Routes are split into <code>routers/health.py</code> and <code>routers/tasks.py</code> using <code>APIRouter</code>.</li>
+      <li><code>main.py</code> only creates the app and includes routers (no route bodies).</li>
+      <li>Single-task routes use <code>get_task_or_404</code> via <code>Depends</code>.</li>
+      <li><code>config.py</code> provides <code>Settings</code> with <code>cors_origins</code>, used for the app title.</li>
+      <li><code>uvicorn app.main:app --reload</code> runs and all CRUD + <code>/health</code> behave as before.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🚀 Stretch goals (optional)</h2>
+    <ul>
+      <li>Add a <code>pagination_params</code> dependency and apply <code>limit</code>/<code>offset</code> slicing to <code>GET /tasks</code>.</li>
+      <li>Create a <code>.env</code> file overriding <code>app_name</code> and confirm it shows in <code>/docs</code>.</li>
+      <li>Add a root <code>GET /</code> route (in <code>main.py</code> or a small router) that redirects/points to <code>/docs</code>.</li>
+      <li>Add a module-level docstring to each file describing its single responsibility.</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a class="current">🧪 Assignment</a>
+    <a href="solution.html">✅ Solution →</a>
+  </div>
+</footer>
+</body>
+</html>

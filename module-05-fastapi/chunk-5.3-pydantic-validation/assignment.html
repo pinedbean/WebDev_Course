@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment · Chunk 5.3 — Request Bodies &amp; Pydantic Validation</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #ede9fe;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .objective{background:#ede9fe;border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#5b21b6;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--task);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .deliverable{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .deliverable h2{border-color:#a7f3d0;color:#065f46;}
+  .check{list-style:none;padding-left:0;} .check li{padding-left:30px;position:relative;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:18px;color:var(--task);}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 5 — Backend with FastAPI</div>
+    <h1>Chunk 5.3 — Lab: Typed Schemas &amp; Validation</h1>
+    <span class="badge">🧪 ASSIGNMENT</span>
+    <span class="badge">⏱️ 45–75 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 Your mission</h2>
+    <p>Upgrade your CRUD API from Chunk 5.2 to use <strong>Pydantic v2 schemas</strong> and real <strong>JSON request bodies</strong>. Define <code>TaskBase</code>, <code>TaskCreate</code>, <code>TaskUpdate</code>, and <code>TaskRead</code>, wire them into your routes with <code>response_model</code>, and verify automatic validation.</p>
+  </section>
+
+  <section>
+    <h2>Before you start</h2>
+    <ul>
+      <li>Continue in <code>tasks-api</code> with the venv active and <code>uvicorn main:app --reload</code> running.</li>
+      <li>You already have Pydantic — it installed with FastAPI in 5.1. Confirm v2 with <code>pip show pydantic</code> (Version 2.x).</li>
+      <li>Keep storing tasks as dicts in the in-memory list; only the request/response handling changes.</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ Try it yourself first</div>
+      The lecture shows every piece. Assemble it yourself, run it, and break it on purpose to see the 422s before checking the solution.
+    </div>
+  </section>
+
+  <section>
+    <h2>Tasks</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Define the four schemas</h3>
+      <p>Near the top of <code>main.py</code> (after the imports), define:</p>
+      <ul>
+        <li><code>TaskBase</code> — <code>title</code> (1–200 chars via <code>Field</code>) and <code>description: str | None = None</code>.</li>
+        <li><code>TaskCreate(TaskBase)</code> — inherits the base fields.</li>
+        <li><code>TaskUpdate</code> — <code>title</code>, <code>description</code>, and <code>completed</code>, all optional (default <code>None</code>).</li>
+        <li><code>TaskRead(TaskBase)</code> — adds <code>id: int</code>, <code>completed: bool</code>, <code>created_at: datetime</code>.</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Convert <code>POST /tasks</code> to a body</h3>
+      <p>Change the signature to take a single <code>payload: TaskCreate</code>. Build the stored dict from <code>payload.model_dump()</code> plus the server-owned fields (<code>id</code>, <code>completed=False</code>, <code>created_at</code>). Add <code>response_model=TaskRead</code> and keep status 201.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Add <code>response_model</code> to the read routes</h3>
+      <p>Set <code>response_model=list[TaskRead]</code> on <code>GET /tasks</code> and <code>response_model=TaskRead</code> on <code>GET /tasks/{task_id}</code>. Keep the <code>completed</code> filter and the 404 behavior.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Convert <code>PATCH</code> to <code>TaskUpdate</code></h3>
+      <p>Take <code>payload: TaskUpdate</code>, find the task (404 if missing), and merge with <code>payload.model_dump(exclude_unset=True)</code> so only provided fields change. Return with <code>response_model=TaskRead</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Leave DELETE as-is</h3>
+      <p><code>DELETE /tasks/{task_id}</code> still takes only a path param and returns 204 — no body, no schema needed.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Test the happy path in <code>/docs</code></h3>
+      <p>Notice POST/PATCH now show an editable JSON body with an example. Create a task by sending <code>{"title": "Read docs"}</code>, list tasks, and PATCH it with <code>{"completed": true}</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Test validation failures</h3>
+      <p>Deliberately send bad data and confirm you get a <strong>422</strong>:</p>
+      <ul>
+        <li><code>POST /tasks</code> with <code>{}</code> (missing <code>title</code>).</li>
+        <li><code>POST /tasks</code> with <code>{"title": ""}</code> (too short).</li>
+        <li><code>POST /tasks</code> with <code>{"title": 123}</code> (wrong type) — note Pydantic may coerce; try a list instead to force an error.</li>
+      </ul>
+      <p>Read the <code>detail</code> array and find the <code>loc</code> that points to the bad field.</p>
+    </div>
+  </section>
+
+  <section class="deliverable">
+    <h2>✅ Deliverable — acceptance checklist</h2>
+    <ul class="check">
+      <li><code>TaskBase</code>, <code>TaskCreate</code>, <code>TaskUpdate</code>, and <code>TaskRead</code> are defined as Pydantic v2 models.</li>
+      <li><code>POST /tasks</code> accepts a JSON body (<code>TaskCreate</code>) and returns 201 with a <code>TaskRead</code>.</li>
+      <li><code>GET /tasks</code> uses <code>response_model=list[TaskRead]</code>; single GET uses <code>TaskRead</code>.</li>
+      <li><code>PATCH</code> uses <code>TaskUpdate</code> + <code>exclude_unset=True</code> for true partial updates.</li>
+      <li>Sending an invalid body returns a <strong>422</strong> with a helpful <code>detail</code>.</li>
+      <li><code>title</code> has a length constraint; an empty title is rejected.</li>
+      <li>DELETE still returns 204; <code>/health</code> still works.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🚀 Stretch goals (optional)</h2>
+    <ul>
+      <li>Add an example to a schema via <code>model_config = {"json_schema_extra": {"examples": [...]}}</code> and see it appear in <code>/docs</code>.</li>
+      <li>Add a custom field validator that strips whitespace from <code>title</code> and rejects titles that are only spaces.</li>
+      <li>Add a <code>due_date: datetime | None = None</code> field to the schemas and confirm ISO date strings validate.</li>
+      <li>Return a <code>409 Conflict</code> if a task with the exact same title already exists.</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a class="current">🧪 Assignment</a>
+    <a href="solution.html">✅ Solution →</a>
+  </div>
+</footer>
+</body>
+</html>

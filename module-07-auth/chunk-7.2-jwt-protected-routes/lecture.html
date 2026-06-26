@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 7.2 — JWT Tokens &amp; Protected Routes</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .flow{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.6;}
+  .jwt-h{color:#f87171;} .jwt-p{color:#34d399;} .jwt-s{color:#60a5fa;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 7 — Authentication &amp; Security</div>
+    <h1>Chunk 7.2 — JWT Tokens &amp; Protected Routes</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>What a <strong>JWT</strong> is: its three parts (header, payload, signature) and what each does.</li>
+      <li>How signing/verifying makes a token <strong>tamper-proof</strong> — and why it is <em>not</em> encrypted.</li>
+      <li>Access tokens, <strong>expiry</strong>, and a <code>SECRET_KEY</code>.</li>
+      <li>Creating and decoding JWTs in FastAPI with <strong>python-jose</strong>.</li>
+      <li>Wiring <code>OAuth2PasswordBearer</code> and a <strong><code>get_current_user</code></strong> dependency to protect routes.</li>
+      <li>Scoping the Tasks API so each user only sees their <strong>own</strong> tasks.</li>
+    </ul>
+    <p>In the lab you'll issue a JWT on login, add a <code>get_current_user</code> dependency, build <code>GET /auth/me</code>, and lock down every task route.</p>
+  </section>
+
+  <section>
+    <h2>1. The problem JWTs solve</h2>
+    <p>In 7.1 login ended with "Login successful" — but the very next request the server has no idea who you are again (HTTP is stateless). We need the browser to carry <em>proof of identity</em> on every request. That proof is a <strong>token</strong>.</p>
+    <p>A <strong>JWT</strong> (JSON Web Token, pronounced "jot") is a compact, signed string the server issues at login. The browser stores it and sends it back on each request in an <code>Authorization</code> header. Because the token is <em>signed</em>, the server can trust it without looking anything up in a session store — that's <strong>stateless</strong> auth, and it's what makes the load-balanced setup in Module 9 simple.</p>
+    <div class="flow">LOGIN     POST /auth/login  { email, password }
+          server verifies password  ->  signs a JWT  ->  returns it
+                                                          { "access_token": "eyJ...", "token_type": "bearer" }
+
+REQUEST   GET /tasks
+          Authorization: Bearer eyJ...
+          server VERIFIES the signature -> reads user id -> loads the user -> answers</div>
+  </section>
+
+  <section>
+    <h2>2. Anatomy of a JWT</h2>
+    <p>A JWT is three Base64url chunks joined by dots: <code>header.payload.signature</code>.</p>
+    <pre><code><span class="jwt-h">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9</span>.<span class="jwt-p">eyJzdWIiOiIxIiwiZXhwIjoxNzE4OTk5OTk5fQ</span>.<span class="jwt-s">3a8f...signature...</span></code></pre>
+    <table>
+      <tr><th>Part</th><th>Contains</th><th>Example (decoded)</th></tr>
+      <tr><td><span style="color:#b91c1c"><strong>Header</strong></span></td><td>The algorithm &amp; token type</td><td><code>{"alg":"HS256","typ":"JWT"}</code></td></tr>
+      <tr><td><span style="color:#047857"><strong>Payload</strong></span></td><td>The <em>claims</em>: who the user is + metadata</td><td><code>{"sub":"1","exp":1718999999}</code></td></tr>
+      <tr><td><span style="color:#1d4ed8"><strong>Signature</strong></span></td><td>A cryptographic seal over header+payload using your <code>SECRET_KEY</code></td><td><code>HMACSHA256(...)</code></td></tr>
+    </table>
+    <p>Common <strong>claims</strong> in the payload:</p>
+    <ul>
+      <li><code>sub</code> ("subject") — who the token is about. We put the <strong>user id</strong> here (as a string).</li>
+      <li><code>exp</code> ("expiration") — a Unix timestamp after which the token is invalid.</li>
+      <li><code>iat</code> ("issued at") — when it was created (optional but useful).</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ The payload is readable by anyone</div>
+      A JWT is <strong>signed, not encrypted</strong>. Anyone holding the token can Base64-decode the payload and read every claim (try pasting one into <code>jwt.io</code>). <strong>Never put secrets in a JWT</strong> — no passwords, no credit cards. Put only an identifier (the user id) and non-sensitive metadata.
+    </div>
+  </section>
+
+  <section>
+    <h2>3. Signing &amp; verifying — what the signature buys you</h2>
+    <p>The signature is computed from the header, the payload, and your server's <code>SECRET_KEY</code>. If anyone changes a single character of the payload (say, to impersonate another user), the signature no longer matches and verification fails.</p>
+    <ul>
+      <li><strong>Only your server</strong> knows the <code>SECRET_KEY</code>, so only your server can mint valid tokens.</li>
+      <li>Anyone can <em>read</em> a token, but nobody can <em>forge</em> or <em>tamper with</em> one without the key.</li>
+      <li>So if a token verifies, you can trust its claims came from your server.</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ Protect the SECRET_KEY like a password</div>
+      If your <code>SECRET_KEY</code> leaks, attackers can mint tokens for <em>any</em> user. Keep it in an environment variable / <code>.env</code> file — <strong>never hard-code it in source or commit it to Git</strong>. Generate a strong one: <code>python -c "import secrets; print(secrets.token_hex(32))"</code>. (We harden secrets management properly in 7.4.)
+    </div>
+  </section>
+
+  <section>
+    <h2>4. Access tokens &amp; expiry</h2>
+    <p>The token you issue at login is an <strong>access token</strong> — it grants access to protected routes. It must <strong>expire</strong> (the <code>exp</code> claim) so a stolen token isn't useful forever. A common access-token lifetime is short, e.g. <strong>15–60 minutes</strong>.</p>
+    <p>"But then users get logged out constantly?" That's what <strong>refresh tokens</strong> solve — a longer-lived token used only to get a fresh access token. We add those in 7.4. For now, a single access token with a sensible expiry is exactly right.</p>
+  </section>
+
+  <section>
+    <h2>5. JWTs in FastAPI with python-jose</h2>
+    <p>Install the library (the <code>cryptography</code> extra provides the signing backend):</p>
+    <pre><code>pip install "python-jose[cryptography]"</code></pre>
+    <p>Add token functions to <code>security.py</code> next to your password helpers:</p>
+    <pre><code># app/security.py  (additions)
+import os
+from datetime import datetime, timedelta, timezone
+from jose import jwt, JWTError
+
+SECRET_KEY = os.getenv("SECRET_KEY", "dev-only-change-me")   # 7.4: load from .env
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+def create_access_token(subject: str) -> str:
+    """Sign a JWT whose 'sub' claim is the user id (a string)."""
+    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    payload = {"sub": subject, "exp": expire}
+    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+
+def decode_access_token(token: str) -> str | None:
+    """Return the user id from a valid token, or None if invalid/expired."""
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload.get("sub")
+    except JWTError:
+        return None</code></pre>
+    <p><code>jwt.decode</code> automatically rejects an expired or tampered token by raising <code>JWTError</code>, which we turn into <code>None</code>. Now update login to return a token instead of a message:</p>
+    <pre><code># app/routers/auth.py  (updated login)
+from app.security import verify_password, create_access_token
+
+@router.post("/login", response_model=schemas.Token)
+def login(data: schemas.UserLogin, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.email == data.email.lower()).first()
+    if not user or not verify_password(data.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    token = create_access_token(subject=str(user.id))
+    return {"access_token": token, "token_type": "bearer"}</code></pre>
+    <p>With a tiny <code>Token</code> schema:</p>
+    <pre><code>class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"</code></pre>
+  </section>
+
+  <section>
+    <h2>6. OAuth2PasswordBearer — telling FastAPI where the token comes from</h2>
+    <p>FastAPI ships an OAuth2 helper that reads the token out of the <code>Authorization: Bearer ...</code> header and powers the green "Authorize" button in <code>/docs</code>. Point it at your login URL:</p>
+    <pre><code># app/deps.py
+from fastapi.security import OAuth2PasswordBearer
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")</code></pre>
+    <p>When a route depends on <code>oauth2_scheme</code>, FastAPI will: (a) extract the bearer token from the header, and (b) automatically return <code>401</code> if it's missing.</p>
+    <div class="callout note">
+      <div class="label">📝 The OAuth2 "password flow" expects form fields</div>
+      The standard token endpoint receives <strong>form-encoded</strong> <code>username</code> &amp; <code>password</code> (not JSON), via FastAPI's <code>OAuth2PasswordRequestForm</code>. That's what makes the <code>/docs</code> Authorize button work. In the lab you'll switch login to this form so the docs UI and your future frontend both work cleanly. (Our "username" field will just hold the email.)
+    </div>
+  </section>
+
+  <section>
+    <h2>7. The get_current_user dependency</h2>
+    <p>This is the keystone. One dependency that: reads the token → decodes it → loads the user from the DB → hands it to your route. Any route that wants "the logged-in user" just declares it as a parameter.</p>
+    <pre><code># app/deps.py
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app.security import decode_access_token
+from app import models
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+
+def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db),
+) -> models.User:
+    credentials_error = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    user_id = decode_access_token(token)
+    if user_id is None:
+        raise credentials_error
+    user = db.get(models.User, int(user_id))
+    if user is None:
+        raise credentials_error
+    return user</code></pre>
+    <p>Now a protected route is trivially:</p>
+    <pre><code># app/routers/auth.py
+from app.deps import get_current_user
+
+@router.get("/me", response_model=schemas.UserOut)
+def read_me(current_user: models.User = Depends(get_current_user)):
+    return current_user</code></pre>
+    <p>Hit <code>GET /auth/me</code> with no token → <code>401</code>. With a valid token → your user. The dependency is reusable across every protected endpoint in your app.</p>
+  </section>
+
+  <section>
+    <h2>8. Scoping tasks to the current user</h2>
+    <p>Authentication isn't useful until your data respects it. Add the same dependency to your task routes and filter by <code>owner_id</code> so users only see and touch their own tasks.</p>
+    <pre><code># app/routers/tasks.py  (key changes)
+from app.deps import get_current_user
+
+@router.get("", response_model=list[schemas.TaskOut])
+def list_tasks(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    return db.query(models.Task).filter(models.Task.owner_id == current_user.id).all()
+
+@router.post("", response_model=schemas.TaskOut, status_code=201)
+def create_task(
+    data: schemas.TaskCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    task = models.Task(**data.model_dump(), owner_id=current_user.id)  # owner = you
+    db.add(task); db.commit(); db.refresh(task)
+    return task</code></pre>
+    <p>For <strong>get one / update / delete</strong>, fetch the task <em>and</em> require it belongs to the current user — otherwise <code>404</code> (not <code>403</code>, so you don't even reveal that someone else's task exists):</p>
+    <pre><code>def get_owned_task(task_id: int, db, current_user) -&gt; models.Task:
+    task = db.get(models.Task, task_id)
+    if task is None or task.owner_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return task</code></pre>
+    <div class="callout tip">
+      <div class="label">💡 This is authorization sneaking in</div>
+      Filtering by <code>owner_id</code> is your first taste of <strong>authorization</strong> (the "what can you do?" question). In 7.4 you'll formalize it with roles so an admin can override ownership.
+    </div>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li>A <strong>JWT</strong> is <code>header.payload.signature</code> — signed (tamper-proof), <strong>not encrypted</strong> (readable), so never put secrets in it.</li>
+      <li>Sign with a secret <code>SECRET_KEY</code> + an <code>exp</code> expiry; <code>create_access_token</code> on login, <code>decode_access_token</code> to verify.</li>
+      <li><code>OAuth2PasswordBearer(tokenUrl="auth/login")</code> reads the <code>Authorization: Bearer</code> header and powers the docs Authorize button.</li>
+      <li><code>get_current_user</code> decodes the token, loads the user, and is reused by every protected route.</li>
+      <li>Scope task routes by <code>owner_id</code> so users only see their own data (return <code>404</code> for others' tasks).</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and turn login into a real token-based system.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment · Chunk 6.3 — Persisting CRUD &amp; Migrations</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #ede9fe;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .objective{background:#ede9fe;border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#5b21b6;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--task);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .deliverable{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .deliverable h2{border-color:#a7f3d0;color:#065f46;}
+  .check{list-style:none;padding-left:0;} .check li{padding-left:30px;position:relative;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:18px;color:var(--task);}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 6 — Database with SQLite</div>
+    <h1>Chunk 6.3 — Lab: A Persistent CRUD API</h1>
+    <span class="badge">🧪 ASSIGNMENT</span>
+    <span class="badge">⏱️ 45–75 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 Your mission</h2>
+    <p>Turn your Tasks API into a fully persistent CRUD service. You'll build a <code>crud.py</code> repository layer, rewire every endpoint (<code>GET</code>/<code>POST</code>/<code>PATCH</code>/<code>DELETE</code>) to use it, delete the in-memory list for good, and replace <code>create_all</code> with a real <strong>Alembic</strong> migration. When you're done, data created through the API survives a server restart.</p>
+  </section>
+
+  <section>
+    <h2>Before you start</h2>
+    <ul>
+      <li>Continue from your Chunk 6.2 project (the Tasks API connected to SQLite), venv active.</li>
+      <li>Install Alembic into the venv:
+        <pre><code>pip install alembic</code></pre></li>
+      <li>This lab changes how the schema is created. To avoid mixing the old <code>create_all</code> table with Alembic, plan to start from a fresh <code>tasks.db</code> (delete it before your first migration — instructions in the solution).</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ Try it yourself first</div>
+      Work from the lecture's <code>crud.py</code> and Alembic steps. Only open <code>solution.html</code> when stuck or to compare.
+    </div>
+  </section>
+
+  <section>
+    <h2>Part A — Repository &amp; DB-backed CRUD</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Create <code>app/crud.py</code></h3>
+      <p>Write five functions, each taking a <code>Session</code> first: <code>get_tasks(db)</code>, <code>get_task(db, task_id)</code>, <code>create_task(db, data)</code>, <code>update_task(db, task, data)</code>, and <code>delete_task(db, task)</code>. Use <code>add</code>/<code>commit</code>/<code>refresh</code> for create, attribute assignment + <code>commit</code> for update, and <code>delete</code> + <code>commit</code> for delete. These functions must contain <strong>no HTTP logic</strong>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Rewrite every endpoint to use <code>crud</code></h3>
+      <p>Update all five task endpoints to take <code>db: Session = Depends(get_db)</code> and delegate to <code>crud</code>:</p>
+      <ul>
+        <li><code>GET /tasks</code> → <code>crud.get_tasks</code></li>
+        <li><code>POST /tasks</code> → <code>crud.create_task</code> (return <code>201 Created</code>)</li>
+        <li><code>GET /tasks/{task_id}</code> → <code>crud.get_task</code> (404 if missing)</li>
+        <li><code>PATCH /tasks/{task_id}</code> → look up, 404 if missing, then <code>crud.update_task</code></li>
+        <li><code>DELETE /tasks/{task_id}</code> → look up, 404 if missing, then <code>crud.delete_task</code> (return <code>204 No Content</code>)</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Make PATCH partial</h3>
+      <p>Ensure your update only changes the fields the client actually sent, using <code>data.model_dump(exclude_unset=True)</code>. Sending only <code>{"completed": true}</code> must not wipe the title or description.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Delete the in-memory store</h3>
+      <p>Remove the old <code>tasks: list = []</code> and any code that used it. The database is now the only source of truth.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Part B — Alembic migrations</h2>
+
+    <div class="step">
+      <h3><span class="num">5</span> Initialize Alembic</h3>
+      <p>From the project root, run <code>alembic init alembic</code>. This creates the <code>alembic/</code> folder and <code>alembic.ini</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Wire Alembic to your project</h3>
+      <ul>
+        <li>In <code>alembic.ini</code>, set <code>sqlalchemy.url = sqlite:///./tasks.db</code>.</li>
+        <li>In <code>alembic/env.py</code>, import your <code>Base</code> and your <code>models</code>, and set <code>target_metadata = Base.metadata</code>.</li>
+        <li>Remove (or comment out) <code>Base.metadata.create_all(bind=engine)</code> from <code>main.py</code> — Alembic owns the schema now.</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Generate &amp; apply the first migration</h3>
+      <p>Start from a clean database (delete any old <code>tasks.db</code>), then:</p>
+      <pre><code>alembic revision --autogenerate -m "create tasks table"
+alembic upgrade head</code></pre>
+      <p>Open the generated file in <code>alembic/versions/</code> and read its <code>upgrade()</code> — it should create the <code>tasks</code> table with your five columns.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">8</span> Test the full cycle &amp; persistence</h3>
+      <p>Run the server and use <code>/docs</code> to: create a task (POST), list tasks (GET), fetch one (GET by id), toggle it (PATCH <code>{"completed": true}</code>), and delete one (DELETE). Confirm a missing id returns 404. Then <strong>restart the server</strong> and verify your created tasks are still there.</p>
+    </div>
+  </section>
+
+  <section class="deliverable">
+    <h2>✅ Deliverable — acceptance checklist</h2>
+    <ul class="check">
+      <li><code>app/crud.py</code> exists with the five DB functions and no HTTP logic.</li>
+      <li>All five task endpoints use <code>Depends(get_db)</code> and call into <code>crud</code>; the in-memory list is gone.</li>
+      <li><code>POST</code> returns 201, <code>DELETE</code> returns 204, missing ids return 404.</li>
+      <li>PATCH only updates the fields sent (partial update via <code>exclude_unset</code>).</li>
+      <li>An Alembic migration file exists under <code>alembic/versions/</code> that creates the <code>tasks</code> table.</li>
+      <li><code>alembic upgrade head</code> runs cleanly and <code>create_all</code> is no longer used.</li>
+      <li>Tasks created via the API survive a full server restart.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🚀 Stretch goals (optional)</h2>
+    <ul>
+      <li>Roll back and re-apply: <code>alembic downgrade -1</code> then <code>alembic upgrade head</code>. Watch the <code>tasks</code> table disappear and come back.</li>
+      <li>Add a <code>priority</code> column (integer, default 0) to the <code>Task</code> model, then generate &amp; apply a <em>second</em> migration for it. Confirm the schema changed without losing data.</li>
+      <li>Check the current revision with <code>alembic current</code> and the history with <code>alembic history</code>.</li>
+      <li>Add a simple unit test that calls <code>crud.create_task</code> against a temporary session.</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a class="current">🧪 Assignment</a>
+    <a href="solution.html">✅ Solution →</a>
+  </div>
+</footer>
+</body>
+</html>

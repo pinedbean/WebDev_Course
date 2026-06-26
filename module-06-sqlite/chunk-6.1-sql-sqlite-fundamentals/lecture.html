@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 6.1 — SQL &amp; SQLite Fundamentals</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 6 — Database with SQLite</div>
+    <h1>Chunk 6.1 — SQL &amp; SQLite Fundamentals</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>Why your Tasks API needs a <strong>database</strong> (and why in-memory data was never going to last).</li>
+      <li>The <strong>relational model</strong>: tables, rows, columns, primary keys, data types.</li>
+      <li>The four CRUD verbs in <strong>SQL</strong>: <code>INSERT</code>, <code>SELECT</code>, <code>UPDATE</code>, <code>DELETE</code> — plus <code>CREATE TABLE</code> and filtering with <code>WHERE</code>.</li>
+      <li>What <strong>SQLite</strong> is, why it's perfect for this course, and how to drive it from the terminal.</li>
+    </ul>
+    <p>In the lab you'll create a real <code>tasks.db</code> file, build a <code>tasks</code> table, and run every kind of query by hand.</p>
+  </section>
+
+  <section>
+    <h2>1. The problem: your data disappears</h2>
+    <p>In Module 5 you built a Tasks API with FastAPI. It worked — you could create, read, update, and delete tasks. But every task lived in a Python <strong>list in memory</strong>:</p>
+    <pre><code># Module 5 — the in-memory store
+tasks: list[Task] = []</code></pre>
+    <p>That list only exists while the server is running. The moment you stop Uvicorn (or it crashes, or you redeploy), <strong>every task is gone</strong>. Restart the server and you're back to an empty list. That's fine for a demo, useless for a real app.</p>
+    <p>We need <strong>persistence</strong>: a place to store data that survives restarts. That place is a <strong>database</strong>, and the data lives in a file on disk. This whole module is about giving the Tasks API a real, durable memory.</p>
+    <div class="callout note">
+      <div class="label">📝 Where this is going</div>
+      6.1 (today): learn SQL by hand. 6.2: talk to SQLite from Python with SQLAlchemy. 6.3: make the Tasks API itself persistent + migrations. 6.4: add a second table (Users) and connect them. Then Module 7 adds login.
+    </div>
+  </section>
+
+  <section>
+    <h2>2. The relational model</h2>
+    <p>A <strong>relational database</strong> organizes data into <strong>tables</strong> — think of a spreadsheet, but with strict rules. A table for tasks might look like this:</p>
+    <table>
+      <tr><th>id</th><th>title</th><th>description</th><th>completed</th><th>created_at</th></tr>
+      <tr><td>1</td><td>Buy milk</td><td>2% organic</td><td>0</td><td>2026-06-26 09:00:00</td></tr>
+      <tr><td>2</td><td>Finish report</td><td>(null)</td><td>1</td><td>2026-06-26 09:05:00</td></tr>
+      <tr><td>3</td><td>Call dentist</td><td>Reschedule</td><td>0</td><td>2026-06-26 09:10:00</td></tr>
+    </table>
+    <ul>
+      <li>A <strong>table</strong> holds one kind of thing (here, tasks). Its name is plural by convention: <code>tasks</code>.</li>
+      <li>A <strong>row</strong> (also called a <em>record</em>) is one item — one task.</li>
+      <li>A <strong>column</strong> (also called a <em>field</em>) is one attribute every row has — <code>title</code>, <code>completed</code>, etc.</li>
+      <li>A <strong>primary key</strong> is a column whose value uniquely identifies each row. Here it's <code>id</code>. No two rows share an <code>id</code>.</li>
+    </ul>
+    <p>Notice this is <em>exactly</em> the shape of the <code>Task</code> entity from Module 5: <code>id</code>, <code>title</code>, <code>description</code>, <code>completed</code>, <code>created_at</code>. A database column maps cleanly onto a model field — that's the bridge we'll cross in 6.2.</p>
+
+    <h3>SQLite data types</h3>
+    <p>Each column has a <strong>type</strong> that says what kind of value it stores. SQLite keeps this simple — it has just a handful of <em>storage classes</em>:</p>
+    <table>
+      <tr><th>Type</th><th>Stores</th><th>Used for our Task</th></tr>
+      <tr><td><code>INTEGER</code></td><td>Whole numbers</td><td><code>id</code>, and <code>completed</code> (0 = false, 1 = true)</td></tr>
+      <tr><td><code>TEXT</code></td><td>Strings of text</td><td><code>title</code>, <code>description</code>, and dates (as ISO text)</td></tr>
+      <tr><td><code>REAL</code></td><td>Decimal numbers</td><td>(not needed here — e.g. prices)</td></tr>
+      <tr><td><code>BLOB</code></td><td>Raw bytes (files, images)</td><td>(not needed here)</td></tr>
+      <tr><td><code>NULL</code></td><td>"No value" / missing</td><td>a <code>description</code> that wasn't provided</td></tr>
+    </table>
+    <div class="callout note">
+      <div class="label">📝 No real boolean or date type</div>
+      SQLite has no dedicated <code>BOOLEAN</code> or <code>DATETIME</code> type. Booleans are stored as <code>INTEGER</code> <code>0</code>/<code>1</code>, and dates/times are stored as <code>TEXT</code> in ISO format like <code>2026-06-26 09:00:00</code>. SQLAlchemy will hide this from us later — it converts to/from Python <code>bool</code> and <code>datetime</code> automatically.
+    </div>
+  </section>
+
+  <section>
+    <h2>3. Why SQLite?</h2>
+    <p><strong>SQLite</strong> is a relational database that lives in a <em>single file</em>. There's no server to install, no port to open, no username/password to configure. Your whole database is one file (we'll call ours <code>tasks.db</code>) that you can copy, email, or delete like any other file.</p>
+    <table>
+      <tr><th>Why it's great for us</th><th>What to know</th></tr>
+      <tr><td><strong>Zero setup</strong></td><td>It's built into Python and macOS. Nothing to install to get started.</td></tr>
+      <tr><td><strong>Serverless</strong></td><td>No separate database process — your app reads/writes the file directly.</td></tr>
+      <tr><td><strong>Portable</strong></td><td>The entire database is one file you can version, back up, or move.</td></tr>
+      <tr><td><strong>Real SQL</strong></td><td>The SQL you learn here works in Postgres, MySQL, etc. with minor tweaks.</td></tr>
+    </table>
+    <div class="callout warning">
+      <div class="label">⚠️ When NOT to use SQLite</div>
+      SQLite is fantastic for development, small apps, and learning. But because it's a single file, it struggles with <em>many simultaneous writers</em> (high-traffic production with lots of concurrent writes). For that you'd reach for a client/server database like <strong>PostgreSQL</strong>. The Bonus Track shows how to migrate. For everything in this course, SQLite is the right call.
+    </div>
+  </section>
+
+  <section>
+    <h2>4. SQL: the language of databases</h2>
+    <p><strong>SQL</strong> (Structured Query Language) is how you talk to a relational database. You write <em>statements</em> that describe what you want, and the database figures out how to do it. The four operations you'll use constantly map directly onto <strong>CRUD</strong>:</p>
+    <table>
+      <tr><th>CRUD</th><th>SQL keyword</th><th>Meaning</th></tr>
+      <tr><td>Create</td><td><code>INSERT</code></td><td>Add new rows</td></tr>
+      <tr><td>Read</td><td><code>SELECT</code></td><td>Fetch rows</td></tr>
+      <tr><td>Update</td><td><code>UPDATE</code></td><td>Change existing rows</td></tr>
+      <tr><td>Delete</td><td><code>DELETE</code></td><td>Remove rows</td></tr>
+    </table>
+    <p>And before you can do any of that, you define the table's shape with <code>CREATE TABLE</code>. SQL keywords are usually written in UPPERCASE (just a convention — it makes statements easier to read). Every statement ends with a semicolon <code>;</code>.</p>
+  </section>
+
+  <section>
+    <h2>5. CREATE TABLE — defining the shape</h2>
+    <p>This creates our <code>tasks</code> table. Read it top to bottom: each line is a column name, its type, and optional <strong>constraints</strong> (rules the database enforces):</p>
+    <pre><code>CREATE TABLE tasks (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    title       TEXT    NOT NULL,
+    description TEXT,
+    completed   INTEGER NOT NULL DEFAULT 0,
+    created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+);</code></pre>
+    <table>
+      <tr><th>Constraint</th><th>What it does</th></tr>
+      <tr><td><code>PRIMARY KEY</code></td><td>Marks this column as the unique row identifier.</td></tr>
+      <tr><td><code>AUTOINCREMENT</code></td><td>The database fills in <code>id</code> for you (1, 2, 3, …) so you never repeat one.</td></tr>
+      <tr><td><code>NOT NULL</code></td><td>This column is required — you can't leave it empty.</td></tr>
+      <tr><td><code>DEFAULT 0</code></td><td>If you don't supply a value, use this one. New tasks default to "not completed".</td></tr>
+      <tr><td><code>DEFAULT (datetime('now'))</code></td><td>Auto-stamp the current UTC time when a row is created.</td></tr>
+    </table>
+    <div class="callout tip">
+      <div class="label">💡 INTEGER PRIMARY KEY is special</div>
+      In SQLite, a column declared <code>INTEGER PRIMARY KEY</code> automatically becomes an alias for the row's built-in <code>ROWID</code>, so it auto-assigns ascending numbers even without <code>AUTOINCREMENT</code>. Adding <code>AUTOINCREMENT</code> just guarantees ids are never reused after deletion.
+    </div>
+  </section>
+
+  <section>
+    <h2>6. INSERT — adding rows (Create)</h2>
+    <p>You list the columns you're providing, then the matching values. Columns you skip (<code>id</code>, <code>completed</code>, <code>created_at</code>) fall back to their defaults:</p>
+    <pre><code>INSERT INTO tasks (title, description)
+VALUES ('Buy milk', '2% organic');
+
+INSERT INTO tasks (title, description, completed)
+VALUES ('Finish report', NULL, 1);</code></pre>
+    <p>Text values go in <strong>single quotes</strong> <code>'like this'</code>. To insert several rows at once, separate value groups with commas:</p>
+    <pre><code>INSERT INTO tasks (title, description) VALUES
+    ('Call dentist', 'Reschedule cleaning'),
+    ('Water plants', NULL),
+    ('Read SQL chapter', 'Module 6');</code></pre>
+  </section>
+
+  <section>
+    <h2>7. SELECT — reading rows (Read)</h2>
+    <p><code>SELECT</code> fetches data. The simplest form grabs every column of every row (<code>*</code> means "all columns"):</p>
+    <pre><code>SELECT * FROM tasks;</code></pre>
+    <p>Ask for only the columns you need:</p>
+    <pre><code>SELECT id, title FROM tasks;</code></pre>
+
+    <h3>WHERE — filtering</h3>
+    <p><code>WHERE</code> keeps only the rows that match a condition. This is the most important clause in SQL:</p>
+    <pre><code>-- only tasks that aren't done yet (completed = 0)
+SELECT * FROM tasks WHERE completed = 0;
+
+-- one specific task by id
+SELECT * FROM tasks WHERE id = 2;</code></pre>
+    <p>Comparison operators inside <code>WHERE</code>:</p>
+    <table>
+      <tr><th>Operator</th><th>Means</th><th>Example</th></tr>
+      <tr><td><code>=</code></td><td>equals</td><td><code>WHERE completed = 1</code></td></tr>
+      <tr><td><code>!=</code> or <code>&lt;&gt;</code></td><td>not equal</td><td><code>WHERE completed != 1</code></td></tr>
+      <tr><td><code>&gt;</code> <code>&lt;</code> <code>&gt;=</code> <code>&lt;=</code></td><td>greater / less than</td><td><code>WHERE id &gt; 2</code></td></tr>
+      <tr><td><code>LIKE</code></td><td>pattern match (<code>%</code> = any text)</td><td><code>WHERE title LIKE 'Buy%'</code></td></tr>
+      <tr><td><code>IS NULL</code></td><td>has no value</td><td><code>WHERE description IS NULL</code></td></tr>
+    </table>
+    <p>Combine conditions with <code>AND</code> / <code>OR</code>:</p>
+    <pre><code>SELECT * FROM tasks
+WHERE completed = 0 AND title LIKE '%report%';</code></pre>
+
+    <h3>ORDER BY and LIMIT</h3>
+    <p>Sort results, and cap how many come back:</p>
+    <pre><code>-- newest tasks first
+SELECT * FROM tasks ORDER BY created_at DESC;
+
+-- the 3 lowest ids
+SELECT * FROM tasks ORDER BY id ASC LIMIT 3;</code></pre>
+    <p><code>ASC</code> = ascending (default), <code>DESC</code> = descending.</p>
+  </section>
+
+  <section>
+    <h2>8. UPDATE — changing rows (Update)</h2>
+    <p><code>UPDATE</code> modifies existing rows. <code>SET</code> assigns new values; <code>WHERE</code> chooses which rows to touch:</p>
+    <pre><code>-- mark task #1 as completed
+UPDATE tasks
+SET completed = 1
+WHERE id = 1;</code></pre>
+    <p>You can change several columns at once:</p>
+    <pre><code>UPDATE tasks
+SET title = 'Buy oat milk', description = 'Switched brands'
+WHERE id = 1;</code></pre>
+    <div class="callout warning">
+      <div class="label">⚠️ Never forget the WHERE</div>
+      An <code>UPDATE</code> (or <code>DELETE</code>) <strong>without a <code>WHERE</code></strong> applies to <em>every row in the table</em>. <code>UPDATE tasks SET completed = 1;</code> would mark <strong>all</strong> tasks done. Always double-check your <code>WHERE</code> before running it.
+    </div>
+  </section>
+
+  <section>
+    <h2>9. DELETE — removing rows (Delete)</h2>
+    <p><code>DELETE</code> removes rows that match the <code>WHERE</code> condition:</p>
+    <pre><code>-- delete a single task
+DELETE FROM tasks WHERE id = 3;
+
+-- delete all completed tasks
+DELETE FROM tasks WHERE completed = 1;</code></pre>
+    <p>Same warning applies: <code>DELETE FROM tasks;</code> empties the entire table. There's no undo.</p>
+  </section>
+
+  <section>
+    <h2>10. The tools: SQLite CLI &amp; DB Browser</h2>
+    <p>You can run all of this SQL by hand using one of two tools:</p>
+    <h3>Option A — the SQLite CLI (terminal)</h3>
+    <p>macOS ships with the <code>sqlite3</code> command built in. Open a database file (it's created if it doesn't exist) and you get an interactive prompt:</p>
+    <pre><code>sqlite3 tasks.db</code></pre>
+    <p>Inside it you type SQL, plus a few special <strong>dot-commands</strong> (they start with <code>.</code> and don't need a semicolon):</p>
+    <table>
+      <tr><th>Dot-command</th><th>What it does</th></tr>
+      <tr><td><code>.tables</code></td><td>List the tables in the database</td></tr>
+      <tr><td><code>.schema tasks</code></td><td>Show the <code>CREATE TABLE</code> that defines a table</td></tr>
+      <tr><td><code>.headers on</code></td><td>Show column names above results</td></tr>
+      <tr><td><code>.mode column</code></td><td>Print results as neat aligned columns</td></tr>
+      <tr><td><code>.quit</code></td><td>Exit the SQLite prompt</td></tr>
+    </table>
+    <h3>Option B — DB Browser for SQLite (graphical)</h3>
+    <p><a href="https://sqlitebrowser.org">DB Browser for SQLite</a> is a free desktop app that lets you click through tables, run SQL in a tab, and see results in a grid. Great for visual learners. The CLI is faster once you're comfortable; we'll use the CLI as primary in the lab and mention the GUI as an alternative.</p>
+    <div class="callout tip">
+      <div class="label">💡 You will rarely write SQL by hand later</div>
+      From Chunk 6.2 onward, an <strong>ORM</strong> (SQLAlchemy) writes the SQL for you from Python. So why learn raw SQL? Because when something breaks, you need to read the SQL the ORM generates, and inspect the database directly to see what really got stored. SQL is the ground truth.
+    </div>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li>In-memory data dies on restart; a <strong>database</strong> persists data to a file on disk.</li>
+      <li>Relational databases store data in <strong>tables</strong> of <strong>rows</strong> and <strong>columns</strong>, with a <strong>primary key</strong> identifying each row.</li>
+      <li><strong>SQLite</strong> is a serverless, single-file database — zero setup, perfect for this course.</li>
+      <li><strong>SQL</strong> CRUD: <code>CREATE TABLE</code> defines shape; <code>INSERT</code>/<code>SELECT</code>/<code>UPDATE</code>/<code>DELETE</code> are Create/Read/Update/Delete.</li>
+      <li><code>WHERE</code> filters rows — and an <code>UPDATE</code>/<code>DELETE</code> without it hits every row.</li>
+      <li>Drive SQLite from the terminal (<code>sqlite3</code>) or with DB Browser for SQLite.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and build a real <code>tasks.db</code> with sample data and queries.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

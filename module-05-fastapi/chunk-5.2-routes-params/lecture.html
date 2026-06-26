@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 5.2 — Routes, Path &amp; Query Params</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 5 — Backend with FastAPI</div>
+    <h1>Chunk 5.2 — Routes, Path &amp; Query Params</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>The HTTP methods — <strong>GET, POST, PUT, PATCH, DELETE</strong> — and what each means.</li>
+      <li><strong>Path parameters</strong> (part of the URL) vs <strong>query parameters</strong> (after the <code>?</code>).</li>
+      <li>How FastAPI converts and validates params from type hints.</li>
+      <li><strong>Status codes</strong> and how to return the right one (201, 204, 404…).</li>
+      <li>How to design a set of CRUD endpoints around a resource.</li>
+    </ul>
+    <p>In the lab you'll build full in-memory CRUD for tasks: list, get one, create, update, delete.</p>
+  </section>
+
+  <section>
+    <h2>1. HTTP methods = verbs</h2>
+    <p>Every request has a <strong>method</strong> (a verb) describing the <em>intent</em>, and a <strong>path</strong> (a noun) naming the <em>resource</em>. Together they form an endpoint. For a "tasks" resource the standard set is:</p>
+    <table>
+      <tr><th>Method</th><th>Endpoint</th><th>Meaning</th><th>FastAPI decorator</th></tr>
+      <tr><td>GET</td><td><code>/tasks</code></td><td>List all tasks</td><td><code>@app.get</code></td></tr>
+      <tr><td>GET</td><td><code>/tasks/{id}</code></td><td>Get one task</td><td><code>@app.get</code></td></tr>
+      <tr><td>POST</td><td><code>/tasks</code></td><td>Create a task</td><td><code>@app.post</code></td></tr>
+      <tr><td>PATCH</td><td><code>/tasks/{id}</code></td><td>Partially update a task</td><td><code>@app.patch</code></td></tr>
+      <tr><td>PUT</td><td><code>/tasks/{id}</code></td><td>Replace a task entirely</td><td><code>@app.put</code></td></tr>
+      <tr><td>DELETE</td><td><code>/tasks/{id}</code></td><td>Delete a task</td><td><code>@app.delete</code></td></tr>
+    </table>
+    <p>This pattern is <strong>REST</strong>: the path names <em>what</em> (the resource), the method says <em>what to do</em> with it. We'll use <strong>PATCH</strong> for updates in this course because we usually change <em>some</em> fields, not replace the whole task.</p>
+    <div class="callout note">
+      <div class="label">📝 GET vs the rest</div>
+      A browser address bar only sends <strong>GET</strong>. To send POST/PATCH/DELETE you need a tool — that's exactly what the <code>/docs</code> page is for. Later, your React app's <code>fetch</code> will send them.
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Path parameters</h2>
+    <p>A <strong>path parameter</strong> is a placeholder inside the URL itself, written in <code>{braces}</code>. It identifies <em>which</em> resource. Declare a function argument with the same name and a type hint; FastAPI extracts and converts it.</p>
+    <pre><code>@app.get("/tasks/{task_id}")
+def get_task(task_id: int):
+    return {"task_id": task_id}</code></pre>
+    <p>Because of <code>task_id: int</code>, FastAPI converts the text from the URL into an integer. Request <code>/tasks/7</code> → <code>task_id == 7</code> (an int). Request <code>/tasks/abc</code> → FastAPI auto-returns a <strong>422</strong> error explaining the value isn't a valid integer. You wrote zero validation code.</p>
+    <div class="callout tip">
+      <div class="label">💡 Order matters</div>
+      Put fixed paths <em>before</em> parameterized ones. Define <code>/tasks/stats</code> before <code>/tasks/{task_id}</code>, or "stats" would be read as an id and fail conversion.
+    </div>
+  </section>
+
+  <section>
+    <h2>3. Query parameters</h2>
+    <p>A <strong>query parameter</strong> comes after the <code>?</code> in a URL, as <code>key=value</code> pairs joined by <code>&amp;</code>. Use them to filter, sort, paginate, or search — optional tweaks to a request. In FastAPI, any function argument that is <em>not</em> in the path automatically becomes a query parameter.</p>
+    <pre><code>@app.get("/tasks")
+def list_tasks(completed: bool | None = None, limit: int = 10):
+    return {"completed": completed, "limit": limit}</code></pre>
+    <ul>
+      <li><code>limit: int = 10</code> — has a default, so it's <strong>optional</strong>; <code>/tasks</code> uses 10.</li>
+      <li><code>completed: bool | None = None</code> — optional, defaults to "not provided".</li>
+      <li>Request <code>/tasks?completed=true&amp;limit=5</code> → <code>completed=True</code>, <code>limit=5</code>.</li>
+    </ul>
+    <table>
+      <tr><th></th><th>Path param</th><th>Query param</th></tr>
+      <tr><td>Where</td><td>In the URL path: <code>/tasks/<strong>7</strong></code></td><td>After <code>?</code>: <code>/tasks?<strong>limit=5</strong></code></td></tr>
+      <tr><td>Required?</td><td>Always required</td><td>Optional if it has a default</td></tr>
+      <tr><td>Use for</td><td>Identifying one resource</td><td>Filtering / options</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>4. Status codes</h2>
+    <p>Every response carries a 3-digit <strong>status code</strong> telling the client what happened. By default FastAPI returns <strong>200 OK</strong>. You set a different default per route with <code>status_code=</code>, and signal errors by raising <code>HTTPException</code>.</p>
+    <table>
+      <tr><th>Code</th><th>Name</th><th>Use when</th></tr>
+      <tr><td>200</td><td>OK</td><td>A successful GET / PATCH (default).</td></tr>
+      <tr><td>201</td><td>Created</td><td>A POST that created a new resource.</td></tr>
+      <tr><td>204</td><td>No Content</td><td>A successful DELETE — nothing to return.</td></tr>
+      <tr><td>400</td><td>Bad Request</td><td>The client sent something invalid.</td></tr>
+      <tr><td>404</td><td>Not Found</td><td>The requested resource doesn't exist.</td></tr>
+      <tr><td>422</td><td>Unprocessable Entity</td><td>FastAPI's auto validation failed.</td></tr>
+      <tr><td>500</td><td>Server Error</td><td>Your code crashed (a bug).</td></tr>
+    </table>
+    <p>Roughly: <strong>2xx</strong> = success, <strong>4xx</strong> = the client's fault, <strong>5xx</strong> = the server's fault.</p>
+
+    <h3>Setting the success code</h3>
+    <pre><code>from fastapi import status
+
+@app.post("/tasks", status_code=status.HTTP_201_CREATED)
+def create_task(...):
+    ...
+
+@app.delete("/tasks/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_task(task_id: int):
+    ...   # return nothing for 204</code></pre>
+
+    <h3>Raising errors with <code>HTTPException</code></h3>
+    <p>When a task id doesn't exist, you should return <strong>404</strong>, not crash. Raise <code>HTTPException</code> and FastAPI turns it into a proper JSON error response:</p>
+    <pre><code>from fastapi import HTTPException, status
+
+@app.get("/tasks/{task_id}")
+def get_task(task_id: int):
+    task = find_task(task_id)
+    if task is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Task not found",
+        )
+    return task</code></pre>
+    <p>The client receives <code>{"detail": "Task not found"}</code> with status 404.</p>
+  </section>
+
+  <section>
+    <h2>5. In-memory storage for tasks</h2>
+    <p>We need somewhere to keep tasks while the server runs. For now that's a plain Python <code>list</code> of dicts living in <code>main.py</code> — <strong>in-memory storage</strong>. It resets every time the server restarts; that's fine for learning. Module 6 replaces it with a real SQLite database.</p>
+    <pre><code># in-memory "database"
+tasks: list[dict] = []
+next_id: int = 1     # we hand out ids ourselves</code></pre>
+    <p>A small helper to find a task by id keeps routes tidy:</p>
+    <pre><code>def find_task(task_id: int) -&gt; dict | None:
+    for task in tasks:
+        if task["id"] == task_id:
+            return task
+    return None</code></pre>
+    <div class="callout warning">
+      <div class="label">⚠️ It's volatile on purpose</div>
+      Restart Uvicorn and your tasks vanish. With <code>--reload</code>, saving a file restarts the server too. That's expected in Module 5 — persistence arrives with SQLite in Module 6.
+    </div>
+  </section>
+
+  <section>
+    <h2>6. A worked CRUD route</h2>
+    <p>Here's a create endpoint. There's one wrinkle: <strong>request bodies</strong> (sending JSON in a POST) need Pydantic models, which is Chunk 5.3's whole topic. For <em>this</em> chunk we'll accept the task's fields as <strong>query parameters</strong> so we can focus on routing and status codes:</p>
+    <pre><code>from datetime import datetime
+from fastapi import status
+
+@app.post("/tasks", status_code=status.HTTP_201_CREATED)
+def create_task(title: str, description: str | None = None):
+    global next_id
+    task = {
+        "id": next_id,
+        "title": title,
+        "description": description,
+        "completed": False,
+        "created_at": datetime.now().isoformat(),
+    }
+    tasks.append(task)
+    next_id += 1
+    return task</code></pre>
+    <p>Calling <code>POST /tasks?title=Buy%20milk</code> returns the new task with status 201. (<code>%20</code> is just a URL-encoded space.)</p>
+    <div class="callout tip">
+      <div class="label">💡 This feels clunky — and it should</div>
+      Cramming a task's data into the URL works, but it's awkward and won't scale to nested data. That's the motivation for <strong>request bodies + Pydantic</strong> in Chunk 5.3, where <code>POST /tasks</code> will accept a clean JSON body instead.
+    </div>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li>HTTP <strong>methods</strong> are verbs (GET/POST/PATCH/DELETE) on resource <strong>paths</strong> — that's REST.</li>
+      <li><strong>Path params</strong> (<code>/tasks/{id}</code>) identify a resource; <strong>query params</strong> (<code>?limit=5</code>) are optional filters.</li>
+      <li>Type hints make FastAPI <strong>convert and validate</strong> params automatically (bad input → 422).</li>
+      <li>Return the right <strong>status code</strong>: 201 on create, 204 on delete, 404 (via <code>HTTPException</code>) when not found.</li>
+      <li>Store tasks in an in-memory <code>list[dict]</code> for now; SQLite comes in Module 6.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and build the full in-memory CRUD API for tasks.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html" class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

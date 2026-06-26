@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment · Chunk 7.2 — JWT Tokens &amp; Protected Routes</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #ede9fe;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .objective{background:#ede9fe;border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#5b21b6;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--task);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .deliverable{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .deliverable h2{border-color:#a7f3d0;color:#065f46;}
+  .check{list-style:none;padding-left:0;} .check li{padding-left:30px;position:relative;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:18px;color:var(--task);}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 7 — Authentication &amp; Security</div>
+    <h1>Chunk 7.2 — Lab: Issue JWTs &amp; Protect Your Routes</h1>
+    <span class="badge">🧪 ASSIGNMENT</span>
+    <span class="badge">⏱️ 45–75 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 Your mission</h2>
+    <p>Turn last chunk's "Login successful" into a real <strong>token-based</strong> system. Your <code>/auth/login</code> will return a JWT, you'll build a reusable <code>get_current_user</code> dependency, add <code>GET /auth/me</code>, and lock down all task routes so each user only sees and edits their <strong>own</strong> tasks.</p>
+  </section>
+
+  <section>
+    <h2>Before you start</h2>
+    <ul>
+      <li>Chunk 7.1 complete: <code>security.py</code> with bcrypt, <code>/auth/register</code> + <code>/auth/login</code>, and the <code>User</code> model with <code>hashed_password</code> + <code>role</code>.</li>
+      <li>venv active; server runs with <code>uvicorn app.main:app --reload</code>; docs at <code>/docs</code>.</li>
+      <li>Your <code>Task</code> model has an <code>owner_id</code> FK to <code>users.id</code> (from Module 6).</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ Try it yourself first</div>
+      Work from the lecture. Only open <code>solution.html</code> when stuck or to compare.
+    </div>
+  </section>
+
+  <section>
+    <h2>Tasks</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Install python-jose &amp; set a SECRET_KEY</h3>
+      <pre><code>pip install "python-jose[cryptography]"
+pip freeze &gt; requirements.txt</code></pre>
+      <p>Generate a strong secret and set it as an environment variable for this terminal session:</p>
+      <pre><code>python -c "import secrets; print(secrets.token_hex(32))"
+export SECRET_KEY="paste-the-value-here"     # Windows PowerShell: $env:SECRET_KEY="..."</code></pre>
+      <p>(In 7.4 you'll move this to a <code>.env</code> file. For now an env var is fine — just don't hard-code it.)</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Add token functions to <code>security.py</code></h3>
+      <p>Add <code>create_access_token(subject)</code> and <code>decode_access_token(token)</code> using <code>jose.jwt</code>, plus constants <code>SECRET_KEY</code> (from env), <code>ALGORITHM = "HS256"</code>, and <code>ACCESS_TOKEN_EXPIRE_MINUTES = 30</code>. The token's <code>sub</code> claim should be the user id as a string, and it must include an <code>exp</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Add a <code>Token</code> schema &amp; return it from login</h3>
+      <p>Add a <code>Token</code> Pydantic model (<code>access_token</code>, <code>token_type</code>). Update <code>/auth/login</code> to verify the password and return a freshly signed token.</p>
+      <div class="callout tip">
+        <div class="label">💡 Switch login to the OAuth2 form</div>
+        Change login to accept <code>form_data: OAuth2PasswordRequestForm = Depends()</code> instead of a JSON body, and read the email from <code>form_data.username</code>. This makes the <code>/docs</code> "Authorize" button work and matches what your React frontend will send in 7.3.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Build <code>app/deps.py</code></h3>
+      <p>Create the dependencies module with:</p>
+      <ul>
+        <li><code>oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")</code>.</li>
+        <li><code>get_current_user(token, db)</code> — decode the token, load the user from the DB, raise <code>401</code> ("Could not validate credentials", with a <code>WWW-Authenticate: Bearer</code> header) if anything fails.</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Add <code>GET /auth/me</code></h3>
+      <p>A protected endpoint that depends on <code>get_current_user</code> and returns the current user as <code>UserOut</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Scope every task route to the owner</h3>
+      <p>Add <code>current_user: models.User = Depends(get_current_user)</code> to all task endpoints, then:</p>
+      <ul>
+        <li><strong>list</strong>: filter by <code>owner_id == current_user.id</code>.</li>
+        <li><strong>create</strong>: set <code>owner_id = current_user.id</code>.</li>
+        <li><strong>get one / update / delete</strong>: load the task and return <code>404</code> if it's missing <em>or</em> not owned by the current user.</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Test the whole flow in <code>/docs</code></h3>
+      <ol>
+        <li>Register two users (e.g. <code>a@x.com</code> and <code>b@x.com</code>).</li>
+        <li>Click <strong>Authorize</strong>, log in as user A.</li>
+        <li>Create a couple of tasks — confirm <code>GET /tasks</code> shows only A's tasks.</li>
+        <li>Authorize as user B; confirm B sees none of A's tasks, and trying to <code>GET /tasks/{A's id}</code> returns <code>404</code>.</li>
+        <li>Call <code>GET /tasks</code> with the Authorize logged out → expect <code>401</code>.</li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="deliverable">
+    <h2>✅ Deliverable — acceptance checklist</h2>
+    <ul class="check">
+      <li><code>python-jose[cryptography]</code> installed; <code>SECRET_KEY</code> read from the environment (not hard-coded).</li>
+      <li><code>/auth/login</code> returns <code>{access_token, token_type}</code> and works via the docs Authorize button.</li>
+      <li><code>get_current_user</code> in <code>deps.py</code> decodes the token and loads the user; bad/missing tokens give <code>401</code>.</li>
+      <li><code>GET /auth/me</code> returns the logged-in user and is <code>401</code> without a token.</li>
+      <li>All task routes require a token; <code>GET /tasks</code> shows only the current user's tasks.</li>
+      <li>Accessing another user's task by id returns <code>404</code> (not the task, not <code>403</code>).</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🚀 Stretch goals (optional)</h2>
+    <ul>
+      <li>Paste your access token into <a href="https://jwt.io">jwt.io</a> and read the decoded <code>sub</code> and <code>exp</code>. Confirm you cannot see the password anywhere — and that editing the payload breaks the signature.</li>
+      <li>Set <code>ACCESS_TOKEN_EXPIRE_MINUTES = 1</code>, log in, wait, then call <code>/auth/me</code> and watch it return <code>401</code> once the token expires.</li>
+      <li>Extract the ownership check into a reusable <code>get_owned_task</code> dependency and use it in get/update/delete.</li>
+      <li>Add the user's <code>role</code> as a claim in the token payload (you'll use it in 7.4).</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a class="current">🧪 Assignment</a>
+    <a href="solution.html">✅ Solution →</a>
+  </div>
+</footer>
+</body>
+</html>

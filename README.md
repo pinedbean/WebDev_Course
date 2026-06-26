@@ -144,17 +144,18 @@ By the end of this course you will be able to:
 
 ## 📈 Progress
 
-**Modules 0–4 complete** · **23 / 52 chunks built**
+**Modules 0–7 complete** · **37 / 52 chunks built**
 
 | ✅ Built | 🚧 Remaining |
 |---------|-------------|
-| Module 0 — Setup & Tooling | Module 5 — Backend with FastAPI |
-| Module 1 — HTML Foundations | Module 6 — Database with SQLite |
-| Module 2 — CSS & Layout | Module 7 — Authentication & Security |
-| Module 3 — JavaScript Core | Module 8 — Logging & Observability |
-| Module 4 — React + Vite | Module 9 — Production & Load Balancing |
-| | Module 10 — Capstone: TaskFlow |
-| | ⭐ Bonus Track — Git & GCP |
+| Module 0 — Setup & Tooling | Module 8 — Logging & Observability |
+| Module 1 — HTML Foundations | Module 9 — Production & Load Balancing |
+| Module 2 — CSS & Layout | Module 10 — Capstone: TaskFlow |
+| Module 3 — JavaScript Core | ⭐ Bonus Track — Git & GCP |
+| Module 4 — React + Vite | |
+| Module 5 — Backend with FastAPI | |
+| Module 6 — Database with SQLite | |
+| Module 7 — Authentication & Security | |
 
 See [`course_progress_tracking.md`](./course_progress_tracking.md) for the per-chunk status.
 
@@ -188,9 +189,9 @@ WebDev_Course/
 ├── module-02-css/
 ├── module-03-javascript/
 ├── module-04-react-vite/
-├── module-05-fastapi/           # (coming soon)
-├── module-06-sqlite/            # (coming soon)
-├── module-07-auth/              # (coming soon)
+├── module-05-fastapi/
+├── module-06-sqlite/
+├── module-07-auth/
 ├── module-08-logging/           # (coming soon)
 ├── module-09-production/        # (coming soon)
 ├── capstone-taskflow/           # (coming soon)

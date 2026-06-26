@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk 7.1 — Auth Concepts &amp; Password Hashing</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .full{border:2px solid #16a34a;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 7 — Authentication &amp; Security</div>
+    <h1>Chunk 7.1 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>We'll add password hashing to the Tasks API and build <code>/auth/register</code> + <code>/auth/login</code>. New/changed files:</p>
+    <div class="filetree">tasks-api/
+└── app/
+    ├── models.py              (extend User)
+    ├── schemas.py             (UserCreate / UserLogin / UserOut)
+    ├── security.py            (new: bcrypt hashing)
+    ├── main.py                (include the auth router)
+    └── routers/
+        └── auth.py            (new: register + login)</div>
+  </section>
+
+  <section>
+    <div class="step">
+      <h3><span class="num">1</span> Install passlib + bcrypt</h3>
+      <pre><code>source .venv/bin/activate          # Windows: .venv\Scripts\activate
+pip install "passlib[bcrypt]"
+pip freeze &gt; requirements.txt</code></pre>
+      <p>You should see <code>passlib</code> and <code>bcrypt</code> appear in <code>requirements.txt</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Extend the User model</h3>
+      <p>Add <code>hashed_password</code> and <code>role</code>. This is SQLAlchemy 2.x typed-mapping style.</p>
+      <pre><code># app/models.py
+from datetime import datetime, timezone
+from sqlalchemy import String, DateTime, ForeignKey, Boolean
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from app.database import Base
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
+    hashed_password: Mapped[str] = mapped_column(String, nullable=False)   # NEW
+    role: Mapped[str] = mapped_column(String, default="user", nullable=False)  # NEW
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+
+    tasks: Mapped[list["Task"]] = relationship(back_populates="owner")</code></pre>
+      <p>Your existing <code>Task</code> model keeps its <code>owner_id</code> FK and <code>owner</code> relationship — no change needed this chunk.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Migration</h3>
+      <pre><code>alembic revision --autogenerate -m "add hashed_password and role to users"
+alembic upgrade head</code></pre>
+      <p>Open the generated file in <code>alembic/versions/</code> and confirm it has <code>add_column</code> calls for <code>hashed_password</code> and <code>role</code> before running <code>upgrade</code>.</p>
+      <div class="callout warning">
+        <div class="label">⚠️ "NOT NULL column added" on existing rows</div>
+        SQLite can't add a required column to a table that already has rows without a default. In dev the cleanest fix is to wipe old users first: <code>sqlite3 tasks.db "DELETE FROM tasks; DELETE FROM users;"</code> then re-run the upgrade, or delete <code>tasks.db</code> and run <code>alembic upgrade head</code> from scratch.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> <code>app/security.py</code></h3>
+      <p>One module owns all password logic. Everything else imports from here.</p>
+      <pre><code># app/security.py
+from passlib.context import CryptContext
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def hash_password(plain: str) -> str:
+    """Hash a plaintext password for storage (salted bcrypt)."""
+    return pwd_context.hash(plain)
+
+def verify_password(plain: str, hashed: str) -> bool:
+    """Return True if the plaintext matches the stored hash."""
+    return pwd_context.verify(plain, hashed)</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Schemas (Pydantic v2)</h3>
+      <p>Separate "in" schemas (carry the password) from the "out" schema (never does).</p>
+      <pre><code># app/schemas.py
+from datetime import datetime
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
+
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str = Field(min_length=8)
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class UserOut(BaseModel):
+    id: int
+    email: EmailStr
+    role: str
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)   # read from ORM objects</code></pre>
+      <div class="callout note">
+        <div class="label">📝 EmailStr</div>
+        <code>EmailStr</code> needs the <code>email-validator</code> package. If you hit an import error, run <code>pip install "pydantic[email]"</code> and re-freeze.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> The auth router</h3>
+      <p>Create <code>app/routers/auth.py</code>. Both endpoints live here.</p>
+      <pre><code># app/routers/auth.py
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app.security import hash_password, verify_password
+from app import models, schemas
+
+router = APIRouter(prefix="/auth", tags=["auth"])
+
+@router.post("/register", response_model=schemas.UserOut,
+             status_code=status.HTTP_201_CREATED)
+def register(data: schemas.UserCreate, db: Session = Depends(get_db)):
+    email = data.email.lower()
+    existing = db.query(models.User).filter(models.User.email == email).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    user = models.User(email=email, hashed_password=hash_password(data.password))
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+@router.post("/login")
+def login(data: schemas.UserLogin, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.email == data.email.lower()).first()
+    if not user or not verify_password(data.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    return {"message": "Login successful"}   # 7.2: return a JWT here</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Register the router</h3>
+      <pre><code># app/main.py
+from fastapi import FastAPI
+from app.routers import auth, tasks   # tasks from Module 6
+
+app = FastAPI(title="Tasks API")
+
+app.include_router(auth.router)
+app.include_router(tasks.router)</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">8</span> Run &amp; test</h3>
+      <pre><code>uvicorn app.main:app --reload</code></pre>
+      <p>At <code>http://localhost:8000/docs</code>, expand <strong>POST /auth/register</strong> and send:</p>
+      <pre><code>{ "email": "jane@example.com", "password": "supersecret123" }</code></pre>
+      <p><strong>Expected (201):</strong> note there is <em>no</em> password field in the response.</p>
+      <pre><code>{
+  "id": 1,
+  "email": "jane@example.com",
+  "role": "user",
+  "created_at": "2026-06-26T10:15:00+00:00"
+}</code></pre>
+      <p>Confirm the database stored a hash, not plaintext:</p>
+      <pre><code>sqlite3 tasks.db "SELECT email, hashed_password FROM users;"
+# jane@example.com|$2b$12$Nl2....   &lt;- starts with $2b$ = bcrypt. </code></pre>
+      <p>Now test <strong>POST /auth/login</strong>:</p>
+      <pre><code>{ "email": "jane@example.com", "password": "supersecret123" }   -&gt; 200 {"message":"Login successful"}
+{ "email": "jane@example.com", "password": "WRONG" }            -&gt; 401 {"detail":"Invalid credentials"}
+{ "email": "nobody@example.com", "password": "whatever" }       -&gt; 401 {"detail":"Invalid credentials"}</code></pre>
+      <p>Notice the wrong password and the unknown email give the <strong>exact same</strong> 401 — that's the account-enumeration defense from the lecture.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>🔧 Troubleshooting</h2>
+    <table>
+      <tr><th>Symptom</th><th>Fix</th></tr>
+      <tr><td><code>ModuleNotFoundError: passlib</code></td><td>venv not active, or you installed globally. Activate it and re-run <code>pip install "passlib[bcrypt]"</code>.</td></tr>
+      <tr><td><code>AttributeError: module 'bcrypt' has no attribute '__about__'</code></td><td>A known passlib/bcrypt version mismatch. Pin a compatible bcrypt: <code>pip install "bcrypt&lt;4.1"</code> (or upgrade passlib). Hashing still works either way; this is just a noisy warning in some combos.</td></tr>
+      <tr><td><code>email-validator is not installed</code></td><td><code>pip install "pydantic[email]"</code> for <code>EmailStr</code>.</td></tr>
+      <tr><td>Migration says "no changes detected"</td><td>Alembic can't see your model. Make sure <code>models.py</code> is imported in <code>alembic/env.py</code> and <code>target_metadata = Base.metadata</code>.</td></tr>
+      <tr><td>Response includes the hash</td><td>You returned the ORM object without <code>response_model=schemas.UserOut</code>, or <code>UserOut</code> still lists a password field. Fix the schema.</td></tr>
+    </table>
+  </section>
+
+  <section class="full">
+    <h2>📄 Complete <code>app/security.py</code></h2>
+    <pre><code>from passlib.context import CryptContext
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def hash_password(plain: str) -> str:
+    return pwd_context.hash(plain)
+
+def verify_password(plain: str, hashed: str) -> bool:
+    return pwd_context.verify(plain, hashed)</code></pre>
+  </section>
+
+  <section class="done">
+    <h2>🎉 You're done</h2>
+    <p>Your Tasks API now stores <strong>salted bcrypt hashes</strong> and verifies logins without ever keeping a readable password. You've built the foundation every login system stands on.</p>
+    <p>Right now <code>/auth/login</code> just says "successful" — the browser still can't stay logged in. In the next chunk you'll issue a <strong>JWT</strong> on login and use it to protect your task routes so each user only touches their own data.</p>
+    <p><strong>Up next → Chunk 7.2: JWT Tokens &amp; Protected Routes.</strong></p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

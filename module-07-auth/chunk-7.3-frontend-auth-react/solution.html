@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk 7.3 — Frontend Auth Flow in React</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .full{border:2px solid #16a34a;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 7 — Authentication &amp; Security</div>
+    <h1>Chunk 7.3 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>We'll build the React auth layer file by file. Final structure:</p>
+    <div class="filetree">tasks-web/
+├── .env                       (VITE_API_URL)
+└── src/
+    ├── api.js                 (fetch helpers + auth headers)
+    ├── main.jsx               (BrowserRouter + AuthProvider)
+    ├── App.jsx                (routes)
+    ├── context/
+    │   └── AuthContext.jsx    (token/user state, login/logout)
+    ├── components/
+    │   └── ProtectedRoute.jsx (redirect guard)
+    └── pages/
+        ├── Login.jsx
+        ├── Register.jsx
+        └── Dashboard.jsx</div>
+  </section>
+
+  <section>
+    <div class="step">
+      <h3><span class="num">1</span> The env file</h3>
+      <pre><code># .env  (project root, next to package.json)
+VITE_API_URL=http://localhost:8000</code></pre>
+      <p>Restart <code>npm run dev</code> after adding it — Vite only reads env files at startup.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> <code>src/api.js</code></h3>
+      <pre><code>const BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
+export function getToken() {
+  return localStorage.getItem("token");
+}
+
+export async function apiFetch(path, options = {}) {
+  const token = getToken();
+  const headers = { ...(options.headers || {}) };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  const res = await fetch(`${BASE}${path}`, { ...options, headers });
+  if (res.status === 401) {
+    localStorage.removeItem("token");
+    throw new Error("Unauthorized");
+  }
+  if (!res.ok) {
+    const data = await res.json().catch(() =&gt; ({}));
+    throw new Error(data.detail || "Request failed");
+  }
+  return res.status === 204 ? null : res.json();
+}
+
+export async function loginRequest(email, password) {
+  const body = new URLSearchParams({ username: email, password });
+  const res = await fetch(`${BASE}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body,
+  });
+  if (!res.ok) throw new Error("Invalid email or password");
+  return res.json();
+}
+
+export async function registerRequest(email, password) {
+  const res = await fetch(`${BASE}/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() =&gt; ({}));
+    throw new Error(data.detail || "Registration failed");
+  }
+  return res.json();
+}
+
+// Convenience helpers for the dashboard
+export const getTasks = () =&gt; apiFetch("/tasks");
+export const createTask = (title) =&gt;
+  apiFetch("/tasks", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title }),
+  });</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> <code>src/context/AuthContext.jsx</code></h3>
+      <pre><code>import { createContext, useContext, useEffect, useState } from "react";
+import { loginRequest, apiFetch } from "../api";
+
+const AuthContext = createContext(null);
+
+export function AuthProvider({ children }) {
+  const [token, setToken] = useState(() =&gt; localStorage.getItem("token"));
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() =&gt; {
+    if (!token) { setUser(null); setLoading(false); return; }
+    setLoading(true);
+    apiFetch("/auth/me")
+      .then(setUser)
+      .catch(() =&gt; { localStorage.removeItem("token"); setToken(null); })
+      .finally(() =&gt; setLoading(false));
+  }, [token]);
+
+  async function login(email, password) {
+    const { access_token } = await loginRequest(email, password);
+    localStorage.setItem("token", access_token);
+    setToken(access_token);
+  }
+
+  function logout() {
+    localStorage.removeItem("token");
+    setToken(null);
+    setUser(null);
+  }
+
+  const value = { user, token, loading, login, logout, isAuthenticated: !!token };
+  return &lt;AuthContext.Provider value={value}&gt;{children}&lt;/AuthContext.Provider&gt;;
+}
+
+export function useAuth() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used inside &lt;AuthProvider&gt;");
+  return ctx;
+}</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> <code>src/main.jsx</code></h3>
+      <pre><code>import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import App from "./App";
+
+ReactDOM.createRoot(document.getElementById("root")).render(
+  &lt;React.StrictMode&gt;
+    &lt;BrowserRouter&gt;
+      &lt;AuthProvider&gt;
+        &lt;App /&gt;
+      &lt;/AuthProvider&gt;
+    &lt;/BrowserRouter&gt;
+  &lt;/React.StrictMode&gt;
+);</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> <code>src/components/ProtectedRoute.jsx</code></h3>
+      <pre><code>import { Navigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+
+export default function ProtectedRoute({ children }) {
+  const { isAuthenticated, loading } = useAuth();
+  if (loading) return &lt;p&gt;Loading…&lt;/p&gt;;
+  if (!isAuthenticated) return &lt;Navigate to="/login" replace /&gt;;
+  return children;
+}</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> <code>src/App.jsx</code> — routes</h3>
+      <pre><code>import { Routes, Route } from "react-router-dom";
+import ProtectedRoute from "./components/ProtectedRoute";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Dashboard from "./pages/Dashboard";
+
+export default function App() {
+  return (
+    &lt;Routes&gt;
+      &lt;Route path="/login" element={&lt;Login /&gt;} /&gt;
+      &lt;Route path="/register" element={&lt;Register /&gt;} /&gt;
+      &lt;Route
+        path="/dashboard"
+        element={
+          &lt;ProtectedRoute&gt;
+            &lt;Dashboard /&gt;
+          &lt;/ProtectedRoute&gt;
+        }
+      /&gt;
+      &lt;Route path="*" element={&lt;Login /&gt;} /&gt;
+    &lt;/Routes&gt;
+  );
+}</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> <code>src/pages/Login.jsx</code></h3>
+      <pre><code>import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+
+export default function Login() {
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError("");
+    setBusy(true);
+    try {
+      await login(email, password);
+      navigate("/dashboard");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    &lt;form onSubmit={handleSubmit} style={{ maxWidth: 320, margin: "40px auto" }}&gt;
+      &lt;h1&gt;Log in&lt;/h1&gt;
+      {error &amp;&amp; &lt;p style={{ color: "crimson" }}&gt;{error}&lt;/p&gt;}
+      &lt;input type="email" value={email} placeholder="Email" required
+             onChange={(e) =&gt; setEmail(e.target.value)} /&gt;
+      &lt;input type="password" value={password} placeholder="Password" required
+             onChange={(e) =&gt; setPassword(e.target.value)} /&gt;
+      &lt;button type="submit" disabled={busy}&gt;{busy ? "Logging in…" : "Log in"}&lt;/button&gt;
+      &lt;p&gt;No account? &lt;Link to="/register"&gt;Register&lt;/Link&gt;&lt;/p&gt;
+    &lt;/form&gt;
+  );
+}</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">8</span> <code>src/pages/Register.jsx</code></h3>
+      <pre><code>import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { registerRequest } from "../api";
+
+export default function Register() {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError("");
+    try {
+      await registerRequest(email, password);
+      navigate("/login");
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  return (
+    &lt;form onSubmit={handleSubmit} style={{ maxWidth: 320, margin: "40px auto" }}&gt;
+      &lt;h1&gt;Create account&lt;/h1&gt;
+      {error &amp;&amp; &lt;p style={{ color: "crimson" }}&gt;{error}&lt;/p&gt;}
+      &lt;input type="email" value={email} placeholder="Email" required
+             onChange={(e) =&gt; setEmail(e.target.value)} /&gt;
+      &lt;input type="password" value={password} placeholder="Password (8+ chars)"
+             minLength={8} required
+             onChange={(e) =&gt; setPassword(e.target.value)} /&gt;
+      &lt;button type="submit"&gt;Register&lt;/button&gt;
+      &lt;p&gt;Have an account? &lt;Link to="/login"&gt;Log in&lt;/Link&gt;&lt;/p&gt;
+    &lt;/form&gt;
+  );
+}</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">9</span> <code>src/pages/Dashboard.jsx</code></h3>
+      <pre><code>import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { getTasks, createTask } from "../api";
+
+export default function Dashboard() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [tasks, setTasks] = useState([]);
+  const [title, setTitle] = useState("");
+  const [error, setError] = useState("");
+
+  useEffect(() =&gt; {
+    getTasks().then(setTasks).catch((e) =&gt; setError(e.message));
+  }, []);
+
+  async function handleAdd(e) {
+    e.preventDefault();
+    if (!title.trim()) return;
+    try {
+      const task = await createTask(title);
+      setTasks((prev) =&gt; [...prev, task]);
+      setTitle("");
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+
+  function handleLogout() {
+    logout();
+    navigate("/login");
+  }
+
+  return (
+    &lt;div style={{ maxWidth: 480, margin: "40px auto" }}&gt;
+      &lt;header style={{ display: "flex", justifyContent: "space-between" }}&gt;
+        &lt;h1&gt;My Tasks&lt;/h1&gt;
+        &lt;button onClick={handleLogout}&gt;Log out ({user?.email})&lt;/button&gt;
+      &lt;/header&gt;
+
+      {error &amp;&amp; &lt;p style={{ color: "crimson" }}&gt;{error}&lt;/p&gt;}
+
+      &lt;form onSubmit={handleAdd}&gt;
+        &lt;input value={title} placeholder="New task…"
+               onChange={(e) =&gt; setTitle(e.target.value)} /&gt;
+        &lt;button type="submit"&gt;Add&lt;/button&gt;
+      &lt;/form&gt;
+
+      &lt;ul&gt;
+        {tasks.map((t) =&gt; (
+          &lt;li key={t.id}&gt;{t.completed ? "✅" : "⬜"} {t.title}&lt;/li&gt;
+        ))}
+      &lt;/ul&gt;
+      {tasks.length === 0 &amp;&amp; &lt;p&gt;No tasks yet — add one above.&lt;/p&gt;}
+    &lt;/div&gt;
+  );
+}</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">10</span> Run both servers &amp; test</h3>
+      <pre><code># terminal 1 — backend (with SECRET_KEY exported)
+uvicorn app.main:app --reload
+
+# terminal 2 — frontend
+npm run dev      # http://localhost:5173</code></pre>
+      <p><strong>Expected:</strong></p>
+      <ul>
+        <li>Visiting <code>/dashboard</code> logged out bounces you to <code>/login</code>.</li>
+        <li>Register → Login → you land on the dashboard greeting your email.</li>
+        <li>Add a task; it appears and survives a backend restart (it's in <code>tasks.db</code>).</li>
+        <li>Refresh the browser → still logged in. Log out → back to <code>/login</code>, dashboard blocked.</li>
+        <li>In DevTools → Application → Local Storage you'll see the <code>token</code> key.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>🔧 Troubleshooting</h2>
+    <table>
+      <tr><th>Symptom</th><th>Fix</th></tr>
+      <tr><td>CORS error in the console</td><td>Add the Vite origin to FastAPI's <code>CORSMiddleware</code> <code>allow_origins=["http://localhost:5173"]</code> with <code>allow_headers=["*"]</code> (Chunk 5.5).</td></tr>
+      <tr><td>Login returns <code>422</code></td><td>You sent JSON. Login must be form-encoded — use <code>URLSearchParams</code> and <code>Content-Type: application/x-www-form-urlencoded</code>.</td></tr>
+      <tr><td>Every request is <code>401</code></td><td>The token isn't being attached. Confirm it's in localStorage and <code>apiFetch</code> adds the <code>Authorization</code> header.</td></tr>
+      <tr><td>Redirected to login on refresh even with a token</td><td>You're redirecting before <code>/auth/me</code> resolves. Keep the <code>loading</code> guard in <code>ProtectedRoute</code>.</td></tr>
+      <tr><td><code>useAuth must be used inside &lt;AuthProvider&gt;</code></td><td>A component using <code>useAuth</code> is rendered outside the provider. Ensure <code>AuthProvider</code> wraps <code>&lt;App /&gt;</code> in <code>main.jsx</code>.</td></tr>
+      <tr><td><code>import.meta.env.VITE_API_URL</code> is undefined</td><td>Env var must start with <code>VITE_</code> and the dev server must be restarted after editing <code>.env</code>.</td></tr>
+    </table>
+  </section>
+
+  <section class="done">
+    <h2>🎉 You're done</h2>
+    <p>You have a complete login experience end-to-end: a React UI that registers and logs users in, stores the JWT, attaches it to every request, protects the dashboard, survives refresh, and logs out cleanly — all talking to your secured Tasks API.</p>
+    <p>It works, but it isn't fully <em>hardened</em> yet: there are no roles, the access token never refreshes, and the secret still lives in an env var by hand. The final chunk locks all of that down and ties the module together.</p>
+    <p><strong>Up next → Chunk 7.4: Authorization, Refresh &amp; Security Hardening.</strong></p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

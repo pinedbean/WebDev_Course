@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 6.2 — SQLAlchemy ORM with FastAPI</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 6 — Database with SQLite</div>
+    <h1>Chunk 6.2 — SQLAlchemy ORM with FastAPI</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>What an <strong>ORM</strong> is and why we use one instead of writing SQL by hand.</li>
+      <li>The four pieces of SQLAlchemy 2.x: the <strong>engine</strong>, the <strong>session</strong>, the <strong>Base</strong>, and <strong>models</strong>.</li>
+      <li>How to map the <code>Task</code> entity to a database table with <code>Mapped</code> / <code>mapped_column</code>.</li>
+      <li>How to inject a database session into FastAPI endpoints with a <code>get_db()</code> dependency.</li>
+      <li>How Pydantic v2's <code>from_attributes</code> lets a response model read straight from an ORM object.</li>
+    </ul>
+    <p>In the lab you'll wire your Module 5 Tasks API to a real SQLite file and read tasks from the database.</p>
+  </section>
+
+  <section>
+    <h2>1. Where we are</h2>
+    <p>In Chunk 6.1 you ran SQL by hand. In Module 5 you built a Tasks API whose data lived in a Python list. This chunk connects the two: your Python code will <em>own</em> a SQLite database and read/write it — but you'll almost never type SQL yourself. An <strong>ORM</strong> does it for you.</p>
+    <div class="callout note">
+      <div class="label">📝 The Module 5 starting point</div>
+      We assume the Tasks API from Module 5: FastAPI + Pydantic v2, with a <code>Task</code> entity (<code>id</code>, <code>title</code>, <code>description</code>, <code>completed</code>, <code>created_at</code>) and schemas <code>TaskBase</code>, <code>TaskCreate</code>, <code>TaskUpdate</code>, <code>TaskRead</code>, plus endpoints <code>GET/POST /tasks</code>, <code>GET/PATCH/DELETE /tasks/{task_id}</code>, and <code>GET /health</code>. Today we add persistence; in 6.3 we convert every endpoint to use it.
+    </div>
+  </section>
+
+  <section>
+    <h2>2. What is an ORM?</h2>
+    <p>An <strong>ORM</strong> (Object–Relational Mapper) is a translator between two worlds:</p>
+    <table>
+      <tr><th>Database world</th><th>Python world</th></tr>
+      <tr><td>A <strong>table</strong> (<code>tasks</code>)</td><td>A <strong>class</strong> (<code>Task</code>)</td></tr>
+      <tr><td>A <strong>column</strong> (<code>title</code>)</td><td>An <strong>attribute</strong> (<code>task.title</code>)</td></tr>
+      <tr><td>A <strong>row</strong></td><td>An <strong>object/instance</strong></td></tr>
+      <tr><td>A SQL <code>INSERT</code></td><td><code>db.add(task)</code></td></tr>
+      <tr><td>A SQL <code>SELECT</code></td><td><code>db.get(Task, 1)</code></td></tr>
+    </table>
+    <p>Instead of building SQL strings, you work with normal Python objects and the ORM generates the SQL. Compare:</p>
+    <pre><code># Raw SQL (what you did in 6.1)
+INSERT INTO tasks (title) VALUES ('Buy milk');
+
+# With an ORM (what you'll do now)
+task = Task(title="Buy milk")
+db.add(task)
+db.commit()</code></pre>
+    <table>
+      <tr><th>Why use an ORM</th><th>The trade-off</th></tr>
+      <tr><td>Write Python, not SQL strings</td><td>Another library to learn</td></tr>
+      <tr><td>Protects against SQL injection automatically</td><td>Hides some SQL details (still learn SQL!)</td></tr>
+      <tr><td>Same code works on SQLite, Postgres, MySQL…</td><td>Very complex queries can be awkward</td></tr>
+      <tr><td>Type-safe models that match your Pydantic schemas</td><td>A little "magic" to get used to</td></tr>
+    </table>
+    <p>We'll use <strong>SQLAlchemy 2.x</strong>, the standard Python ORM and the one FastAPI projects reach for most.</p>
+  </section>
+
+  <section>
+    <h2>3. The four pieces of SQLAlchemy</h2>
+    <p>SQLAlchemy has a handful of moving parts. Once you know what each does, the setup file makes total sense:</p>
+    <table>
+      <tr><th>Piece</th><th>Job</th></tr>
+      <tr><td><strong>Engine</strong></td><td>The connection to the database. Created once, knows <em>where</em> the database is (the URL).</td></tr>
+      <tr><td><strong>Base</strong></td><td>The parent class all your models inherit from. It collects table definitions (its <code>metadata</code>).</td></tr>
+      <tr><td><strong>Model</strong></td><td>A Python class mapped to a table (e.g. <code>Task</code> → <code>tasks</code>).</td></tr>
+      <tr><td><strong>Session</strong></td><td>A short-lived workspace for one batch of reads/writes — a "unit of work". You open one per request.</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>4. The engine &amp; the connection URL</h2>
+    <p>The <strong>engine</strong> is created from a <em>database URL</em>. For a SQLite file in the current folder:</p>
+    <pre><code>from sqlalchemy import create_engine
+
+SQLALCHEMY_DATABASE_URL = "sqlite:///./tasks.db"
+
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL,
+    connect_args={"check_same_thread": False},
+)</code></pre>
+    <ul>
+      <li><code>sqlite:///./tasks.db</code> — the <code>sqlite://</code> dialect, then the path. <code>./tasks.db</code> is a file in the working directory. (Postgres would be <code>postgresql://user:pass@host/dbname</code> — same engine, different URL.)</li>
+      <li><code>check_same_thread=False</code> — <strong>SQLite-only</strong>. By default SQLite refuses to be used from more than one thread, but FastAPI handles requests across threads. This flag tells SQLite to allow it. (Safe here because each request gets its own session.)</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ Only for SQLite</div>
+      <code>connect_args={"check_same_thread": False}</code> is specific to SQLite. If you ever switch to Postgres, drop it.
+    </div>
+  </section>
+
+  <section>
+    <h2>5. The Base &amp; your first model</h2>
+    <p>Every model inherits from a common <strong>Base</strong> class. In SQLAlchemy 2.x you make one by subclassing <code>DeclarativeBase</code>:</p>
+    <pre><code>from sqlalchemy.orm import DeclarativeBase
+
+class Base(DeclarativeBase):
+    pass</code></pre>
+    <p>Now define the <code>Task</code> model. The 2.x style uses typed attributes: <code>Mapped[type]</code> declares the Python type, and <code>mapped_column(...)</code> describes the column (constraints, defaults):</p>
+    <pre><code>from datetime import datetime
+from sqlalchemy import String, Boolean, DateTime, func
+from sqlalchemy.orm import Mapped, mapped_column
+
+class Task(Base):
+    __tablename__ = "tasks"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[str | None] = mapped_column(String, nullable=True)
+    completed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), nullable=False
+    )</code></pre>
+    <table>
+      <tr><th>Line</th><th>Meaning</th></tr>
+      <tr><td><code>__tablename__ = "tasks"</code></td><td>Maps this class to the <code>tasks</code> table.</td></tr>
+      <tr><td><code>Mapped[int]</code> + <code>primary_key=True</code></td><td>The <code>id</code> column; SQLite auto-increments it.</td></tr>
+      <tr><td><code>Mapped[str | None]</code></td><td>An optional column — <code>None</code> in Python = <code>NULL</code> in SQL.</td></tr>
+      <tr><td><code>default=False</code></td><td>Python-side default for <code>completed</code>.</td></tr>
+      <tr><td><code>server_default=func.now()</code></td><td>The <em>database</em> stamps the time on insert.</td></tr>
+    </table>
+    <p>Notice how closely this mirrors your Pydantic <code>Task</code>. The ORM model is the database-facing twin of the Pydantic schema.</p>
+  </section>
+
+  <section>
+    <h2>6. The session: a unit of work</h2>
+    <p>You never use the engine directly in your endpoints. Instead you open a <strong>session</strong> — a temporary workspace that batches your changes and commits them together. You build a session factory once with <code>sessionmaker</code>:</p>
+    <pre><code>from sqlalchemy.orm import sessionmaker
+
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)</code></pre>
+    <p>Calling <code>SessionLocal()</code> gives you a fresh session bound to the engine. The lifecycle is always: <strong>open → use → commit (or rollback) → close</strong>.</p>
+  </section>
+
+  <section>
+    <h2>7. Creating the tables</h2>
+    <p>The database file has no tables until you make them. The quick way (we'll replace this with Alembic migrations in 6.3) is to ask the Base to create every known table:</p>
+    <pre><code>Base.metadata.create_all(bind=engine)</code></pre>
+    <p>This looks at every model that inherits from <code>Base</code> and runs the matching <code>CREATE TABLE … IF NOT EXISTS</code>. Run it once at startup.</p>
+    <div class="callout warning">
+      <div class="label">⚠️ create_all can't change existing tables</div>
+      <code>create_all</code> only creates tables that don't exist yet. If you later add a column to a model, it will <em>not</em> alter the existing table. That's the exact problem <strong>Alembic migrations</strong> solve in Chunk 6.3 — for now, <code>create_all</code> is fine to get started.
+    </div>
+  </section>
+
+  <section>
+    <h2>8. Dependency injection: <code>get_db()</code></h2>
+    <p>Each request needs its own session, and that session must always be closed afterward — even if the request errors. FastAPI's <strong>dependency injection</strong> handles this perfectly with a generator function:</p>
+    <pre><code>from sqlalchemy.orm import Session
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()</code></pre>
+    <p>The magic is in <code>yield</code>: FastAPI runs the code up to <code>yield</code> (opening the session), hands the session to your endpoint, and then runs the <code>finally</code> block (closing it) after the response is sent. You declare you want one with <code>Depends</code>:</p>
+    <pre><code>from fastapi import Depends
+
+@app.get("/tasks")
+def list_tasks(db: Session = Depends(get_db)):
+    tasks = db.query(Task).all()   # 2.x style shown in 6.3
+    return tasks</code></pre>
+    <p>Now <code>db</code> is a ready-to-use session, automatically cleaned up. This is the single most important pattern in this module — every database endpoint takes <code>db: Session = Depends(get_db)</code>.</p>
+  </section>
+
+  <section>
+    <h2>9. Pydantic v2 meets the ORM</h2>
+    <p>Your endpoints return ORM <code>Task</code> objects, but FastAPI serializes responses through Pydantic schemas like <code>TaskRead</code>. By default Pydantic reads from dictionaries, not arbitrary objects. To let it read attributes off an ORM object, enable <code>from_attributes</code> in Pydantic v2:</p>
+    <pre><code>from datetime import datetime
+from pydantic import BaseModel, ConfigDict
+
+class TaskRead(BaseModel):
+    id: int
+    title: str
+    description: str | None = None
+    completed: bool
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)</code></pre>
+    <p>With <code>from_attributes=True</code>, FastAPI can take the ORM <code>Task</code> object your endpoint returns and build a <code>TaskRead</code> from <code>task.id</code>, <code>task.title</code>, etc. — no manual conversion needed.</p>
+    <div class="callout tip">
+      <div class="label">💡 ORM model vs Pydantic schema — keep both</div>
+      They look similar but do different jobs. The <strong>SQLAlchemy model</strong> (<code>models.Task</code>) defines the database table. The <strong>Pydantic schema</strong> (<code>schemas.TaskRead</code>) defines the JSON shape going in/out of the API. Keeping them separate means your database and your API contract can evolve independently.
+    </div>
+  </section>
+
+  <section>
+    <h2>10. Putting it together: the file layout</h2>
+    <p>We split the database wiring into its own module so it can be imported anywhere:</p>
+    <div class="filetree">tasks-api/
+├── app/
+│   ├── __init__.py
+│   ├── main.py          ← FastAPI app + endpoints
+│   ├── database.py      ← engine, SessionLocal, Base, get_db   (NEW)
+│   ├── models.py        ← SQLAlchemy models (Task)            (NEW)
+│   └── schemas.py       ← Pydantic schemas (TaskRead, …)
+└── tasks.db             ← created on first run</div>
+    <p>A minimal <code>database.py</code> brings the pieces from sections 4–8 together:</p>
+    <pre><code># app/database.py
+from sqlalchemy import create_engine
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
+
+SQLALCHEMY_DATABASE_URL = "sqlite:///./tasks.db"
+
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL,
+    connect_args={"check_same_thread": False},
+)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+class Base(DeclarativeBase):
+    pass
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()</code></pre>
+    <p>You'll build all of this for real in the lab, then read one task back out of SQLite.</p>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li>An <strong>ORM</strong> maps tables↔classes, rows↔objects, columns↔attributes — you write Python, it writes SQL.</li>
+      <li>SQLAlchemy's four pieces: the <strong>engine</strong> (connection), <strong>Base</strong> (model registry), <strong>models</strong> (tables), and the <strong>session</strong> (unit of work).</li>
+      <li>SQLite needs <code>connect_args={"check_same_thread": False}</code> with FastAPI.</li>
+      <li>Models use <code>Mapped[...]</code> + <code>mapped_column(...)</code>; <code>Base.metadata.create_all()</code> builds the tables (temporarily, until Alembic).</li>
+      <li>Inject a session per request with a <code>get_db()</code> generator and <code>Depends(get_db)</code>.</li>
+      <li>Pydantic v2's <code>ConfigDict(from_attributes=True)</code> lets <code>TaskRead</code> serialize an ORM object directly.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and connect your Tasks API to SQLite.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

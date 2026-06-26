@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 5.1 — Python Refresher &amp; FastAPI Setup</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 5 — Backend with FastAPI</div>
+    <h1>Chunk 5.1 — Python Refresher &amp; FastAPI Setup</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>What a <strong>backend / API</strong> is and how it fits with the React frontend you already built.</li>
+      <li>How to isolate a project's packages with a <strong>virtual environment</strong> (venv) and install with <code>pip</code>.</li>
+      <li>Just-enough modern Python: functions, <strong>type hints</strong>, and dicts.</li>
+      <li>What <strong>ASGI</strong> and <strong>Uvicorn</strong> are, and why FastAPI needs them.</li>
+      <li>How to write your first endpoint and explore the <strong>auto-generated <code>/docs</code></strong>.</li>
+    </ul>
+    <p>In the lab you'll create the <code>tasks-api</code> project, install FastAPI + Uvicorn, and serve a <code>/hello</code> endpoint.</p>
+  </section>
+
+  <section>
+    <h2>1. Frontend, meet backend</h2>
+    <p>Through Module 4 you built <strong>frontends</strong> — code that runs in the browser and renders UI. But where does the <em>data</em> come from? In Chunk 4.4 you fetched recipes from someone else's public API. Now you'll build your <strong>own</strong> API.</p>
+    <p>A <strong>backend</strong> is a program that runs on a server, waits for HTTP requests, does work (reads/writes data, applies rules), and sends back responses — usually <strong>JSON</strong>. An <strong>API</strong> (Application Programming Interface) is the set of URLs (<strong>endpoints</strong>) your backend exposes.</p>
+    <table>
+      <tr><th>Layer</th><th>Runs where</th><th>Job</th><th>Built with</th></tr>
+      <tr><td>Frontend</td><td>The user's browser</td><td>Show UI, capture input</td><td>React + Vite (Module 4)</td></tr>
+      <tr><td>Backend / API</td><td>A server</td><td>Logic, validation, data</td><td>FastAPI (this module)</td></tr>
+      <tr><td>Database</td><td>A server</td><td>Persist data</td><td>SQLite (Module 6)</td></tr>
+    </table>
+    <p>Across Modules 5–7 you'll build one backend: a <strong>Tasks API</strong>. This module keeps data <strong>in memory</strong> (a Python list) so we can focus on the API itself. Module 6 swaps in a real SQLite database; Module 7 adds login. It's a stepping stone toward the Module 10 capstone, <strong>TaskFlow</strong>.</p>
+    <div class="callout note">
+      <div class="label">📝 Why FastAPI?</div>
+      It's modern, fast, and uses plain Python type hints to <em>automatically</em> validate data and generate interactive documentation. You write less code and get more safety — perfect for learning and for real production apps.
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Virtual environments &amp; pip</h2>
+    <p>Python projects need third-party packages (like FastAPI). If you install everything globally, two projects can end up needing different versions of the same package and clash. The fix is a <strong>virtual environment</strong>: a private, per-project folder of packages.</p>
+    <p>Python ships with the <code>venv</code> tool. You create one folder (conventionally <code>.venv</code>), <strong>activate</strong> it, then any <code>pip install</code> lands inside that folder only.</p>
+    <pre><code># 1. Create a project folder and move into it
+mkdir tasks-api
+cd tasks-api
+
+# 2. Create a virtual environment named .venv
+python3 -m venv .venv
+
+# 3. Activate it  (macOS / Linux — zsh/bash)
+source .venv/bin/activate
+
+# 3. Activate it  (Windows PowerShell)
+.venv\Scripts\Activate.ps1</code></pre>
+    <p>Once active, your prompt shows <code>(.venv)</code> at the front. Now install packages:</p>
+    <pre><code>pip install fastapi uvicorn</code></pre>
+    <table>
+      <tr><th>Command</th><th>What it does</th></tr>
+      <tr><td><code>python3 -m venv .venv</code></td><td>Creates the isolated environment folder <code>.venv</code>.</td></tr>
+      <tr><td><code>source .venv/bin/activate</code></td><td>Turns it on (macOS/Linux). The prompt gains <code>(.venv)</code>.</td></tr>
+      <tr><td><code>pip install &lt;pkg&gt;</code></td><td>Installs a package into the active venv.</td></tr>
+      <tr><td><code>pip freeze &gt; requirements.txt</code></td><td>Saves the exact versions so others can reproduce them.</td></tr>
+      <tr><td><code>deactivate</code></td><td>Turns the venv off.</td></tr>
+    </table>
+    <div class="callout warning">
+      <div class="label">⚠️ Activate every session</div>
+      The venv is only active in the terminal where you ran <code>activate</code>. Open a new terminal? Run <code>source .venv/bin/activate</code> again. If <code>pip install</code> or <code>uvicorn</code> "isn't found", you almost certainly forgot to activate.
+    </div>
+    <div class="callout tip">
+      <div class="label">💡 Keep <code>.venv</code> out of Git</div>
+      Add <code>.venv/</code> to your <code>.gitignore</code>. You commit <code>requirements.txt</code> (the recipe), never the installed packages (the cooked meal).
+    </div>
+  </section>
+
+  <section>
+    <h2>3. Just-enough Python</h2>
+    <p>You know JavaScript, so Python will feel familiar. Here are the differences that matter for FastAPI.</p>
+
+    <h3>Functions &amp; indentation</h3>
+    <p>Python uses a colon and <strong>indentation</strong> instead of curly braces. No semicolons.</p>
+    <pre><code>def greet(name):
+    message = "Hello, " + name
+    return message
+
+print(greet("Ada"))   # Hello, Ada</code></pre>
+
+    <h3>Type hints</h3>
+    <p>You can annotate what types a function expects and returns. Python does not <em>enforce</em> these at runtime, but FastAPI <strong>reads them</strong> to validate requests and build docs. This is the secret sauce — get comfortable writing them.</p>
+    <pre><code>def add(a: int, b: int) -&gt; int:
+    return a + b
+
+def greet(name: str) -&gt; str:
+    return f"Hello, {name}"      # f-string = JS template literal</code></pre>
+    <p>Common types: <code>int</code>, <code>float</code>, <code>str</code>, <code>bool</code>, <code>list</code>, <code>dict</code>. A value that may be missing is written <code>str | None</code> ("a string or nothing"). A list of strings is <code>list[str]</code>.</p>
+
+    <h3>Dicts &amp; lists</h3>
+    <p>A Python <code>dict</code> is like a JS object; a <code>list</code> is like a JS array. JSON maps onto these almost 1:1.</p>
+    <pre><code>task = {
+    "id": 1,
+    "title": "Buy milk",
+    "completed": False,        # Python uses True / False / None
+}
+
+tasks = [task]                 # a list holding one dict
+print(task["title"])           # Buy milk
+print(len(tasks))              # 1</code></pre>
+    <table>
+      <tr><th>JavaScript</th><th>Python</th></tr>
+      <tr><td><code>const x = 1;</code></td><td><code>x = 1</code></td></tr>
+      <tr><td><code>true / false / null</code></td><td><code>True / False / None</code></td></tr>
+      <tr><td><code>`Hi ${name}`</code></td><td><code>f"Hi {name}"</code></td></tr>
+      <tr><td><code>obj.key / obj["key"]</code></td><td><code>obj["key"]</code></td></tr>
+      <tr><td><code>// comment</code></td><td><code># comment</code></td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>4. ASGI &amp; Uvicorn — what actually runs your API</h2>
+    <p>FastAPI is a <em>framework</em>: it describes your endpoints, but it doesn't open a network port by itself. It needs a <strong>server</strong> to accept HTTP connections and hand requests to your code. That server is <strong>Uvicorn</strong>.</p>
+    <p>They talk through a standard called <strong>ASGI</strong> (Asynchronous Server Gateway Interface) — a contract that says "here's how a Python web app and a Python web server pass requests and responses to each other." Because FastAPI speaks ASGI, you can run it under any ASGI server (Uvicorn is the popular default).</p>
+    <div class="filetree">Browser / React  ──HTTP──&gt;  Uvicorn (ASGI server)  ──&gt;  FastAPI (your code)
+                                                            │
+Browser / React  &lt;──JSON──   Uvicorn                 &lt;──   returns a dict</div>
+    <p>You start everything with one command, pointing Uvicorn at your app object:</p>
+    <pre><code>uvicorn main:app --reload</code></pre>
+    <ul>
+      <li><code>main</code> — the file <code>main.py</code>.</li>
+      <li><code>app</code> — the variable inside it (your FastAPI instance).</li>
+      <li><code>--reload</code> — auto-restart when you save changes (dev only).</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>5. Your first endpoint</h2>
+    <p>Here is a complete, runnable FastAPI app. Create <code>main.py</code> with this:</p>
+    <pre><code>from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/hello")
+def say_hello():
+    return {"message": "Hello, FastAPI!"}</code></pre>
+    <p>Three ideas to unpack:</p>
+    <ul>
+      <li><code>app = FastAPI()</code> creates the application object Uvicorn will run.</li>
+      <li><code>@app.get("/hello")</code> is a <strong>decorator</strong> — it attaches the function below it to <strong>GET requests at <code>/hello</code></strong>. (A decorator is just "wrap this function with extra behavior". You'll mostly copy the pattern.)</li>
+      <li>The function returns a Python <code>dict</code>. FastAPI automatically converts it to a JSON response. No manual serialization needed.</li>
+    </ul>
+    <p>Run it with <code>uvicorn main:app --reload</code>, then visit <code>http://127.0.0.1:8000/hello</code> in your browser. You'll see:</p>
+    <pre><code>{"message":"Hello, FastAPI!"}</code></pre>
+
+    <h3>Path parameters (a sneak peek)</h3>
+    <p>Put a name in <code>{curly braces}</code> in the path and accept it as a typed function argument. FastAPI converts and validates it for you (Chunk 5.2 goes deep on this):</p>
+    <pre><code>@app.get("/hello/{name}")
+def hello_name(name: str):
+    return {"message": f"Hello, {name}!"}
+
+# GET /hello/Ada  -&gt;  {"message": "Hello, Ada!"}</code></pre>
+  </section>
+
+  <section>
+    <h2>6. The magic: interactive docs at <code>/docs</code></h2>
+    <p>Because FastAPI knows your paths, methods, and type hints, it generates live API documentation for free. With the server running, open:</p>
+    <pre><code>http://127.0.0.1:8000/docs</code></pre>
+    <p>This is <strong>Swagger UI</strong>. Every endpoint is listed, and you can click <em>"Try it out"</em> → <em>"Execute"</em> to send real requests right from the browser — no Postman or curl needed. There's a second, cleaner view at <code>/redoc</code>, and the raw machine-readable spec at <code>/openapi.json</code>.</p>
+    <div class="callout tip">
+      <div class="label">💡 This is your new best friend</div>
+      Throughout Module 5 you'll test endpoints at <code>/docs</code> constantly. It updates the instant you save your code (thanks to <code>--reload</code>). Keep that tab open.
+    </div>
+    <div class="callout note">
+      <div class="label">📝 127.0.0.1 vs localhost</div>
+      Both mean "this same computer". Uvicorn prints <code>http://127.0.0.1:8000</code>; you can type <code>localhost:8000</code> instead — they're equivalent. <code>:8000</code> is the <strong>port</strong> Uvicorn listens on.
+    </div>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li>A <strong>backend/API</strong> answers HTTP requests with JSON; your Tasks API will be the backend for your React app.</li>
+      <li>A <strong>venv</strong> isolates a project's packages; <code>source .venv/bin/activate</code> turns it on, then <code>pip install fastapi uvicorn</code>.</li>
+      <li>Python uses indentation, <code>True/False/None</code>, f-strings, and <strong>type hints</strong> that FastAPI reads to validate and document.</li>
+      <li><strong>Uvicorn</strong> (an ASGI server) runs your FastAPI app: <code>uvicorn main:app --reload</code>.</li>
+      <li>A <code>@app.get("/path")</code> function that returns a dict becomes a JSON endpoint, fully documented at <code>/docs</code>.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and stand up your own <code>tasks-api</code> server with a <code>/hello</code> endpoint.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

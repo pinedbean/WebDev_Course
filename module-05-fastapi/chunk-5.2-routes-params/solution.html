@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk 5.2 — Routes, Path &amp; Query Params</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .full{border:2px solid #16a34a;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 5 — Backend with FastAPI</div>
+    <h1>Chunk 5.2 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>We'll grow <code>main.py</code> into a full in-memory CRUD API. Each step shows the route and explains the design choice. The complete file is at the bottom.</p>
+  </section>
+
+  <section>
+    <div class="step">
+      <h3><span class="num">1</span> Imports &amp; in-memory storage</h3>
+      <p>At the top of <code>main.py</code>, import the pieces we need and set up the store and helper.</p>
+      <pre><code>from datetime import datetime
+from fastapi import FastAPI, HTTPException, status
+
+app = FastAPI(title="Tasks API", description="Backend for the WebDev course")
+
+# In-memory "database" (resets on restart)
+tasks: list[dict] = []
+next_id: int = 1
+
+
+def find_task(task_id: int) -&gt; dict | None:
+    for task in tasks:
+        if task["id"] == task_id:
+            return task
+    return None
+
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Create — <code>POST /tasks</code></h3>
+      <p>Fields arrive as query params for now. We assign the id ourselves, default <code>completed</code> to <code>False</code>, and stamp <code>created_at</code>. <code>global next_id</code> lets us reassign the module-level counter.</p>
+      <pre><code>@app.post("/tasks", status_code=status.HTTP_201_CREATED)
+def create_task(title: str, description: str | None = None):
+    global next_id
+    task = {
+        "id": next_id,
+        "title": title,
+        "description": description,
+        "completed": False,
+        "created_at": datetime.now().isoformat(),
+    }
+    tasks.append(task)
+    next_id += 1
+    return task</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> List — <code>GET /tasks</code></h3>
+      <p>The optional <code>completed</code> query param filters the list. When it's <code>None</code>, we return everything.</p>
+      <pre><code>@app.get("/tasks")
+def list_tasks(completed: bool | None = None):
+    if completed is None:
+        return tasks
+    return [t for t in tasks if t["completed"] == completed]</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Read one — <code>GET /tasks/{task_id}</code></h3>
+      <p>The path param is typed <code>int</code>, so <code>/tasks/abc</code> auto-fails with 422. A missing id is a 404 we raise ourselves.</p>
+      <pre><code>@app.get("/tasks/{task_id}")
+def get_task(task_id: int):
+    task = find_task(task_id)
+    if task is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Task not found",
+        )
+    return task</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Update — <code>PATCH /tasks/{task_id}</code></h3>
+      <p>Every field is optional. We only overwrite a field if the caller actually sent it (i.e. it isn't <code>None</code>). This is what makes it a <em>partial</em> update.</p>
+      <pre><code>@app.patch("/tasks/{task_id}")
+def update_task(
+    task_id: int,
+    title: str | None = None,
+    description: str | None = None,
+    completed: bool | None = None,
+):
+    task = find_task(task_id)
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    if title is not None:
+        task["title"] = title
+    if description is not None:
+        task["description"] = description
+    if completed is not None:
+        task["completed"] = completed
+    return task</code></pre>
+      <div class="callout note">
+        <div class="label">📝 Why check <code>is not None</code>?</div>
+        If we blindly assigned every argument, omitting <code>description</code> would wipe it to <code>None</code>. Checking <code>is not None</code> means "only change what was provided" — true PATCH behavior.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Delete — <code>DELETE /tasks/{task_id}</code></h3>
+      <p>204 means "success, no body" — so we return nothing.</p>
+      <pre><code>@app.delete("/tasks/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_task(task_id: int):
+    task = find_task(task_id)
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+    tasks.remove(task)
+    return None</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Exercise it in <code>/docs</code></h3>
+      <p>With the server running, open <code>/docs</code> and walk through:</p>
+      <table>
+        <tr><th>Action</th><th>Expected</th></tr>
+        <tr><td>POST <code>/tasks?title=Buy milk</code> ×3 (vary titles)</td><td>201, each returns a task with a new <code>id</code></td></tr>
+        <tr><td>GET <code>/tasks</code></td><td>200, all three tasks</td></tr>
+        <tr><td>PATCH <code>/tasks/1?completed=true</code></td><td>200, task 1 now <code>"completed": true</code></td></tr>
+        <tr><td>GET <code>/tasks?completed=true</code></td><td>200, just task 1</td></tr>
+        <tr><td>GET <code>/tasks/999</code></td><td>404, <code>{"detail":"Task not found"}</code></td></tr>
+        <tr><td>DELETE <code>/tasks/2</code></td><td>204, empty body; it's gone from the list</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section class="full">
+    <h2>📄 Complete <code>main.py</code></h2>
+    <pre><code>from datetime import datetime
+from fastapi import FastAPI, HTTPException, status
+
+app = FastAPI(title="Tasks API", description="Backend for the WebDev course")
+
+# In-memory "database" (resets on restart)
+tasks: list[dict] = []
+next_id: int = 1
+
+
+def find_task(task_id: int) -&gt; dict | None:
+    for task in tasks:
+        if task["id"] == task_id:
+            return task
+    return None
+
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
+
+
+@app.get("/tasks")
+def list_tasks(completed: bool | None = None):
+    if completed is None:
+        return tasks
+    return [t for t in tasks if t["completed"] == completed]
+
+
+@app.post("/tasks", status_code=status.HTTP_201_CREATED)
+def create_task(title: str, description: str | None = None):
+    global next_id
+    task = {
+        "id": next_id,
+        "title": title,
+        "description": description,
+        "completed": False,
+        "created_at": datetime.now().isoformat(),
+    }
+    tasks.append(task)
+    next_id += 1
+    return task
+
+
+@app.get("/tasks/{task_id}")
+def get_task(task_id: int):
+    task = find_task(task_id)
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return task
+
+
+@app.patch("/tasks/{task_id}")
+def update_task(
+    task_id: int,
+    title: str | None = None,
+    description: str | None = None,
+    completed: bool | None = None,
+):
+    task = find_task(task_id)
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    if title is not None:
+        task["title"] = title
+    if description is not None:
+        task["description"] = description
+    if completed is not None:
+        task["completed"] = completed
+    return task
+
+
+@app.delete("/tasks/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_task(task_id: int):
+    task = find_task(task_id)
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+    tasks.remove(task)
+    return None</code></pre>
+  </section>
+
+  <section>
+    <h2>🛠 Troubleshooting</h2>
+    <table>
+      <tr><th>Symptom</th><th>Fix</th></tr>
+      <tr><td><code>name 'next_id' is not defined</code> on create</td><td>Add <code>global next_id</code> as the first line of <code>create_task</code> before you reassign it.</td></tr>
+      <tr><td><code>/docs</code> shows POST fields as query params, not a body</td><td>Expected for this chunk — request bodies (JSON) need Pydantic, which is Chunk 5.3.</td></tr>
+      <tr><td>Filtering by <code>completed</code> returns nothing</td><td>Send <code>true</code>/<code>false</code> (lowercase). FastAPI parses these into Python <code>True</code>/<code>False</code>.</td></tr>
+      <tr><td><code>/tasks/stats</code> gives a 422</td><td>A literal route must be declared <em>before</em> <code>/tasks/{task_id}</code>, or "stats" is parsed as an id.</td></tr>
+      <tr><td>All tasks gone after editing code</td><td>Normal — <code>--reload</code> restarts the server and in-memory data resets. Persistence comes in Module 6.</td></tr>
+      <tr><td>DELETE returns 200 with a body</td><td>Add <code>status_code=204</code> to the decorator and <code>return None</code>.</td></tr>
+    </table>
+  </section>
+
+  <section class="done">
+    <h2>🎉 You're done</h2>
+    <p>You built a working in-memory CRUD API with proper methods, params, and status codes — and you handled the "not found" case correctly. That's the backbone of every REST service.</p>
+    <p>You also felt the pain of stuffing data into query strings. Next we fix it properly.</p>
+    <p><strong>Up next → Chunk 5.3: Request Bodies &amp; Pydantic Validation</strong> — clean JSON bodies, typed schemas (<code>TaskCreate</code>, <code>TaskRead</code>…), and automatic validation.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

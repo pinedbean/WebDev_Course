@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 5.4 — Project Structure &amp; Routers</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 5 — Backend with FastAPI</div>
+    <h1>Chunk 5.4 — Project Structure &amp; Routers</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>Why a single <code>main.py</code> stops scaling, and how to split into an <code>app/</code> package.</li>
+      <li><strong>APIRouter</strong> — grouping related routes and mounting them with <code>include_router</code>.</li>
+      <li><strong>Dependency injection</strong> with <code>Depends</code> — reusing logic like "find this task or 404".</li>
+      <li><strong>Settings/config</strong> with <code>pydantic-settings</code> and environment variables.</li>
+      <li>How the new layout runs: <code>uvicorn app.main:app --reload</code>.</li>
+    </ul>
+    <p>In the lab you'll refactor your one-file API into a clean, growable package — no behavior change, much better organization.</p>
+  </section>
+
+  <section>
+    <h2>1. Why split the file?</h2>
+    <p>Your <code>main.py</code> now holds imports, schemas, storage, and every route. It works, but it's heading toward hundreds of lines where everything touches everything. As soon as Module 6 adds a database and Module 7 adds users, a single file becomes painful to navigate and risky to change.</p>
+    <p>The fix is <strong>separation of concerns</strong>: each file has one job. Here's the layout we'll build — the same shape real FastAPI projects use, and the one Module 6/7/capstone extend:</p>
+    <div class="filetree">tasks-api/
+├── .venv/
+├── .gitignore
+├── requirements.txt
+└── app/
+    ├── __init__.py        # marks "app" as a Python package
+    ├── main.py            # creates the FastAPI app, includes routers
+    ├── config.py          # settings (app name, CORS origins, ...)
+    ├── schemas.py         # Pydantic models (TaskBase/Create/Update/Read)
+    ├── storage.py         # the in-memory store + access functions
+    ├── dependencies.py    # shared dependencies (get_task_or_404, pagination)
+    └── routers/
+        ├── __init__.py
+        ├── health.py      # GET /health
+        └── tasks.py       # the /tasks CRUD routes</div>
+    <div class="callout note">
+      <div class="label">📝 What's <code>__init__.py</code>?</div>
+      An (often empty) file that tells Python "this folder is a package", so you can do <code>from app.routers import tasks</code>. One per package folder (<code>app/</code> and <code>app/routers/</code>).
+    </div>
+  </section>
+
+  <section>
+    <h2>2. APIRouter — routes in their own file</h2>
+    <p>An <strong>APIRouter</strong> is a mini-FastAPI you can attach routes to, then mount onto the main app. It works exactly like <code>app</code>, but lives in its own module. In <code>app/routers/tasks.py</code>:</p>
+    <pre><code>from fastapi import APIRouter
+
+router = APIRouter(prefix="/tasks", tags=["tasks"])
+
+@router.get("")          # full path becomes  GET /tasks
+def list_tasks():
+    ...
+
+@router.get("/{task_id}")  # full path becomes  GET /tasks/{task_id}
+def get_task(task_id: int):
+    ...</code></pre>
+    <ul>
+      <li><code>prefix="/tasks"</code> — every route here is automatically under <code>/tasks</code>, so you write <code>""</code> and <code>"/{task_id}"</code>.</li>
+      <li><code>tags=["tasks"]</code> — groups these endpoints together in <code>/docs</code> under a "tasks" heading.</li>
+    </ul>
+    <p>Then in <code>app/main.py</code> you create the app and <strong>include</strong> the routers:</p>
+    <pre><code>from fastapi import FastAPI
+from app.routers import health, tasks
+
+app = FastAPI(title="Tasks API")
+
+app.include_router(health.router)
+app.include_router(tasks.router)</code></pre>
+    <p>The app no longer defines routes itself — it just wires routers together. New feature later? Add a file under <code>routers/</code> and one <code>include_router</code> line.</p>
+  </section>
+
+  <section>
+    <h2>3. A storage module</h2>
+    <p>Move the in-memory list and its access functions into <code>app/storage.py</code>. Routers stop touching the list directly and call named functions instead — this is the seed of the <strong>repository pattern</strong> you'll formalize in Module 6 when these functions start hitting SQLite.</p>
+    <pre><code># app/storage.py
+from datetime import datetime
+
+_tasks: list[dict] = []
+_next_id: int = 1
+
+
+def get_all() -&gt; list[dict]:
+    return _tasks
+
+
+def get_by_id(task_id: int) -&gt; dict | None:
+    return next((t for t in _tasks if t["id"] == task_id), None)
+
+
+def add(data: dict) -&gt; dict:
+    global _next_id
+    task = {
+        "id": _next_id,
+        "completed": False,
+        "created_at": datetime.now(),
+        **data,                      # title, description from the request
+    }
+    _tasks.append(task)
+    _next_id += 1
+    return task</code></pre>
+    <p>Why does the swap to SQLite later become easy? Because routers only know <code>storage.get_all()</code>, <code>storage.add(...)</code>, etc. Change <em>how</em> storage works without changing a single route. That's the payoff of separation.</p>
+  </section>
+
+  <section>
+    <h2>4. Dependency injection with <code>Depends</code></h2>
+    <p>Notice every "single task" route repeats the same lines: look up the task, raise 404 if missing. FastAPI's <strong>dependency injection</strong> lets you write that logic once as a function and "inject" its result into any route.</p>
+    <p>A dependency is just a function. Declare a parameter as <code>= Depends(that_function)</code> and FastAPI runs it first, passing the result in. In <code>app/dependencies.py</code>:</p>
+    <pre><code>from fastapi import HTTPException
+from app import storage
+
+
+def get_task_or_404(task_id: int) -&gt; dict:
+    task = storage.get_by_id(task_id)
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return task</code></pre>
+    <p>Now routes that need an existing task just ask for one:</p>
+    <pre><code>from fastapi import Depends
+from app.dependencies import get_task_or_404
+
+@router.get("/{task_id}", response_model=TaskRead)
+def get_task(task: dict = Depends(get_task_or_404)):
+    return task                # already guaranteed to exist</code></pre>
+    <p>FastAPI sees the dependency needs <code>task_id</code>, pulls it from the path, runs <code>get_task_or_404</code>, and hands the route a ready task (or already returned a 404). No repeated lookup-and-check in every route.</p>
+    <div class="callout tip">
+      <div class="label">💡 Dependencies are everywhere</div>
+      This same mechanism powers a <em>huge</em> amount of FastAPI: in Module 6 you'll inject a database session, and in Module 7 a "current logged-in user". Get comfortable with <code>Depends</code> now — it's one of FastAPI's most important ideas.
+    </div>
+
+    <h3>A reusable params dependency</h3>
+    <p>Dependencies can also bundle query params. A pagination dependency keeps <code>limit</code>/<code>offset</code> consistent across endpoints:</p>
+    <pre><code>def pagination_params(limit: int = 20, offset: int = 0) -&gt; dict:
+    return {"limit": limit, "offset": offset}
+
+@router.get("", response_model=list[TaskRead])
+def list_tasks(page: dict = Depends(pagination_params)):
+    items = storage.get_all()
+    return items[page["offset"] : page["offset"] + page["limit"]]</code></pre>
+    <p>(Chunk 5.6 turns this into a proper paginated response envelope — for now it just slices the list.)</p>
+  </section>
+
+  <section>
+    <h2>5. Settings &amp; config</h2>
+    <p>Hard-coding things like the app name or which frontend URLs may call your API is fragile — those differ between your laptop and production. <code>pydantic-settings</code> (a companion to Pydantic) reads <strong>environment variables</strong> into a typed <code>Settings</code> object, with sensible defaults.</p>
+    <pre><code>pip install pydantic-settings</code></pre>
+    <pre><code># app/config.py
+from functools import lru_cache
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    app_name: str = "Tasks API"
+    cors_origins: list[str] = ["http://localhost:5173"]   # the Vite dev server
+
+    model_config = SettingsConfigDict(env_file=".env")
+
+
+@lru_cache
+def get_settings() -&gt; Settings:
+    return Settings()</code></pre>
+    <ul>
+      <li>Each field has a <strong>default</strong>, so it works with no setup.</li>
+      <li><code>env_file=".env"</code> lets you override values via a <code>.env</code> file (already git-ignored from 5.1).</li>
+      <li><code>@lru_cache</code> means <code>get_settings()</code> builds the object once and reuses it.</li>
+    </ul>
+    <p>Use it where needed:</p>
+    <pre><code>from app.config import get_settings
+
+settings = get_settings()
+app = FastAPI(title=settings.app_name)</code></pre>
+    <div class="callout note">
+      <div class="label">📝 Why <code>cors_origins</code> already?</div>
+      You'll need it in the very next chunk. Chunk 5.5 connects your React app, and CORS decides which origins are allowed to call the API. Defining it in settings now means 5.5 just reads it.
+    </div>
+  </section>
+
+  <section>
+    <h2>6. Running the restructured app</h2>
+    <p>The app object now lives at <code>app/main.py</code>, so the import path changes. Run from the <strong>project root</strong> (the <code>tasks-api</code> folder, the parent of <code>app/</code>):</p>
+    <pre><code>uvicorn app.main:app --reload</code></pre>
+    <p>Read it as "from the <code>app.main</code> module, use the <code>app</code> object". Everything else — <code>/docs</code>, your endpoints, behavior — is identical. You only reorganized.</p>
+    <div class="callout warning">
+      <div class="label">⚠️ Run from the right folder</div>
+      Run Uvicorn from <code>tasks-api/</code>, not from inside <code>app/</code>. If you see <code>ModuleNotFoundError: No module named 'app'</code>, you're in the wrong directory or missing an <code>__init__.py</code>.
+    </div>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li>Split the monolith into an <code>app/</code> package: <code>main</code>, <code>config</code>, <code>schemas</code>, <code>storage</code>, <code>dependencies</code>, and <code>routers/</code>.</li>
+      <li><strong>APIRouter</strong> groups routes (with <code>prefix</code> + <code>tags</code>); <code>app.include_router(...)</code> mounts them.</li>
+      <li>A <strong>storage module</strong> hides the data details — easy to swap for SQLite later.</li>
+      <li><strong><code>Depends</code></strong> injects shared logic (like <code>get_task_or_404</code>) so routes stay DRY.</li>
+      <li><strong><code>pydantic-settings</code></strong> gives typed config from env vars, including <code>cors_origins</code> for the next chunk.</li>
+      <li>Run it with <code>uvicorn app.main:app --reload</code> from the project root.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and refactor your Tasks API into the package layout.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html" class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

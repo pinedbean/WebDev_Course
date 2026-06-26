@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 5.3 — Request Bodies &amp; Pydantic Validation</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 5 — Backend with FastAPI</div>
+    <h1>Chunk 5.3 — Request Bodies &amp; Pydantic Validation</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>What a <strong>request body</strong> is and why JSON beats query params for sending data.</li>
+      <li><strong>Pydantic v2</strong> models: <code>BaseModel</code>, typed fields, defaults, and <code>Field</code> constraints.</li>
+      <li>The schema pattern: <strong>TaskBase / TaskCreate / TaskUpdate / TaskRead</strong>.</li>
+      <li>How <code>response_model</code> shapes and filters what you send back.</li>
+      <li>How FastAPI turns validation failures into clean <strong>422</strong> errors — automatically.</li>
+    </ul>
+    <p>In the lab you'll replace the query-param CRUD from 5.2 with typed schemas and real JSON bodies.</p>
+  </section>
+
+  <section>
+    <h2>1. The request body</h2>
+    <p>A <strong>request body</strong> is data sent <em>inside</em> the request (not in the URL), almost always as JSON. It's how clients send structured data on POST/PATCH/PUT. Compare the two styles for creating a task:</p>
+    <pre><code># Chunk 5.2 (clunky): data crammed into the URL
+POST /tasks?title=Buy%20milk&amp;description=2%25%20fat
+
+# This chunk (clean): data in a JSON body
+POST /tasks
+Content-Type: application/json
+
+{
+  "title": "Buy milk",
+  "description": "2% fat"
+}</code></pre>
+    <p>Bodies handle nested data, are easier to read, and don't leak into server logs the way URLs do. To accept one in FastAPI, you describe its <em>shape</em> with a <strong>Pydantic model</strong>.</p>
+  </section>
+
+  <section>
+    <h2>2. Pydantic models</h2>
+    <p><strong>Pydantic</strong> (installed automatically with FastAPI — it's Pydantic <strong>v2</strong>) lets you declare data shapes as Python classes. You subclass <code>BaseModel</code> and list fields with type hints:</p>
+    <pre><code>from pydantic import BaseModel
+
+class TaskCreate(BaseModel):
+    title: str
+    description: str | None = None</code></pre>
+    <p>That tiny class gives you a lot:</p>
+    <ul>
+      <li><strong>Validation</strong> — incoming JSON must match the types, or you get an error.</li>
+      <li><strong>Coercion</strong> — e.g. the string <code>"true"</code> becomes the bool <code>True</code> where appropriate.</li>
+      <li><strong>Editor help</strong> — autocomplete and type checking on <code>task.title</code>.</li>
+      <li><strong>Docs</strong> — the model's shape appears in <code>/docs</code> with an example.</li>
+    </ul>
+    <p>Fields with a default (like <code>description: str | None = None</code>) are optional; fields without one (like <code>title: str</code>) are required.</p>
+
+    <h3>Adding constraints with <code>Field</code></h3>
+    <p>Want rules beyond the type? Use <code>Field</code>. Here <code>title</code> must be 1–200 characters:</p>
+    <pre><code>from pydantic import BaseModel, Field
+
+class TaskCreate(BaseModel):
+    title: str = Field(min_length=1, max_length=200)
+    description: str | None = Field(default=None, max_length=1000)</code></pre>
+    <p>Now an empty title is rejected before your route code ever runs. Other handy constraints: <code>ge</code>/<code>le</code> (number ranges), <code>pattern</code> (regex). You describe the rule once; Pydantic enforces it everywhere.</p>
+  </section>
+
+  <section>
+    <h2>3. Using a model as a request body</h2>
+    <p>Add a parameter typed as your model. FastAPI sees it's a Pydantic model and reads it from the JSON body (not the query string):</p>
+    <pre><code>@app.post("/tasks", status_code=201)
+def create_task(payload: TaskCreate):
+    # payload is a validated TaskCreate object
+    print(payload.title)          # dot access, fully typed
+    data = payload.model_dump()   # -&gt; a plain dict
+    ...</code></pre>
+    <p>If the client sends invalid JSON (missing <code>title</code>, wrong type, empty string), FastAPI never calls your function — it returns a <strong>422</strong> automatically. Your route body can assume the data is already valid. That's the big win.</p>
+    <div class="callout note">
+      <div class="label">📝 <code>model_dump()</code></div>
+      In Pydantic v2, <code>model_dump()</code> converts a model to a plain <code>dict</code> (the v1 name was <code>.dict()</code>). Use it when you need to merge model data into your in-memory store.
+    </div>
+  </section>
+
+  <section>
+    <h2>4. The four-schema pattern</h2>
+    <p>One model rarely fits every situation. The data a client <em>sends to create</em> differs from what you <em>send back</em> (the response has an <code>id</code> and <code>created_at</code> the client can't know). The clean, reusable pattern — which you'll carry into Modules 6, 7, and the capstone — is four small schemas:</p>
+    <table>
+      <tr><th>Schema</th><th>Purpose</th><th>Fields</th></tr>
+      <tr><td><code>TaskBase</code></td><td>Shared fields, inherited by others</td><td><code>title</code>, <code>description</code></td></tr>
+      <tr><td><code>TaskCreate</code></td><td>Body for <code>POST /tasks</code></td><td>(inherits base)</td></tr>
+      <tr><td><code>TaskUpdate</code></td><td>Body for <code>PATCH</code> — all optional</td><td><code>title?</code>, <code>description?</code>, <code>completed?</code></td></tr>
+      <tr><td><code>TaskRead</code></td><td>The response shape</td><td>base + <code>id</code>, <code>completed</code>, <code>created_at</code></td></tr>
+    </table>
+    <pre><code>from datetime import datetime
+from pydantic import BaseModel, Field
+
+
+class TaskBase(BaseModel):
+    title: str = Field(min_length=1, max_length=200)
+    description: str | None = Field(default=None, max_length=1000)
+
+
+class TaskCreate(TaskBase):
+    pass                       # creating uses exactly the base fields
+
+
+class TaskUpdate(BaseModel):
+    title: str | None = Field(default=None, min_length=1, max_length=200)
+    description: str | None = None
+    completed: bool | None = None
+
+
+class TaskRead(TaskBase):
+    id: int
+    completed: bool
+    created_at: datetime</code></pre>
+    <p>Inheritance (<code>class TaskCreate(TaskBase)</code>) means shared fields are declared once. The server owns <code>id</code>, <code>completed</code>, and <code>created_at</code>, so they live only on <code>TaskRead</code> — clients can't set them.</p>
+  </section>
+
+  <section>
+    <h2>5. <code>response_model</code> — shaping the output</h2>
+    <p>Tell a route what it returns with <code>response_model=</code>. FastAPI validates your return value against it, drops any extra keys, and documents the response in <code>/docs</code>:</p>
+    <pre><code>@app.post("/tasks", response_model=TaskRead, status_code=201)
+def create_task(payload: TaskCreate):
+    ...
+    return task   # a dict; FastAPI coerces it to TaskRead
+
+@app.get("/tasks", response_model=list[TaskRead])
+def list_tasks():
+    return tasks</code></pre>
+    <p>Why bother when we control the dict? Because <code>response_model</code> is a <strong>contract</strong>: it guarantees the response shape, hides fields you didn't list (great later for not leaking password hashes), and keeps your docs honest. <code>list[TaskRead]</code> says "a JSON array of tasks".</p>
+  </section>
+
+  <section>
+    <h2>6. PATCH with <code>exclude_unset</code></h2>
+    <p>For partial updates, <code>TaskUpdate</code> makes every field optional. The trick is telling apart "field not sent" from "field set to null". Pydantic v2 does this with <code>model_dump(exclude_unset=True)</code> — it returns only the fields the client actually included:</p>
+    <pre><code>@app.patch("/tasks/{task_id}", response_model=TaskRead)
+def update_task(task_id: int, payload: TaskUpdate):
+    task = find_task(task_id)
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    updates = payload.model_dump(exclude_unset=True)   # only provided fields
+    task.update(updates)                               # merge into stored dict
+    return task</code></pre>
+    <p>Send <code>{"completed": true}</code> and only <code>completed</code> changes — title and description are untouched. Much cleaner than the manual <code>if x is not None</code> checks from 5.2.</p>
+  </section>
+
+  <section>
+    <h2>7. Automatic validation errors (422)</h2>
+    <p>You don't write validation handling — FastAPI returns a structured <strong>422 Unprocessable Entity</strong> whenever a body fails its schema. Send <code>POST /tasks</code> with <code>{"title": ""}</code> and you get:</p>
+    <pre><code>{
+  "detail": [
+    {
+      "type": "string_too_short",
+      "loc": ["body", "title"],
+      "msg": "String should have at least 1 character",
+      "input": ""
+    }
+  ]
+}</code></pre>
+    <p>The <code>loc</code> array pinpoints exactly which field failed and where. Your React app (Chunk 5.5) can read this to show inline form errors. Consistent, machine-readable errors for free.</p>
+    <div class="callout tip">
+      <div class="label">💡 Looking ahead to the database</div>
+      In Module 6 your tasks become SQLAlchemy ORM <em>objects</em> instead of dicts. To let <code>TaskRead</code> read attributes off an object, you'll add <code>model_config = ConfigDict(from_attributes=True)</code>. Same schemas, one extra line — that's why this pattern pays off.
+    </div>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li>Send structured data in a <strong>JSON request body</strong>, described by a <strong>Pydantic <code>BaseModel</code></strong>.</li>
+      <li>Use <strong>four schemas</strong>: <code>TaskBase</code> (shared), <code>TaskCreate</code>, <code>TaskUpdate</code> (all optional), <code>TaskRead</code> (response).</li>
+      <li><code>Field(...)</code> adds constraints like <code>min_length</code>; invalid input becomes an automatic <strong>422</strong>.</li>
+      <li><code>response_model=</code> guarantees and documents the output shape; <code>list[TaskRead]</code> for collections.</li>
+      <li>PATCH uses <code>model_dump(exclude_unset=True)</code> to update only the fields that were sent.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and convert your CRUD API to typed schemas and real JSON bodies.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html" class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

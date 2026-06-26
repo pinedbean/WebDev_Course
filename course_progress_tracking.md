@@ -15,9 +15,9 @@ Track the build & learning status of every chunk. Each chunk has three HTML deli
 | Metric | Count |
 |--------|------:|
 | Total chunks | 52 |
-| Modules built | 5 of 11 (Modules 0–4 ✅) |
-| Chunks built | 23 |
-| Chunks remaining | 29 |
+| Modules built | 8 of 11 (Modules 0–7 ✅) |
+| Chunks built | 37 |
+| Chunks remaining | 15 |
 | Chunks learned | 0 |
 
 > Last updated: 2026-06-26
@@ -76,30 +76,30 @@ Track the build & learning status of every chunk. Each chunk has three HTML deli
 
 | Chunk | Title | Lecture | Assignment | Solution | Build | Learned |
 |------|-------|:------:|:----------:|:--------:|:-----:|:-------:|
-| 5.1 | Python Refresher & FastAPI Setup | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 5.2 | Routes, Path & Query Params | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 5.3 | Request Bodies & Pydantic Validation | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 5.4 | Project Structure & Routers | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 5.5 | CORS & Connecting React ↔ FastAPI | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 5.6 | Error Handling & API Best Practices | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 5.1 | Python Refresher & FastAPI Setup | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| 5.2 | Routes, Path & Query Params | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| 5.3 | Request Bodies & Pydantic Validation | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| 5.4 | Project Structure & Routers | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| 5.5 | CORS & Connecting React ↔ FastAPI | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| 5.6 | Error Handling & API Best Practices | ✅ | ✅ | ✅ | ✅ | ⬜ |
 
 ## Module 6 — Database with SQLite
 
 | Chunk | Title | Lecture | Assignment | Solution | Build | Learned |
 |------|-------|:------:|:----------:|:--------:|:-----:|:-------:|
-| 6.1 | SQL & SQLite Fundamentals | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 6.2 | SQLAlchemy ORM with FastAPI | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 6.3 | Persisting CRUD & Migrations | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 6.4 | Relationships & Queries | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 6.1 | SQL & SQLite Fundamentals | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| 6.2 | SQLAlchemy ORM with FastAPI | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| 6.3 | Persisting CRUD & Migrations | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| 6.4 | Relationships & Queries | ✅ | ✅ | ✅ | ✅ | ⬜ |
 
 ## Module 7 — Authentication & Security
 
 | Chunk | Title | Lecture | Assignment | Solution | Build | Learned |
 |------|-------|:------:|:----------:|:--------:|:-----:|:-------:|
-| 7.1 | Auth Concepts & Password Hashing | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 7.2 | JWT Tokens & Protected Routes | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 7.3 | Frontend Auth Flow in React | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 7.4 | Authorization, Refresh & Hardening | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 7.1 | Auth Concepts & Password Hashing | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| 7.2 | JWT Tokens & Protected Routes | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| 7.3 | Frontend Auth Flow in React | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| 7.4 | Authorization, Refresh & Hardening | ✅ | ✅ | ✅ | ✅ | ⬜ |
 
 ## Module 8 — Logging & Observability
 
@@ -148,3 +148,6 @@ Track the build & learning status of every chunk. Each chunk has three HTML deli
 | 2026-06-26 | 2.1–2.5 | Built Module 2 (CSS & Layout) via parallel subagent: fundamentals, box model/typography, Flexbox, Grid, responsive + portfolio checkpoint. Styles the Module 1 site into one cumulative `styles.css`. **Module 2 complete.** |
 | 2026-06-26 | 3.1–3.6 | Built Module 3 (JavaScript Core) via parallel subagent: basics, functions/arrays/objects, DOM/events, async/fetch, ES modules+Vite, storage/debugging + expense-tracker checkpoint. To-do app threads through. **Module 3 complete.** |
 | 2026-06-26 | 4.1–4.7 | Built Module 4 (React + Vite) via parallel subagent: setup, components/props, state hooks, effects/data, router, forms/context, custom hooks + Recipe Browser checkpoint. **Module 4 complete.** |
+| 2026-06-26 | 5.1–5.6 | Built Module 5 (FastAPI) via parallel subagent: setup, routes/params, Pydantic v2 validation, routers/structure, CORS+React, error handling/pagination + checkpoint. Shared `tasks-api` project (Task entity) threads through Modules 5–7. **Module 5 complete.** |
+| 2026-06-26 | 6.1–6.4 | Built Module 6 (SQLite) via parallel subagent: SQL fundamentals, SQLAlchemy ORM, persisting CRUD + Alembic, relationships/queries (User↔Task) + full-stack checkpoint. **Module 6 complete.** |
+| 2026-06-26 | 7.1–7.4 | Built Module 7 (Auth) via parallel subagent: password hashing, JWT/protected routes, React auth flow, RBAC/refresh/hardening + secure checkpoint. **Module 7 complete.** |

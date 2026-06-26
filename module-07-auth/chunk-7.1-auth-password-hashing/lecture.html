@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 7.1 — Auth Concepts &amp; Password Hashing</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .flow{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 7 — Authentication &amp; Security</div>
+    <h1>Chunk 7.1 — Auth Concepts &amp; Password Hashing</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>The difference between <strong>authentication</strong> (who are you?) and <strong>authorization</strong> (what may you do?).</li>
+      <li>How login actually works, and the two big approaches: <strong>sessions</strong> vs <strong>tokens</strong>.</li>
+      <li>Why you must <strong>never store plaintext passwords</strong> — and why hashing (not encryption) is the answer.</li>
+      <li>What <strong>salts</strong> and slow, adaptive hashes like <strong>bcrypt</strong> / <strong>argon2</strong> protect you from.</li>
+      <li>How to hash and verify passwords in FastAPI with <strong>passlib[bcrypt]</strong>.</li>
+    </ul>
+    <p>In the lab you'll add a <code>User</code> with a hashed password to the Tasks API and build secure <code>register</code> / <code>login</code> endpoints.</p>
+  </section>
+
+  <section>
+    <h2>1. Authentication vs Authorization</h2>
+    <p>People use these two words interchangeably, but they are different jobs and you'll build them in different chunks.</p>
+    <table>
+      <tr><th>Term</th><th>Question it answers</th><th>Example</th></tr>
+      <tr><td><strong>Authentication</strong> (authn)</td><td>"Who are you?" — proving identity.</td><td>Logging in with email + password.</td></tr>
+      <tr><td><strong>Authorization</strong> (authz)</td><td>"What are you allowed to do?" — checking permissions.</td><td>Only the task's owner can delete it; only admins see all users.</td></tr>
+    </table>
+    <p>This chunk and 7.2 are about <strong>authentication</strong> (logging in, proving identity). Chunk 7.4 adds <strong>authorization</strong> (roles and ownership rules). You authenticate <em>first</em>, then authorize.</p>
+    <div class="callout note">
+      <div class="label">📝 Mnemonic</div>
+      Auth<strong>N</strong> = who you are (i<strong>N</strong>dentity). Auth<strong>Z</strong> = what you can do (privilege<strong>Z</strong>). You always do N before Z.
+    </div>
+  </section>
+
+  <section>
+    <h2>2. How login actually works</h2>
+    <p>Here's the high-level flow you'll implement across 7.1–7.3. Don't worry about the JWT details yet — that's the next chunk. Just notice the shape:</p>
+    <div class="flow">1. REGISTER
+   Browser ──{ email, password }──&gt; Server
+   Server hashes the password, stores the user, returns "created".
+
+2. LOGIN
+   Browser ──{ email, password }──&gt; Server
+   Server looks up the user, VERIFIES the password against the stored hash.
+   If it matches: Server issues a token (an "ID card").  ── token ──&gt; Browser
+
+3. ACCESS A PROTECTED PAGE
+   Browser ──{ request + token }──&gt; Server
+   Server checks the token is valid, figures out who you are, answers.</div>
+    <p>The crucial insight: the server <strong>never stores your real password</strong>. It stores a one-way fingerprint of it (a <em>hash</em>) and only ever <em>compares</em>. We'll explain why that matters in section 4.</p>
+  </section>
+
+  <section>
+    <h2>3. Sessions vs Tokens</h2>
+    <p>HTTP is <strong>stateless</strong>: the server forgets you the instant a request finishes. So after you log in, every later request needs to re-prove who you are. There are two classic ways to do that.</p>
+
+    <h3>Sessions (server remembers)</h3>
+    <p>On login the server creates a <strong>session record</strong> (stored server-side, e.g. in a database or Redis) and sends the browser a random <strong>session ID</strong> in a cookie. On each request the browser sends the cookie; the server looks the ID up in its session store to know who you are.</p>
+
+    <h3>Tokens (the token carries the info)</h3>
+    <p>On login the server hands back a signed <strong>token</strong> (a <abbr title="JSON Web Token">JWT</abbr>) that <em>contains</em> the user's identity and is cryptographically signed. The browser sends it on each request. The server just verifies the signature — <strong>no lookup table required</strong>. This is "stateless" auth.</p>
+
+    <table>
+      <tr><th></th><th>Sessions</th><th>Tokens (JWT)</th></tr>
+      <tr><td>Where state lives</td><td>On the server (session store)</td><td>In the token itself (client holds it)</td></tr>
+      <tr><td>Scales across servers</td><td>Needs shared store / sticky sessions</td><td>Any server can verify — great for load balancing</td></tr>
+      <tr><td>Revoke instantly</td><td>Easy (delete the session)</td><td>Harder (token valid until it expires)</td></tr>
+      <tr><td>Typical transport</td><td>Cookie</td><td><code>Authorization: Bearer</code> header</td></tr>
+    </table>
+    <p>We use <strong>JWTs</strong> in this course because they pair naturally with a separate React frontend and the load-balanced deployment you'll build in Module 9. You'll build them in <strong>Chunk 7.2</strong>. This chunk is the foundation that login depends on: <strong>safely storing passwords</strong>.</p>
+  </section>
+
+  <section>
+    <h2>4. Why you must never store plaintext passwords</h2>
+    <p>Imagine your <code>users</code> table has a <code>password</code> column with the literal text <code>"hunter2"</code>. The day your database leaks — and databases leak — every attacker instantly has every user's password.</p>
+    <p>That's worse than it sounds, because people <strong>reuse passwords</strong>. The password someone used on your little Tasks app is probably the same one they use on their email and bank. A plaintext leak from <em>you</em> becomes a break-in <em>everywhere</em>. Storing plaintext passwords is the single most damaging beginner mistake in web security.</p>
+    <div class="callout warning">
+      <div class="label">⚠️ The rule</div>
+      <strong>Never store a password you can read back.</strong> Not plaintext, and — as we'll see — not encrypted either. Store a one-way <em>hash</em>.
+    </div>
+  </section>
+
+  <section>
+    <h2>5. Hashing vs Encryption vs Encoding</h2>
+    <p>These three get confused constantly. They are not the same thing.</p>
+    <table>
+      <tr><th>Technique</th><th>Reversible?</th><th>Purpose</th><th>Use for passwords?</th></tr>
+      <tr><td><strong>Encoding</strong> (e.g. Base64)</td><td>Yes, trivially</td><td>Reformatting data for transport</td><td>❌ No — it's not security at all</td></tr>
+      <tr><td><strong>Encryption</strong> (e.g. AES)</td><td>Yes, with a key</td><td>Keep data secret but recoverable</td><td>❌ No — if the key leaks, all passwords leak</td></tr>
+      <tr><td><strong>Hashing</strong> (e.g. bcrypt)</td><td><strong>No</strong> — one-way</td><td>Produce a fixed fingerprint you can only compare</td><td>✅ <strong>Yes</strong></td></tr>
+    </table>
+    <p>A <strong>hash function</strong> turns any input into a fixed-size string and <strong>cannot be reversed</strong>. Same input always gives the same hash, so to check a password at login you hash what the user typed and compare it to the stored hash. You never "decrypt" anything because there's nothing to decrypt.</p>
+    <pre><code>hash("hunter2")  ->  "$2b$12$Nl2.../bVq9..."   (always the same for "hunter2")
+hash("hunter3")  ->  "$2b$12$8aD...x0Lp..."    (completely different)</code></pre>
+    <div class="callout note">
+      <div class="label">📝 Why not encryption?</div>
+      Encryption is <em>designed</em> to be reversed (that's the point). To store passwords encrypted, your server must hold the decryption key — so a breach that grabs the database usually grabs the key too. Hashing has no key to steal. Encryption is for data you genuinely need to read back later (rare for passwords — you never do).
+    </div>
+  </section>
+
+  <section>
+    <h2>6. Salts and slow hashes (bcrypt / argon2)</h2>
+    <p>Plain hashing isn't quite enough by itself. Two problems, two fixes.</p>
+
+    <h3>Problem A: identical passwords → identical hashes</h3>
+    <p>If two users both pick <code>"password123"</code>, a naive hash gives them the <em>same</em> stored value. Attackers exploit this with precomputed <strong>rainbow tables</strong> (giant lookups of common-password → hash). The fix is a <strong>salt</strong>: a unique random value mixed in before hashing, so every hash is different even for identical passwords. This defeats rainbow tables entirely.</p>
+
+    <h3>Problem B: fast hashes are easy to brute-force</h3>
+    <p>General-purpose hashes (MD5, SHA-256) are built to be <em>fast</em> — a GPU can try billions per second. Great for checksums, terrible for passwords. The fix is a <strong>deliberately slow</strong> hash with an adjustable <strong>work factor</strong> (cost) you can crank up over the years as hardware improves. <strong>bcrypt</strong> and <strong>argon2</strong> are the standard choices.</p>
+
+    <div class="callout tip">
+      <div class="label">💡 bcrypt does all of this for you</div>
+      bcrypt <strong>generates a random salt automatically</strong> and stores it <em>inside</em> the hash string, along with the cost factor. You don't manage salts manually. That's why two hashes of the same password look different — the salt differs each time.
+    </div>
+
+    <p>Reading a bcrypt hash:</p>
+    <pre><code>$2b$12$eImiTXuWVxfM37uY4JANjQ./9f7e8s3...
+ │   │  └── salt + hash (the rest)
+ │   └───── cost factor: 12  (2^12 = 4096 rounds; higher = slower = safer)
+ └───────── algorithm identifier: bcrypt</code></pre>
+  </section>
+
+  <section>
+    <h2>7. Hashing in FastAPI with passlib</h2>
+    <p>We use <strong>passlib</strong> with the <strong>bcrypt</strong> backend. Install both:</p>
+    <pre><code>pip install "passlib[bcrypt]"</code></pre>
+    <p>Set up a single <code>CryptContext</code> for your whole app (this is the heart of the <code>security.py</code> module you'll write in the lab):</p>
+    <pre><code># app/security.py
+from passlib.context import CryptContext
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def hash_password(plain: str) -> str:
+    """Turn a plaintext password into a salted bcrypt hash for storage."""
+    return pwd_context.hash(plain)
+
+def verify_password(plain: str, hashed: str) -> bool:
+    """Check a login attempt against the stored hash. Never decrypts."""
+    return pwd_context.verify(plain, hashed)</code></pre>
+    <p>That's the entire password layer. <code>hash_password</code> runs at <strong>register</strong>, <code>verify_password</code> runs at <strong>login</strong>:</p>
+    <pre><code>&gt;&gt;&gt; h = hash_password("hunter2")
+&gt;&gt;&gt; h
+'$2b$12$Nl2.../bVq9...'          # store THIS in the database
+&gt;&gt;&gt; verify_password("hunter2", h)
+True                             # correct password
+&gt;&gt;&gt; verify_password("wrong", h)
+False                            # wrong password</code></pre>
+    <div class="callout note">
+      <div class="label">📝 deprecated="auto"</div>
+      This lets passlib transparently upgrade old hashes to a stronger scheme over time. For now it just means "use the current best settings for bcrypt."
+    </div>
+  </section>
+
+  <section>
+    <h2>8. Putting it into endpoints</h2>
+    <p>Here's the shape of the two endpoints you'll build. (In 7.2 the login endpoint will return a real JWT; for now it confirms the password is correct.) Notice we hash on register and verify on login — and we <strong>never put the password (or the hash) in any response</strong>.</p>
+    <pre><code># app/routers/auth.py  (simplified preview)
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app.security import hash_password, verify_password
+from app import models, schemas
+
+router = APIRouter(prefix="/auth", tags=["auth"])
+
+@router.post("/register", response_model=schemas.UserOut,
+             status_code=status.HTTP_201_CREATED)
+def register(data: schemas.UserCreate, db: Session = Depends(get_db)):
+    existing = db.query(models.User).filter(models.User.email == data.email).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    user = models.User(
+        email=data.email,
+        hashed_password=hash_password(data.password),   # hash here
+    )
+    db.add(user); db.commit(); db.refresh(user)
+    return user                                         # UserOut hides the hash
+
+@router.post("/login")
+def login(data: schemas.UserLogin, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.email == data.email).first()
+    if not user or not verify_password(data.password, user.hashed_password):
+        # Same vague message for "no such user" AND "wrong password"
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    return {"message": "Login successful"}              # 7.2: return a JWT here</code></pre>
+    <div class="callout warning">
+      <div class="label">⚠️ Don't leak which part was wrong</div>
+      Return the <em>same</em> "Invalid credentials" error whether the email doesn't exist or the password is wrong. If you say "no such user" vs "wrong password," you let attackers discover which emails are registered (account enumeration).
+    </div>
+    <div class="callout tip">
+      <div class="label">💡 Keep passwords out of responses</div>
+      Your <code>UserOut</code> Pydantic schema should expose <code>id</code>, <code>email</code>, <code>role</code> — and <strong>never</strong> <code>hashed_password</code>. Use a separate <code>UserCreate</code> schema for the incoming password. Shaping schemas this way makes accidental leaks structurally impossible.
+    </div>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li><strong>AuthN</strong> = who you are; <strong>AuthZ</strong> = what you can do. Authenticate first.</li>
+      <li>HTTP is stateless; you re-prove identity each request via <strong>sessions</strong> (server-side) or <strong>tokens</strong> (we use JWTs, in 7.2).</li>
+      <li><strong>Never store plaintext</strong> — and not encryption either. Store a one-way <strong>hash</strong>.</li>
+      <li><strong>Salts</strong> defeat rainbow tables; <strong>slow, adaptive hashes</strong> (bcrypt/argon2) defeat brute force. bcrypt handles the salt for you.</li>
+      <li>In FastAPI: one <code>CryptContext</code>, <code>hash_password</code> on register, <code>verify_password</code> on login. Use a vague error and keep the hash out of responses.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and add secure register/login endpoints to the Tasks API.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk 6.3 — Persisting CRUD &amp; Migrations</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .full{border:2px solid #16a34a;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 6 — Database with SQLite</div>
+    <h1>Chunk 6.3 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>Build the repository layer first, rewire the endpoints, then set up Alembic and run the first migration. Every file is shown complete. Final layout:</p>
+    <div class="filetree">tasks-api/
+├── app/
+│   ├── __init__.py
+│   ├── main.py        ← thin endpoints
+│   ├── database.py    ← (from 6.2)
+│   ├── models.py      ← (from 6.2)
+│   ├── schemas.py     ← (from 6.2)
+│   └── crud.py        ← repository layer            (NEW)
+├── alembic/
+│   ├── env.py         ← edited
+│   └── versions/
+│       └── xxxx_create_tasks_table.py               (generated)
+├── alembic.ini        ← edited
+└── tasks.db</div>
+  </section>
+
+  <section>
+    <h2>Part A — Repository &amp; DB-backed CRUD</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> <code>app/crud.py</code></h3>
+      <pre><code># app/crud.py
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from app import models, schemas
+
+
+def get_tasks(db: Session) -&gt; list[models.Task]:
+    return list(db.scalars(select(models.Task)))
+
+
+def get_task(db: Session, task_id: int) -&gt; models.Task | None:
+    return db.get(models.Task, task_id)
+
+
+def create_task(db: Session, data: schemas.TaskCreate) -&gt; models.Task:
+    task = models.Task(**data.model_dump())
+    db.add(task)
+    db.commit()
+    db.refresh(task)
+    return task
+
+
+def update_task(
+    db: Session, task: models.Task, data: schemas.TaskUpdate
+) -&gt; models.Task:
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(task, field, value)
+    db.commit()
+    db.refresh(task)
+    return task
+
+
+def delete_task(db: Session, task: models.Task) -&gt; None:
+    db.delete(task)
+    db.commit()</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> <code>app/main.py</code> — thin endpoints</h3>
+      <p>No more in-memory list, no more <code>create_all</code>. Every endpoint goes through <code>crud</code>:</p>
+      <pre><code># app/main.py
+from fastapi import Depends, FastAPI, HTTPException, status
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app import crud, schemas
+
+app = FastAPI(title="Tasks API")
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
+@app.get("/tasks", response_model=list[schemas.TaskRead])
+def list_tasks(db: Session = Depends(get_db)):
+    return crud.get_tasks(db)
+
+
+@app.post(
+    "/tasks",
+    response_model=schemas.TaskRead,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_task(data: schemas.TaskCreate, db: Session = Depends(get_db)):
+    return crud.create_task(db, data)
+
+
+@app.get("/tasks/{task_id}", response_model=schemas.TaskRead)
+def read_task(task_id: int, db: Session = Depends(get_db)):
+    task = crud.get_task(db, task_id)
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return task
+
+
+@app.patch("/tasks/{task_id}", response_model=schemas.TaskRead)
+def update_task(task_id: int, data: schemas.TaskUpdate, db: Session = Depends(get_db)):
+    task = crud.get_task(db, task_id)
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return crud.update_task(db, task, data)
+
+
+@app.delete("/tasks/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_task(task_id: int, db: Session = Depends(get_db)):
+    task = crud.get_task(db, task_id)
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+    crud.delete_task(db, task)</code></pre>
+      <div class="callout note">
+        <div class="label">📝 models.py, database.py, schemas.py</div>
+        These are unchanged from Chunk 6.2. <code>TaskUpdate</code> already has all-optional fields, which is what makes the partial PATCH work.
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Part B — Alembic migrations</h2>
+
+    <div class="step">
+      <h3><span class="num">3</span> Start clean &amp; initialize Alembic</h3>
+      <p>Because 6.2 created the table with <code>create_all</code>, delete that file so the first migration owns the schema from scratch:</p>
+      <pre><code>rm tasks.db          # Windows: del tasks.db
+alembic init alembic</code></pre>
+      <pre><code>Creating directory '.../alembic' ...  done
+Generating .../alembic.ini ...  done
+Generating .../alembic/env.py ...  done
+Please edit configuration/connection/logging settings in 'alembic.ini' ...</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Edit <code>alembic.ini</code></h3>
+      <p>Find the <code>sqlalchemy.url</code> line and set it to your SQLite file:</p>
+      <pre><code># alembic.ini
+sqlalchemy.url = sqlite:///./tasks.db</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Edit <code>alembic/env.py</code></h3>
+      <p>Near the top, after the existing imports, point Alembic at your models' metadata. The <code>import models</code> line is essential — it registers <code>Task</code> on <code>Base</code> so autogenerate can see it:</p>
+      <pre><code># alembic/env.py
+import os, sys
+
+# make the app package importable when Alembic runs
+sys.path.append(os.getcwd())
+
+from app.database import Base
+from app import models  # noqa: F401  (imported so the table registers)
+
+# ... existing Alembic config code ...
+
+target_metadata = Base.metadata</code></pre>
+      <div class="callout warning">
+        <div class="label">⚠️ Replace the default <code>target_metadata = None</code></div>
+        The generated <code>env.py</code> ships with <code>target_metadata = None</code>. Change it to <code>Base.metadata</code>, or autogenerate will detect no tables.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Make sure <code>create_all</code> is gone</h3>
+      <p>In <code>main.py</code>, confirm there is no <code>Base.metadata.create_all(bind=engine)</code> left (the thin <code>main.py</code> above already omits it). Migrations are now the only thing that builds the schema.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Autogenerate &amp; apply</h3>
+      <pre><code>alembic revision --autogenerate -m "create tasks table"</code></pre>
+      <pre><code>INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.autogenerate.compare] Detected added table 'tasks'
+  Generating .../alembic/versions/a1b2c3d4e5f6_create_tasks_table.py ...  done</code></pre>
+      <p>Open that generated file and confirm its <code>upgrade()</code> creates the table:</p>
+      <pre><code># alembic/versions/a1b2c3d4e5f6_create_tasks_table.py
+def upgrade() -&gt; None:
+    op.create_table(
+        "tasks",
+        sa.Column("id", sa.Integer(), nullable=False),
+        sa.Column("title", sa.String(), nullable=False),
+        sa.Column("description", sa.String(), nullable=True),
+        sa.Column("completed", sa.Boolean(), nullable=False),
+        sa.Column("created_at", sa.DateTime(), server_default=sa.text("(CURRENT_TIMESTAMP)"), nullable=False),
+        sa.PrimaryKeyConstraint("id"),
+    )
+
+
+def downgrade() -&gt; None:
+    op.drop_table("tasks")</code></pre>
+      <p>Now apply it:</p>
+      <pre><code>alembic upgrade head</code></pre>
+      <pre><code>INFO  [alembic.runtime.migration] Running upgrade  -&gt; a1b2c3d4e5f6, create tasks table</code></pre>
+      <p>A fresh <code>tasks.db</code> now contains both <code>tasks</code> and <code>alembic_version</code>:</p>
+      <pre><code>sqlite3 tasks.db ".tables"
+# alembic_version  tasks</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">8</span> Exercise the full CRUD cycle</h3>
+      <pre><code>uvicorn app.main:app --reload</code></pre>
+      <p>At <code>http://127.0.0.1:8000/docs</code>:</p>
+      <ul>
+        <li><strong>POST /tasks</strong> with <code>{"title": "Buy milk", "description": "2% organic"}</code> → <code>201</code> and a task with <code>id: 1</code>.</li>
+        <li><strong>GET /tasks</strong> → a list containing your task.</li>
+        <li><strong>PATCH /tasks/1</strong> with <code>{"completed": true}</code> → title/description unchanged, <code>completed</code> now <code>true</code>.</li>
+        <li><strong>GET /tasks/999</strong> → <code>404 {"detail": "Task not found"}</code>.</li>
+        <li><strong>DELETE /tasks/1</strong> → <code>204 No Content</code>.</li>
+      </ul>
+      <p>Create a couple of tasks, then <strong>stop and restart</strong> the server. <code>GET /tasks</code> still returns them — the data is in <code>tasks.db</code>, not memory. The API is now genuinely persistent.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>🛠 Troubleshooting</h2>
+    <table>
+      <tr><th>Symptom</th><th>Fix</th></tr>
+      <tr><td>Autogenerated migration is empty ("no changes detected")</td><td>You didn't import models in <code>env.py</code>, or <code>target_metadata</code> is still <code>None</code>. Import <code>app.models</code> and set <code>target_metadata = Base.metadata</code>.</td></tr>
+      <tr><td><code>ModuleNotFoundError: No module named 'app'</code> when running alembic</td><td>Run alembic from the project root, and add <code>sys.path.append(os.getcwd())</code> at the top of <code>env.py</code>.</td></tr>
+      <tr><td><code>Target database is not up to date</code></td><td>You generated a new revision without applying the previous one. Run <code>alembic upgrade head</code> first.</td></tr>
+      <tr><td><code>table tasks already exists</code> on upgrade</td><td>The table was left over from 6.2's <code>create_all</code>. Delete <code>tasks.db</code> and re-run <code>alembic upgrade head</code>.</td></tr>
+      <tr><td>PATCH wipes other fields</td><td>Use <code>data.model_dump(exclude_unset=True)</code>, not <code>model_dump()</code>.</td></tr>
+      <tr><td><code>sqlite3.OperationalError</code> when altering a column later</td><td>SQLite's limited <code>ALTER TABLE</code>. Enable batch mode in <code>env.py</code>'s <code>context.configure(..., render_as_batch=True)</code>.</td></tr>
+    </table>
+  </section>
+
+  <section class="done">
+    <h2>🎉 You're done</h2>
+    <p>Your Tasks API is now fully persistent: a clean repository layer drives every endpoint, and Alembic owns the schema with a versioned, repeatable migration. You can clone this project anywhere, run <code>alembic upgrade head</code>, and get the exact same database.</p>
+    <p><strong>Next chunk</strong> you'll model <em>connected</em> data: add a <code>User</code> entity, give each task an owner, and query across the two tables with joins, filtering, and sorting — then assemble the full-stack Module 6 checkpoint.</p>
+    <p><strong>Up next → Chunk 6.4: Relationships &amp; Queries.</strong></p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

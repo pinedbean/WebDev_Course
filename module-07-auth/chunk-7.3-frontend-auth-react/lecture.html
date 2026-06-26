@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 7.3 — Frontend Auth Flow in React</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .flow{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 7 — Authentication &amp; Security</div>
+    <h1>Chunk 7.3 — Frontend Auth Flow in React</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>The end-to-end <strong>frontend auth flow</strong>: login → store token → attach it → protect pages → logout.</li>
+      <li>Where to <strong>store the token</strong> (localStorage vs memory vs cookies) and the honest trade-offs.</li>
+      <li>Calling the FastAPI login/register endpoints from React (including the form-encoded token request).</li>
+      <li>Attaching the <code>Authorization: Bearer</code> header to every API call with a small helper.</li>
+      <li>Building an <strong>auth context</strong> (<code>useAuth</code>), <strong>protected routes</strong> with redirects, and <strong>logout</strong>.</li>
+    </ul>
+    <p>This reuses everything from Module 4 (components, state, Router, Context). In the lab you'll build login/register pages and a protected dashboard wired to the Tasks API from 7.2.</p>
+  </section>
+
+  <section>
+    <h2>1. The big picture</h2>
+    <p>Your backend already issues JWTs and guards routes. The frontend's job is to manage the token's life cycle in the browser:</p>
+    <div class="flow">LOGIN PAGE   user submits email + password
+             POST /auth/login (form-encoded)  ->  { access_token }
+             save token  ->  set "logged in" state  ->  redirect to /dashboard
+
+ANY API CALL  attach header:  Authorization: Bearer &lt;token&gt;
+
+PROTECTED PAGE  if no token  ->  redirect to /login
+                if token     ->  render the page
+
+LOGOUT       delete token  ->  clear state  ->  redirect to /login</div>
+    <p>Everything below is just the React plumbing for those four moments.</p>
+  </section>
+
+  <section>
+    <h2>2. Where do we store the token?</h2>
+    <p>This is the most important security decision on the frontend, and there's no perfect answer — only trade-offs. Be honest about them.</p>
+    <table>
+      <tr><th>Option</th><th>Survives refresh?</th><th>Main risk</th></tr>
+      <tr><td><code>localStorage</code></td><td>Yes</td><td>Readable by <strong>any JavaScript</strong> on the page → vulnerable to <strong>XSS</strong> (a malicious script can steal it).</td></tr>
+      <tr><td>In-memory (React state only)</td><td>No (lost on reload)</td><td>Safer from XSS exfiltration, but the user is logged out every refresh.</td></tr>
+      <tr><td><code>httpOnly</code> cookie</td><td>Yes</td><td>Invisible to JS (good vs XSS), but introduces <strong>CSRF</strong> concerns and needs backend cookie handling.</td></tr>
+    </table>
+    <div class="callout warning">
+      <div class="label">⚠️ The honest truth about localStorage</div>
+      Tutorials (and this course) use <code>localStorage</code> because it's simple and survives refresh. But understand the cost: <strong>if an attacker can run JavaScript on your page (XSS), they can read the token from localStorage and impersonate the user.</strong> The real defense is preventing XSS in the first place (React escapes output by default — never use <code>dangerouslySetInnerHTML</code> with untrusted data) and keeping token lifetimes short. Production apps that need maximum safety often move to <code>httpOnly</code> cookies + CSRF protection. We cover XSS/CSRF properly in 7.4.
+    </div>
+    <p>We'll use <code>localStorage</code> with a clear understanding of the trade-off, plus short-lived tokens from 7.2.</p>
+  </section>
+
+  <section>
+    <h2>3. A tiny API helper</h2>
+    <p>Centralize fetching so the token logic lives in one place. This helper reads the token from storage and attaches the header automatically.</p>
+    <pre><code>// src/api.js
+const BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
+export function getToken() {
+  return localStorage.getItem("token");
+}
+
+export async function apiFetch(path, options = {}) {
+  const token = getToken();
+  const headers = { ...(options.headers || {}) };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  const res = await fetch(`${BASE}${path}`, { ...options, headers });
+  if (res.status === 401) {
+    // token missing/expired — force a clean logout
+    localStorage.removeItem("token");
+    throw new Error("Unauthorized");
+  }
+  if (!res.ok) throw new Error((await res.json()).detail || "Request failed");
+  return res.status === 204 ? null : res.json();
+}</code></pre>
+    <div class="callout note">
+      <div class="label">📝 Vite env vars</div>
+      In Vite, only variables prefixed <code>VITE_</code> are exposed to the browser, read via <code>import.meta.env.VITE_API_URL</code>. Put <code>VITE_API_URL=http://localhost:8000</code> in a <code>.env</code> file (you learned this in Chunk 4.7). Never put secrets in frontend env vars — they ship to the browser.
+    </div>
+  </section>
+
+  <section>
+    <h2>4. Calling login &amp; register</h2>
+    <p>Remember from 7.2: the <strong>login</strong> endpoint expects <code>application/x-www-form-urlencoded</code> (OAuth2 password flow), while <strong>register</strong> takes JSON. Two different content types.</p>
+    <pre><code>// src/api.js  (auth calls)
+const BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
+export async function loginRequest(email, password) {
+  // OAuth2 form: "username" + "password", form-encoded
+  const body = new URLSearchParams({ username: email, password });
+  const res = await fetch(`${BASE}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body,
+  });
+  if (!res.ok) throw new Error("Invalid email or password");
+  return res.json();                 // { access_token, token_type }
+}
+
+export async function registerRequest(email, password) {
+  const res = await fetch(`${BASE}/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() =&gt; ({}));
+    throw new Error(data.detail || "Registration failed");
+  }
+  return res.json();                 // UserOut
+}</code></pre>
+    <p>The <code>URLSearchParams</code> object makes the browser send form-encoded data automatically — this is the single most common stumbling block when wiring a React frontend to an OAuth2 token endpoint.</p>
+  </section>
+
+  <section>
+    <h2>5. The auth context</h2>
+    <p>Many components need to know "am I logged in? who am I?" Threading that through props is painful, so we use <strong>Context</strong> (Chunk 4.6). The provider owns the token + user and exposes <code>login</code>, <code>logout</code>, and a <code>useAuth</code> hook.</p>
+    <pre><code>// src/context/AuthContext.jsx
+import { createContext, useContext, useEffect, useState } from "react";
+import { loginRequest, apiFetch } from "../api";
+
+const AuthContext = createContext(null);
+
+export function AuthProvider({ children }) {
+  const [token, setToken] = useState(() =&gt; localStorage.getItem("token"));
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // On load (or when the token changes), fetch the current user.
+  useEffect(() =&gt; {
+    if (!token) { setUser(null); setLoading(false); return; }
+    apiFetch("/auth/me")
+      .then(setUser)
+      .catch(() =&gt; { setToken(null); localStorage.removeItem("token"); })
+      .finally(() =&gt; setLoading(false));
+  }, [token]);
+
+  async function login(email, password) {
+    const { access_token } = await loginRequest(email, password);
+    localStorage.setItem("token", access_token);
+    setToken(access_token);          // triggers the effect -&gt; loads /auth/me
+  }
+
+  function logout() {
+    localStorage.removeItem("token");
+    setToken(null);
+    setUser(null);
+  }
+
+  const value = { user, token, loading, login, logout, isAuthenticated: !!token };
+  return &lt;AuthContext.Provider value={value}&gt;{children}&lt;/AuthContext.Provider&gt;;
+}
+
+export function useAuth() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used inside &lt;AuthProvider&gt;");
+  return ctx;
+}</code></pre>
+    <p>Wrap your app once (inside the Router) so every page can call <code>useAuth()</code>:</p>
+    <pre><code>// src/main.jsx
+import { BrowserRouter } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+
+ReactDOM.createRoot(document.getElementById("root")).render(
+  &lt;React.StrictMode&gt;
+    &lt;BrowserRouter&gt;
+      &lt;AuthProvider&gt;
+        &lt;App /&gt;
+      &lt;/AuthProvider&gt;
+    &lt;/BrowserRouter&gt;
+  &lt;/React.StrictMode&gt;
+);</code></pre>
+  </section>
+
+  <section>
+    <h2>6. Protected routes &amp; redirects</h2>
+    <p>A protected route checks auth state and either renders the page or redirects to login. With React Router we wrap protected pages in a small guard component that uses <code>&lt;Navigate&gt;</code>.</p>
+    <pre><code>// src/components/ProtectedRoute.jsx
+import { Navigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+
+export default function ProtectedRoute({ children }) {
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) return &lt;p&gt;Loading…&lt;/p&gt;;          // wait for /auth/me to resolve
+  if (!isAuthenticated) return &lt;Navigate to="/login" replace /&gt;;
+  return children;
+}</code></pre>
+    <p>Use it in your routes:</p>
+    <pre><code>// src/App.jsx
+import { Routes, Route } from "react-router-dom";
+import ProtectedRoute from "./components/ProtectedRoute";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Dashboard from "./pages/Dashboard";
+
+export default function App() {
+  return (
+    &lt;Routes&gt;
+      &lt;Route path="/login" element={&lt;Login /&gt;} /&gt;
+      &lt;Route path="/register" element={&lt;Register /&gt;} /&gt;
+      &lt;Route
+        path="/dashboard"
+        element={
+          &lt;ProtectedRoute&gt;
+            &lt;Dashboard /&gt;
+          &lt;/ProtectedRoute&gt;
+        }
+      /&gt;
+      &lt;Route path="*" element={&lt;Login /&gt;} /&gt;
+    &lt;/Routes&gt;
+  );
+}</code></pre>
+    <div class="callout tip">
+      <div class="label">💡 Why the loading check matters</div>
+      On a hard refresh you have a token but haven't fetched <code>/auth/me</code> yet. Without the <code>loading</code> guard, the route would briefly think you're unauthenticated and bounce you to login. Always wait for auth to resolve before redirecting.
+    </div>
+  </section>
+
+  <section>
+    <h2>7. A login form &amp; logout</h2>
+    <p>The login page is a controlled form (Chunk 4.3) that calls <code>login()</code> from context and navigates on success.</p>
+    <pre><code>// src/pages/Login.jsx
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+
+export default function Login() {
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError("");
+    try {
+      await login(email, password);
+      navigate("/dashboard");
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  return (
+    &lt;form onSubmit={handleSubmit}&gt;
+      &lt;h1&gt;Log in&lt;/h1&gt;
+      {error &amp;&amp; &lt;p style={{ color: "red" }}&gt;{error}&lt;/p&gt;}
+      &lt;input type="email" value={email} placeholder="Email"
+             onChange={(e) =&gt; setEmail(e.target.value)} required /&gt;
+      &lt;input type="password" value={password} placeholder="Password"
+             onChange={(e) =&gt; setPassword(e.target.value)} required /&gt;
+      &lt;button type="submit"&gt;Log in&lt;/button&gt;
+      &lt;p&gt;No account? &lt;Link to="/register"&gt;Register&lt;/Link&gt;&lt;/p&gt;
+    &lt;/form&gt;
+  );
+}</code></pre>
+    <p>Logout is just calling <code>logout()</code> and navigating away:</p>
+    <pre><code>const { user, logout } = useAuth();
+const navigate = useNavigate();
+
+&lt;button onClick={() =&gt; { logout(); navigate("/login"); }}&gt;
+  Log out ({user?.email})
+&lt;/button&gt;</code></pre>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li>The flow is four moments: <strong>login → store → attach → protect (+ logout)</strong>.</li>
+      <li>Token storage is a trade-off; we use <code>localStorage</code> (survives refresh) knowing it's XSS-exposed, and keep tokens short-lived.</li>
+      <li>A small <code>apiFetch</code> helper attaches <code>Authorization: Bearer</code> to every call and handles <code>401</code>.</li>
+      <li><strong>Login is form-encoded</strong> (<code>URLSearchParams</code>, OAuth2); register is JSON.</li>
+      <li><code>AuthContext</code> + <code>useAuth</code> share auth state; <code>ProtectedRoute</code> redirects unauthenticated users (waiting for <code>loading</code> first); logout clears everything.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and build the full login experience.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

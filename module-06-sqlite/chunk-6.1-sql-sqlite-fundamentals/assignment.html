@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment · Chunk 6.1 — SQL &amp; SQLite Fundamentals</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #ede9fe;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .objective{background:#ede9fe;border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#5b21b6;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--task);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .deliverable{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .deliverable h2{border-color:#a7f3d0;color:#065f46;}
+  .check{list-style:none;padding-left:0;} .check li{padding-left:30px;position:relative;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:18px;color:var(--task);}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 6 — Database with SQLite</div>
+    <h1>Chunk 6.1 — Lab: Your First SQLite Database</h1>
+    <span class="badge">🧪 ASSIGNMENT</span>
+    <span class="badge">⏱️ 45–75 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 Your mission</h2>
+    <p>Create a SQLite database file called <code>tasks.db</code>, build a <code>tasks</code> table that matches the Task entity from Module 5, fill it with sample data, and run every CRUD operation by hand from the terminal. By the end you'll have a real database file you could hand to anyone.</p>
+  </section>
+
+  <section>
+    <h2>Before you start</h2>
+    <ul>
+      <li>Make a folder for this module, e.g. <code>~/Desktop/webdev-course/module-06-sqlite/sql-practice/</code>.</li>
+      <li>Open a terminal in that folder (in VS Code: <em>Terminal → New Terminal</em>).</li>
+      <li>Check SQLite is available — on macOS it's pre-installed:
+        <pre><code>sqlite3 --version</code></pre>
+        You should see a version number (3.x). <em>Windows/Linux notes are in the solution.</em></li>
+      <li>Prefer clicking over typing? Install <a href="https://sqlitebrowser.org">DB Browser for SQLite</a> and do the same steps in its GUI.</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ Try it yourself first</div>
+      Write the SQL from memory and the lecture. Only open <code>solution.html</code> when you're stuck or to check your work at the end.
+    </div>
+  </section>
+
+  <section>
+    <h2>Tasks</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Open a new database</h3>
+      <p>From your folder, start the SQLite prompt pointed at a new file. SQLite creates the file on first write:</p>
+      <pre><code>sqlite3 tasks.db</code></pre>
+      <p>Turn on friendlier output so results are readable:</p>
+      <pre><code>.headers on
+.mode column</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Create the <code>tasks</code> table</h3>
+      <p>Write a <code>CREATE TABLE tasks</code> statement with these columns (matching the Module 5 Task):</p>
+      <ul>
+        <li><code>id</code> — integer, primary key, auto-increments</li>
+        <li><code>title</code> — text, required</li>
+        <li><code>description</code> — text, optional (allowed to be NULL)</li>
+        <li><code>completed</code> — integer, required, defaults to <code>0</code></li>
+        <li><code>created_at</code> — text, required, defaults to the current time</li>
+      </ul>
+      <p>Then confirm it exists with <code>.tables</code> and inspect it with <code>.schema tasks</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Insert sample tasks (Create)</h3>
+      <p>Add <strong>at least four</strong> tasks with <code>INSERT</code>. Give some a description and leave at least one description as <code>NULL</code>. Mark at least one task as completed (<code>completed = 1</code>).</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Read your data (Read)</h3>
+      <p>Run these <code>SELECT</code> queries and look at the output of each:</p>
+      <ul>
+        <li>All columns of all tasks.</li>
+        <li>Only the <code>id</code> and <code>title</code> columns.</li>
+        <li>Only the tasks that are <strong>not</strong> completed (<code>WHERE completed = 0</code>).</li>
+        <li>All tasks sorted newest-first (<code>ORDER BY</code> on <code>created_at</code>, descending).</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Update a task (Update)</h3>
+      <p>Pick one unfinished task and mark it completed with an <code>UPDATE … SET completed = 1 WHERE id = …</code>. Then <code>SELECT</code> that one row to prove the change stuck.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Delete a task (Delete)</h3>
+      <p>Remove one task by its <code>id</code> with <code>DELETE … WHERE id = …</code>. Run <code>SELECT * FROM tasks;</code> again to confirm it's gone.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Prove it persisted</h3>
+      <p>Exit the prompt with <code>.quit</code>. Confirm the file exists on disk (<code>ls -l tasks.db</code>). Re-open it (<code>sqlite3 tasks.db</code>) and run <code>SELECT * FROM tasks;</code> — your data is still there. <strong>That's persistence.</strong></p>
+    </div>
+  </section>
+
+  <section class="deliverable">
+    <h2>✅ Deliverable — acceptance checklist</h2>
+    <ul class="check">
+      <li>A <code>tasks.db</code> file exists in your folder.</li>
+      <li>It contains a <code>tasks</code> table with the 5 columns and correct constraints (visible via <code>.schema tasks</code>).</li>
+      <li>The table has at least 4 rows, including at least one with a <code>NULL</code> description and at least one completed task.</li>
+      <li>You ran each of <code>INSERT</code>, <code>SELECT</code> (with and without <code>WHERE</code>), <code>UPDATE</code>, and <code>DELETE</code> successfully.</li>
+      <li>After quitting and re-opening, your data is still present.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🚀 Stretch goals (optional)</h2>
+    <ul>
+      <li>Count your tasks: <code>SELECT COUNT(*) FROM tasks;</code> and count only completed ones with a <code>WHERE</code>.</li>
+      <li>Use <code>LIKE</code> to find tasks whose title contains a word, e.g. <code>WHERE title LIKE '%report%'</code>.</li>
+      <li>Combine conditions with <code>AND</code> / <code>OR</code> in a single query.</li>
+      <li>Save your statements to a file <code>seed.sql</code> and run the whole thing at once with <code>sqlite3 tasks.db &lt; seed.sql</code>.</li>
+      <li>Open the same <code>tasks.db</code> in <strong>DB Browser for SQLite</strong> and browse your rows in the grid.</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a class="current">🧪 Assignment</a>
+    <a href="solution.html">✅ Solution →</a>
+  </div>
+</footer>
+</body>
+</html>

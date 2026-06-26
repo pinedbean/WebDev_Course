@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment · Chunk 5.6 — Error Handling &amp; API Best Practices</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #ede9fe;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:#ede9fe;border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#5b21b6;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--task);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .deliverable{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .deliverable h2{border-color:#a7f3d0;color:#065f46;}
+  .check{list-style:none;padding-left:0;} .check li{padding-left:30px;position:relative;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:18px;color:var(--task);}
+  .checkpoint{background:#fffbeb;border:2px solid #f59e0b;}
+  .checkpoint h2{border-color:#fcd34d;color:#92400e;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 5 — Backend with FastAPI</div>
+    <h1>Chunk 5.6 — Lab: Harden the API + 🏁 Module Checkpoint</h1>
+    <span class="badge">🧪 ASSIGNMENT</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 Your mission</h2>
+    <p>Polish your Tasks API: add consistent error responses with global exception handlers, pagination on the list endpoint, and a <code>/api/v1</code> version prefix. Then complete the <strong>Module 5 Checkpoint</strong> — a full CRUD Tasks API consumed by your React frontend (still in-memory).</p>
+  </section>
+
+  <section>
+    <h2>Before you start</h2>
+    <ul>
+      <li>Continue from your Chunk 5.5 backend (<code>app/</code> package + CORS) and your React frontend.</li>
+      <li>Backend running: <code>uvicorn app.main:app --reload</code>; frontend: <code>npm run dev</code>.</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ Try it yourself first</div>
+      The lecture shows each piece. Build it, break it on purpose (request a missing task, send bad data, page past the end), and confirm the error shape stays consistent before checking the solution.
+    </div>
+  </section>
+
+  <section>
+    <h2>Part A — Harden the backend</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Create <code>app/errors.py</code></h3>
+      <p>Define a <code>TaskNotFound</code> exception and a <code>register_exception_handlers(app)</code> function that adds handlers for <code>TaskNotFound</code>, <code>HTTPException</code>, and <code>RequestValidationError</code> — each returning the <code>{"error": {"code", "message"}}</code> envelope (validation also includes <code>details</code>).</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Use the custom exception</h3>
+      <p>Update <code>get_task_or_404</code> in <code>dependencies.py</code> to raise <code>TaskNotFound(task_id)</code> instead of <code>HTTPException</code>. Register the handlers in <code>main.py</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Add pagination</h3>
+      <p>Add a <code>TaskPage</code> schema (<code>items</code>, <code>total</code>, <code>limit</code>, <code>offset</code>). Change <code>GET /tasks</code> to use the <code>pagination_params</code> dependency, slice the (optionally filtered) list, and return a <code>TaskPage</code>. Cap <code>limit</code> sensibly (e.g. <code>le=100</code>).</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Version the routes</h3>
+      <p>Include the tasks router under <code>prefix="/api/v1"</code> so tasks live at <code>/api/v1/tasks</code>. Keep <code>/health</code> unversioned.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Verify the hardening</h3>
+      <p>In <code>/docs</code>: confirm tasks are now under <code>/api/v1</code>; request a missing id (consistent 404 envelope); send an invalid body (consistent 422 with <code>details</code>); list with <code>?limit=2&amp;offset=0</code> and check the <code>total</code>.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Part B — Reconnect the frontend</h2>
+
+    <div class="step">
+      <h3><span class="num">6</span> Update the API base URL</h3>
+      <p>Because routes moved to <code>/api/v1</code>, update the frontend <code>.env</code> to <code>VITE_API_URL=http://localhost:8000/api/v1</code> and restart Vite. (Health checks, if you call them, use the root URL.)</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Read the paginated shape</h3>
+      <p><code>GET /tasks</code> now returns an object. Update <code>getTasks()</code> to return <code>data.items</code> (and optionally surface <code>total</code>). Confirm the list still renders.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">8</span> Show real error messages</h3>
+      <p>Update the frontend error handling to read the new envelope (<code>data.error.message</code>) when a request fails, and display it. Trigger it by submitting an empty title or deleting a non-existent task.</p>
+    </div>
+  </section>
+
+  <section class="checkpoint">
+    <h2>🏁 Module 5 Checkpoint</h2>
+    <p>Tie the whole module together. You should end with a <strong>full CRUD Tasks API</strong> (in-memory) consumed by a working React frontend. Demonstrate the complete loop:</p>
+    <ul>
+      <li><strong>Backend:</strong> a structured FastAPI app — <code>/api/v1/tasks</code> CRUD with Pydantic schemas, validation, consistent error envelope, pagination, CORS, and an unversioned <code>/health</code>.</li>
+      <li><strong>Frontend:</strong> a React + Vite app that lists, creates, toggles, and deletes tasks via the API, using <code>VITE_API_URL</code>, handling loading and errors.</li>
+      <li><strong>Proof:</strong> a task created in <code>/docs</code> appears in the UI; a task created in the UI appears in <code>/docs</code>; restarting the server clears the data (still in-memory).</li>
+    </ul>
+    <p>Write a short <code>README.md</code> in <code>tasks-api</code> with run instructions for both servers — you'll thank yourself in Module 6.</p>
+  </section>
+
+  <section class="deliverable">
+    <h2>✅ Deliverable — acceptance checklist</h2>
+    <ul class="check">
+      <li>All errors (404, 422, other <code>HTTPException</code>s) share the <code>{"error": {...}}</code> envelope.</li>
+      <li><code>TaskNotFound</code> is raised in logic and translated by a registered handler.</li>
+      <li><code>GET /api/v1/tasks</code> returns a <code>TaskPage</code> with <code>items</code>, <code>total</code>, <code>limit</code>, <code>offset</code>.</li>
+      <li>Tasks are served under <code>/api/v1</code>; <code>/health</code> stays at the root.</li>
+      <li>The frontend points at <code>/api/v1</code>, reads <code>data.items</code>, and shows server error messages.</li>
+      <li>Full CRUD works end to end from the React UI (the Module Checkpoint).</li>
+      <li>A <code>README.md</code> documents how to run backend + frontend.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🚀 Stretch goals (optional)</h2>
+    <ul>
+      <li>Add a <code>409 Conflict</code> (custom exception) when creating a task whose title already exists.</li>
+      <li>Add <code>next_offset</code>/<code>has_more</code> to <code>TaskPage</code> and a "Load more" button in the UI.</li>
+      <li>Add a catch-all handler for unexpected <code>Exception</code>s returning a generic 500 envelope (don't leak details).</li>
+      <li>Add a <code>sort</code> query param (e.g. by <code>created_at</code> or <code>title</code>).</li>
+      <li>Write the <code>requirements.txt</code> and a one-command dev script; sketch what changes when SQLite arrives in Module 6.</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a class="current">🧪 Assignment</a>
+    <a href="solution.html">✅ Solution →</a>
+  </div>
+</footer>
+</body>
+</html>

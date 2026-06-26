@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 7.4 — Authorization, Refresh &amp; Security Hardening</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .flow{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 7 — Authentication &amp; Security</div>
+    <h1>Chunk 7.4 — Authorization, Refresh &amp; Security Hardening</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li><strong>Authorization</strong> with roles &amp; permissions (RBAC), and a reusable <code>require_role</code> dependency.</li>
+      <li><strong>Token expiry</strong> and the <strong>refresh token</strong> pattern (short access + long refresh).</li>
+      <li>The big web vulnerabilities — <strong>XSS, CSRF, SQL injection</strong> — and how your stack already mitigates them (plus what you must still do).</li>
+      <li><strong>Secrets management</strong>: <code>.env</code>, <code>pydantic-settings</code>, keeping keys out of Git.</li>
+      <li>A practical <strong>hardening checklist</strong> for the Tasks API before the Module Checkpoint.</li>
+    </ul>
+    <p>In the lab you'll add an admin role, a refresh endpoint, move secrets to <code>.env</code>, and complete the 🏁 <strong>Module 7 Checkpoint</strong>: a secure full-stack app where users only see their own data.</p>
+  </section>
+
+  <section>
+    <h2>1. Authorization: roles &amp; permissions</h2>
+    <p>Authentication answered "who are you?". <strong>Authorization</strong> answers "what may you do?". The simplest model that scales is <strong>Role-Based Access Control (RBAC)</strong>: every user has a <code>role</code> (you added <code>"user"</code> / <code>"admin"</code> in 7.1), and endpoints check the role before acting.</p>
+    <p>You already do <em>ownership</em> authorization (users only touch their own tasks). Roles add a second axis: an <strong>admin</strong> may do things a normal user can't — like list all users. The clean way to express this in FastAPI is a <strong>dependency factory</strong> that produces a guard for a given role:</p>
+    <pre><code># app/deps.py  (additions)
+from fastapi import Depends, HTTPException, status
+
+def require_role(*allowed_roles: str):
+    """Build a dependency that allows only the given roles."""
+    def checker(current_user: models.User = Depends(get_current_user)) -&gt; models.User:
+        if current_user.role not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not enough permissions",
+            )
+        return current_user
+    return checker
+
+# Handy alias
+get_current_admin = require_role("admin")</code></pre>
+    <p>Now an admin-only route is one line of declaration:</p>
+    <pre><code># app/routers/admin.py
+from app.deps import get_current_admin
+
+@router.get("/users", response_model=list[schemas.UserOut])
+def list_all_users(db: Session = Depends(get_db),
+                   admin: models.User = Depends(get_current_admin)):
+    return db.query(models.User).all()</code></pre>
+    <div class="callout note">
+      <div class="label">📝 401 vs 403</div>
+      <strong>401 Unauthorized</strong> = "I don't know who you are" (no/invalid token). <strong>403 Forbidden</strong> = "I know who you are, but you're not allowed." A logged-in normal user hitting an admin route gets <strong>403</strong>, not 401.
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Token expiry &amp; refresh tokens</h2>
+    <p>In 7.2 your access token expires (good — a stolen token dies quickly). But a short expiry means users would get logged out mid-session. The standard fix is <strong>two tokens</strong>:</p>
+    <table>
+      <tr><th>Token</th><th>Lifetime</th><th>Job</th></tr>
+      <tr><td><strong>Access token</strong></td><td>Short (e.g. 15–30 min)</td><td>Sent on every API request to prove identity.</td></tr>
+      <tr><td><strong>Refresh token</strong></td><td>Long (e.g. 7–30 days)</td><td>Sent only to <code>/auth/refresh</code> to get a fresh access token.</td></tr>
+    </table>
+    <div class="flow">login        ->  access (30 min)  +  refresh (7 days)
+... 30 min later, access expires, an API call 401s ...
+POST /auth/refresh  { refresh_token }  ->  new access token (no re-login!)
+... user keeps working seamlessly ...</div>
+    <p>You distinguish the two by a <code>type</code> claim in the payload, and give them different expiries:</p>
+    <pre><code># app/security.py  (additions)
+REFRESH_TOKEN_EXPIRE_DAYS = 7
+
+def create_token(subject: str, token_type: str, expires_delta: timedelta) -&gt; str:
+    payload = {
+        "sub": subject,
+        "type": token_type,                       # "access" or "refresh"
+        "exp": datetime.now(timezone.utc) + expires_delta,
+    }
+    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+
+def create_access_token(subject: str) -&gt; str:
+    return create_token(subject, "access", timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+
+def create_refresh_token(subject: str) -&gt; str:
+    return create_token(subject, "refresh", timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS))</code></pre>
+    <p>The <code>/auth/refresh</code> endpoint verifies the refresh token (and that its <code>type</code> is <code>"refresh"</code>), then issues a brand-new access token.</p>
+    <div class="callout warning">
+      <div class="label">⚠️ Refresh tokens are powerful — protect them</div>
+      A refresh token is a long-lived key to the account. Never accept an <em>access</em> token at the refresh endpoint (check the <code>type</code> claim). In production, refresh tokens are often stored in an <code>httpOnly</code> cookie and can be <em>revoked</em> server-side (a denylist) so a logout truly ends the session. Plain stateless JWTs can't be revoked before they expire — a real trade-off to be honest about.
+    </div>
+  </section>
+
+  <section>
+    <h2>3. The big three vulnerabilities</h2>
+
+    <h3>XSS — Cross-Site Scripting</h3>
+    <p>An attacker injects JavaScript that runs in <em>other users'</em> browsers (e.g. a task title containing a <code>&lt;script&gt;</code> tag that, when rendered, runs). That script can read your <code>localStorage</code> token and impersonate the user.</p>
+    <ul>
+      <li><strong>React mitigates this by default</strong>: it escapes any value you put in JSX (<code>{userInput}</code> renders as text, not HTML).</li>
+      <li><strong>Your job:</strong> never use <code>dangerouslySetInnerHTML</code> with untrusted data; sanitize any HTML you must render; set a Content-Security-Policy header in production.</li>
+    </ul>
+
+    <h3>CSRF — Cross-Site Request Forgery</h3>
+    <p>A malicious site tricks a logged-in user's browser into making a request to <em>your</em> API using their ambient credentials. CSRF specifically targets <strong>cookies</strong>, which browsers send automatically.</p>
+    <ul>
+      <li><strong>If you use the <code>Authorization: Bearer</code> header</strong> (as we do), you're largely immune — browsers don't auto-attach that header to cross-site requests, so the attacker's page can't add your token.</li>
+      <li><strong>If you switch to cookie-stored tokens</strong>, you must add CSRF defenses (SameSite cookies, CSRF tokens). This is the flip side of the storage trade-off from 7.3.</li>
+    </ul>
+
+    <h3>SQL Injection</h3>
+    <p>An attacker puts SQL into an input (<code>'; DROP TABLE users; --</code>) hoping you concatenate it into a query.</p>
+    <ul>
+      <li><strong>SQLAlchemy mitigates this by default</strong>: the ORM uses parameterized queries, so values are never treated as SQL.</li>
+      <li><strong>Your job:</strong> never build queries with f-strings/string concatenation of user input; stick to the ORM or bound parameters.</li>
+    </ul>
+
+    <div class="callout tip">
+      <div class="label">💡 The reassuring pattern</div>
+      Modern frameworks make the secure path the default path: React escapes output, SQLAlchemy parameterizes queries, bearer headers sidestep CSRF. Security is mostly about <strong>not opting out</strong> of these defaults — and validating everything on the server.
+    </div>
+  </section>
+
+  <section>
+    <h2>4. Validate on the server — always</h2>
+    <p>Frontend validation (the <code>required</code> attribute, min length) is a <em>UX nicety</em>, not security — anyone can call your API directly with <code>curl</code> or Postman, bypassing the browser entirely. <strong>The server is the only place you can trust.</strong> Good news: Pydantic already enforces your schemas on every request. Lean on it: required fields, types, <code>EmailStr</code>, length/range constraints with <code>Field</code>.</p>
+    <pre><code>class UserCreate(BaseModel):
+    email: EmailStr
+    password: str = Field(min_length=8, max_length=128)</code></pre>
+  </section>
+
+  <section>
+    <h2>5. Secrets management</h2>
+    <p>Your <code>SECRET_KEY</code> (and database URLs, API keys) must never be hard-coded or committed. The standard approach is a <code>.env</code> file that stays out of Git, loaded into typed settings.</p>
+    <pre><code># .env  (NEVER commit this)
+SECRET_KEY=3f9a...64-hex-chars...
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+DATABASE_URL=sqlite:///./tasks.db</code></pre>
+    <p>Load it with <strong>pydantic-settings</strong> (the Pydantic v2 way) so config is typed and validated at startup:</p>
+    <pre><code># app/config.py
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+class Settings(BaseSettings):
+    secret_key: str
+    access_token_expire_minutes: int = 30
+    database_url: str = "sqlite:///./tasks.db"
+    model_config = SettingsConfigDict(env_file=".env")
+
+settings = Settings()   # reads .env + real env vars</code></pre>
+    <p>And make sure Git ignores it:</p>
+    <pre><code># .gitignore
+.env
+*.db
+.venv/</code></pre>
+    <div class="callout warning">
+      <div class="label">⚠️ If a secret ever lands in Git</div>
+      It's compromised — even if you delete it in a later commit, it lives in history. <strong>Rotate it immediately</strong> (generate a new <code>SECRET_KEY</code>; all old tokens become invalid, which is exactly what you want). Commit a <code>.env.example</code> with empty placeholders so teammates know what to set, but never the real values.
+    </div>
+  </section>
+
+  <section>
+    <h2>6. Hardening checklist</h2>
+    <p>Before you call an auth system "done," walk this list. You'll apply the relevant items in the lab.</p>
+    <table>
+      <tr><th>Area</th><th>Do this</th></tr>
+      <tr><td>Passwords</td><td>bcrypt/argon2 hashing (done), minimum length, never logged or returned.</td></tr>
+      <tr><td>Tokens</td><td>Short access expiry, refresh flow, secret from env, <code>type</code> claim checked.</td></tr>
+      <tr><td>Errors</td><td>Vague auth messages ("Invalid credentials") to prevent account enumeration.</td></tr>
+      <tr><td>CORS</td><td>Allowlist specific origins (your frontend), not <code>"*"</code>, in production.</td></tr>
+      <tr><td>Validation</td><td>Server-side Pydantic on every input; don't trust the client.</td></tr>
+      <tr><td>Transport</td><td>HTTPS in production (tokens in plaintext over HTTP can be sniffed) — you'll add this in Module 9.</td></tr>
+      <tr><td>Rate limiting</td><td>Throttle <code>/auth/login</code> to slow brute-force attempts (a reverse-proxy or middleware concern; Module 9).</td></tr>
+      <tr><td>Secrets</td><td><code>.env</code> ignored by Git, rotate if leaked, separate dev/prod keys.</td></tr>
+    </table>
+    <div class="callout note">
+      <div class="label">📝 Lock down CORS</div>
+      During development <code>allow_origins=["http://localhost:5173"]</code> is fine. In production set it to your real frontend domain. A wide-open <code>allow_origins=["*"]</code> combined with credentials is a common, dangerous misconfiguration.
+    </div>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li><strong>RBAC</strong>: a <code>role</code> per user + a <code>require_role</code> dependency; normal user hitting an admin route gets <strong>403</strong>.</li>
+      <li><strong>Refresh tokens</strong> (long-lived) mint fresh <strong>access tokens</strong> (short-lived) so sessions persist without re-login; check the <code>type</code> claim and protect refresh tokens.</li>
+      <li>React escaping beats <strong>XSS</strong>, bearer headers sidestep <strong>CSRF</strong>, SQLAlchemy parameterization beats <strong>SQL injection</strong> — don't opt out of these defaults.</li>
+      <li>Always <strong>validate on the server</strong>; client checks are UX only.</li>
+      <li>Keep secrets in <code>.env</code> (git-ignored), load via <code>pydantic-settings</code>, rotate if leaked. Allowlist CORS.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code>, harden the app, and complete the 🏁 Module 7 Checkpoint.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

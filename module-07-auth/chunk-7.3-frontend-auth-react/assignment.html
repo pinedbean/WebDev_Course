@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment · Chunk 7.3 — Frontend Auth Flow in React</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #ede9fe;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .objective{background:#ede9fe;border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#5b21b6;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--task);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .deliverable{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .deliverable h2{border-color:#a7f3d0;color:#065f46;}
+  .check{list-style:none;padding-left:0;} .check li{padding-left:30px;position:relative;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:18px;color:var(--task);}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 7 — Authentication &amp; Security</div>
+    <h1>Chunk 7.3 — Lab: Login Experience End-to-End</h1>
+    <span class="badge">🧪 ASSIGNMENT</span>
+    <span class="badge">⏱️ 45–75 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 Your mission</h2>
+    <p>Build the React front of the auth system. You'll create login and register pages, an <code>AuthContext</code> that stores the JWT and exposes <code>login</code>/<code>logout</code>, an API helper that attaches the bearer header, and a <strong>protected dashboard</strong> that lists the logged-in user's tasks from the Tasks API. End result: a complete login experience, browser to backend.</p>
+  </section>
+
+  <section>
+    <h2>Before you start</h2>
+    <ul>
+      <li>The Tasks API from 7.2 is running on <code>http://localhost:8000</code> with JWT login + protected <code>/tasks</code> + <code>/auth/me</code>.</li>
+      <li>A React + Vite app (from Module 4) with <strong>React Router</strong> installed. New app if needed: <code>npm create vite@latest tasks-web -- --template react</code>, then <code>npm i react-router-dom</code>.</li>
+      <li><strong>CORS:</strong> your FastAPI app must allow the Vite origin (<code>http://localhost:5173</code>) via <code>CORSMiddleware</code> — you set this up in Chunk 5.5. Double-check it's there.</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ Try it yourself first</div>
+      Work from the lecture. Only open <code>solution.html</code> when stuck or to compare.
+    </div>
+  </section>
+
+  <section>
+    <h2>Tasks</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Configure the API base URL</h3>
+      <p>Add a <code>.env</code> file with <code>VITE_API_URL=http://localhost:8000</code> (restart the dev server after creating it).</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Build <code>src/api.js</code></h3>
+      <p>Export: <code>getToken()</code>, <code>apiFetch(path, options)</code> (attaches <code>Authorization: Bearer</code>, handles <code>401</code>), <code>loginRequest(email, password)</code> (<strong>form-encoded</strong> with <code>URLSearchParams</code>), and <code>registerRequest(email, password)</code> (JSON).</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Build <code>src/context/AuthContext.jsx</code></h3>
+      <p>An <code>AuthProvider</code> holding <code>token</code>, <code>user</code>, and <code>loading</code>. On mount (and whenever the token changes) it fetches <code>/auth/me</code> to populate <code>user</code>. Expose <code>login(email, password)</code>, <code>logout()</code>, and <code>isAuthenticated</code>. Add a <code>useAuth()</code> hook.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Wrap the app</h3>
+      <p>In <code>src/main.jsx</code>, wrap <code>&lt;App /&gt;</code> with <code>&lt;BrowserRouter&gt;</code> then <code>&lt;AuthProvider&gt;</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Build the Login &amp; Register pages</h3>
+      <p>Controlled forms in <code>src/pages/Login.jsx</code> and <code>src/pages/Register.jsx</code>. Login calls <code>login()</code> from context then navigates to <code>/dashboard</code>; Register calls <code>registerRequest</code> then sends the user to <code>/login</code>. Show an error message on failure.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Build <code>ProtectedRoute</code></h3>
+      <p>A guard that shows a loading state while auth resolves, redirects to <code>/login</code> when not authenticated, and otherwise renders its children.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Build the protected Dashboard</h3>
+      <p><code>src/pages/Dashboard.jsx</code>: greet the user (<code>user.email</code>), fetch and list their tasks via <code>apiFetch("/tasks")</code>, add a small "create task" form (POST <code>/tasks</code>), and a <strong>Log out</strong> button. Wire all three routes in <code>App.jsx</code> with the dashboard behind <code>ProtectedRoute</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">8</span> Test the full flow</h3>
+      <ol>
+        <li>Visit <code>/dashboard</code> while logged out → you're redirected to <code>/login</code>.</li>
+        <li>Register a new account, then log in → you land on the dashboard.</li>
+        <li>Create a task; confirm it appears and persists in the backend.</li>
+        <li>Refresh the page → you stay logged in (token from localStorage).</li>
+        <li>Log out → you're sent to <code>/login</code> and the dashboard is blocked again.</li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="deliverable">
+    <h2>✅ Deliverable — acceptance checklist</h2>
+    <ul class="check">
+      <li><code>api.js</code> attaches <code>Authorization: Bearer</code> to authenticated calls; login uses form-encoding, register uses JSON.</li>
+      <li><code>AuthContext</code> stores the token, loads <code>/auth/me</code>, and exposes <code>login</code>, <code>logout</code>, <code>isAuthenticated</code> via <code>useAuth</code>.</li>
+      <li>Login and Register pages work and show errors on bad input.</li>
+      <li><code>/dashboard</code> is protected: logged-out users are redirected to <code>/login</code>.</li>
+      <li>The dashboard lists only the current user's tasks and can create a new one.</li>
+      <li>Refreshing keeps you logged in; logging out clears the token and blocks the dashboard.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🚀 Stretch goals (optional)</h2>
+    <ul>
+      <li>Add a navbar that shows the user's email + a logout button only when authenticated.</li>
+      <li>Redirect an <em>already logged-in</em> user away from <code>/login</code> straight to <code>/dashboard</code>.</li>
+      <li>After login, send the user back to the page they originally tried to visit (read it from router location state).</li>
+      <li>Add a toggle/complete and delete button per task, calling <code>PUT</code>/<code>DELETE</code> through <code>apiFetch</code>.</li>
+      <li>Disable the submit button and show "Logging in…" while the request is in flight.</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a class="current">🧪 Assignment</a>
+    <a href="solution.html">✅ Solution →</a>
+  </div>
+</footer>
+</body>
+</html>

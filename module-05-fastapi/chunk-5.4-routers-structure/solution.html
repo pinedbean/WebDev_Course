@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk 5.4 — Project Structure &amp; Routers</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .full{border:2px solid #16a34a;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 5 — Backend with FastAPI</div>
+    <h1>Chunk 5.4 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>We'll create each file in the <code>app/</code> package. The code is the same logic from Chunk 5.3, just reorganized. End state:</p>
+    <div class="filetree">tasks-api/
+├── requirements.txt
+└── app/
+    ├── __init__.py        (empty)
+    ├── main.py
+    ├── config.py
+    ├── schemas.py
+    ├── storage.py
+    ├── dependencies.py
+    └── routers/
+        ├── __init__.py    (empty)
+        ├── health.py
+        └── tasks.py</div>
+  </section>
+
+  <section>
+    <div class="step">
+      <h3><span class="num">1</span> Create the folders &amp; install the dep</h3>
+      <pre><code># from the tasks-api project root, with the venv active
+pip install pydantic-settings
+pip freeze &gt; requirements.txt
+
+mkdir -p app/routers
+touch app/__init__.py app/routers/__init__.py</code></pre>
+      <p>(You can also delete the old top-level <code>main.py</code> once the new package works.)</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> <code>app/schemas.py</code></h3>
+      <pre><code>from datetime import datetime
+from pydantic import BaseModel, Field
+
+
+class TaskBase(BaseModel):
+    title: str = Field(min_length=1, max_length=200)
+    description: str | None = Field(default=None, max_length=1000)
+
+
+class TaskCreate(TaskBase):
+    pass
+
+
+class TaskUpdate(BaseModel):
+    title: str | None = Field(default=None, min_length=1, max_length=200)
+    description: str | None = None
+    completed: bool | None = None
+
+
+class TaskRead(TaskBase):
+    id: int
+    completed: bool
+    created_at: datetime</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> <code>app/storage.py</code></h3>
+      <p>The store and its access functions. Routers will only call these.</p>
+      <pre><code>from datetime import datetime
+
+_tasks: list[dict] = []
+_next_id: int = 1
+
+
+def get_all() -&gt; list[dict]:
+    return _tasks
+
+
+def get_by_id(task_id: int) -&gt; dict | None:
+    return next((t for t in _tasks if t["id"] == task_id), None)
+
+
+def add(data: dict) -&gt; dict:
+    global _next_id
+    task = {
+        "id": _next_id,
+        "completed": False,
+        "created_at": datetime.now(),
+        **data,                      # title, description
+    }
+    _tasks.append(task)
+    _next_id += 1
+    return task
+
+
+def update(task_id: int, changes: dict) -&gt; dict | None:
+    task = get_by_id(task_id)
+    if task is None:
+        return None
+    task.update(changes)
+    return task
+
+
+def delete(task_id: int) -&gt; bool:
+    task = get_by_id(task_id)
+    if task is None:
+        return False
+    _tasks.remove(task)
+    return True</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> <code>app/config.py</code></h3>
+      <pre><code>from functools import lru_cache
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    app_name: str = "Tasks API"
+    cors_origins: list[str] = ["http://localhost:5173"]
+
+    model_config = SettingsConfigDict(env_file=".env")
+
+
+@lru_cache
+def get_settings() -&gt; Settings:
+    return Settings()</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> <code>app/dependencies.py</code></h3>
+      <pre><code>from fastapi import HTTPException, status
+from app import storage
+
+
+def get_task_or_404(task_id: int) -&gt; dict:
+    task = storage.get_by_id(task_id)
+    if task is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Task not found",
+        )
+    return task
+
+
+def pagination_params(limit: int = 20, offset: int = 0) -&gt; dict:
+    return {"limit": limit, "offset": offset}</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> <code>app/routers/health.py</code></h3>
+      <pre><code>from fastapi import APIRouter
+
+router = APIRouter(tags=["health"])
+
+
+@router.get("/health")
+def health_check():
+    return {"status": "ok"}</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> <code>app/routers/tasks.py</code></h3>
+      <p>All routes use the <code>/tasks</code> prefix. The single-task routes inject <code>get_task_or_404</code>, so the 404 logic lives in exactly one place.</p>
+      <pre><code>from fastapi import APIRouter, Depends, status
+
+from app import storage
+from app.dependencies import get_task_or_404
+from app.schemas import TaskCreate, TaskRead, TaskUpdate
+
+router = APIRouter(prefix="/tasks", tags=["tasks"])
+
+
+@router.get("", response_model=list[TaskRead])
+def list_tasks(completed: bool | None = None):
+    tasks = storage.get_all()
+    if completed is None:
+        return tasks
+    return [t for t in tasks if t["completed"] == completed]
+
+
+@router.post("", response_model=TaskRead, status_code=status.HTTP_201_CREATED)
+def create_task(payload: TaskCreate):
+    return storage.add(payload.model_dump())
+
+
+@router.get("/{task_id}", response_model=TaskRead)
+def get_task(task: dict = Depends(get_task_or_404)):
+    return task
+
+
+@router.patch("/{task_id}", response_model=TaskRead)
+def update_task(payload: TaskUpdate, task: dict = Depends(get_task_or_404)):
+    task.update(payload.model_dump(exclude_unset=True))
+    return task
+
+
+@router.delete("/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_task(task: dict = Depends(get_task_or_404)):
+    storage.delete(task["id"])
+    return None</code></pre>
+      <div class="callout note">
+        <div class="label">📝 Empty path with a prefix</div>
+        Because the router has <code>prefix="/tasks"</code>, the list/create routes use <code>""</code> — the full path becomes <code>/tasks</code>. The single-item routes use <code>"/{task_id}"</code>.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">8</span> <code>app/main.py</code></h3>
+      <p>The app just wires routers together — no route bodies here.</p>
+      <pre><code>from fastapi import FastAPI
+
+from app.config import get_settings
+from app.routers import health, tasks
+
+settings = get_settings()
+app = FastAPI(title=settings.app_name)
+
+app.include_router(health.router)
+app.include_router(tasks.router)</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">9</span> Run from the project root</h3>
+      <pre><code>uvicorn app.main:app --reload</code></pre>
+      <p>Open <code>/docs</code>. Endpoints are now grouped under <strong>tasks</strong> and <strong>health</strong> tags. Re-run your CRUD checks from Chunk 5.3 — identical behavior, cleaner code.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>🛠 Troubleshooting</h2>
+    <table>
+      <tr><th>Symptom</th><th>Fix</th></tr>
+      <tr><td><code>ModuleNotFoundError: No module named 'app'</code></td><td>Run Uvicorn from the <code>tasks-api</code> root (the parent of <code>app/</code>), and ensure <code>app/__init__.py</code> exists.</td></tr>
+      <tr><td><code>ModuleNotFoundError: No module named 'app.routers'</code></td><td>Add the empty <code>app/routers/__init__.py</code>.</td></tr>
+      <tr><td><code>ImportError: cannot import name 'BaseSettings' from 'pydantic'</code></td><td>In Pydantic v2 it moved — import from <code>pydantic_settings</code>, and run <code>pip install pydantic-settings</code>.</td></tr>
+      <tr><td>GET <code>/tasks</code> 404s but <code>/tasks/</code> works (or vice-versa)</td><td>Use <code>@router.get("")</code> with the prefix; don't add an extra slash.</td></tr>
+      <tr><td>Circular import between <code>storage</code> and <code>dependencies</code></td><td>Keep <code>storage.py</code> free of FastAPI imports; only <code>dependencies.py</code> imports <code>storage</code>, never the reverse.</td></tr>
+      <tr><td>Old <code>main.py</code> still runs</td><td>You're launching <code>main:app</code> instead of <code>app.main:app</code>. Update the Uvicorn command.</td></tr>
+    </table>
+  </section>
+
+  <section class="done">
+    <h2>🎉 You're done</h2>
+    <p>Your API is now a real project: routers per feature, schemas and storage isolated, shared logic injected with <code>Depends</code>, and config driven by settings. This is the exact skeleton Modules 6 and 7 build on.</p>
+    <p><strong>Up next → Chunk 5.5: CORS &amp; Connecting React ↔ FastAPI</strong> — you'll add CORS middleware (using the <code>cors_origins</code> you just set up) and call this API from your React + Vite frontend.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

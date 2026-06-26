@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk 6.1 — SQL &amp; SQLite Fundamentals</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .full{border:2px solid #16a34a;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 6 — Database with SQLite</div>
+    <h1>Chunk 6.1 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>Follow the steps to build <code>tasks.db</code> from an empty folder. Each step gives the exact command/SQL and the output you should see. A complete, runnable <code>seed.sql</code> script is at the bottom.</p>
+    <div class="callout note">
+      <div class="label">📝 Platform note</div>
+      macOS ships with <code>sqlite3</code>. On <strong>Linux</strong>: <code>sudo apt install sqlite3</code>. On <strong>Windows</strong>: download the "command-line tools" bundle from <a href="https://sqlite.org/download.html">sqlite.org/download</a> and run <code>sqlite3.exe</code>, or just use <a href="https://sqlitebrowser.org">DB Browser for SQLite</a> on any OS.
+    </div>
+  </section>
+
+  <section>
+    <div class="step">
+      <h3><span class="num">1</span> Open a new database</h3>
+      <p>In your project folder, launch the prompt. Passing a filename that doesn't exist yet is fine — SQLite creates it the first time you write data.</p>
+      <pre><code>sqlite3 tasks.db</code></pre>
+      <p>You'll drop into the interactive shell:</p>
+      <pre><code>SQLite version 3.43.2 2023-10-10
+Enter ".help" for usage hints.
+sqlite&gt;</code></pre>
+      <p>Turn on readable output (these settings last for this session):</p>
+      <pre><code>.headers on
+.mode column</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Create the <code>tasks</code> table</h3>
+      <p>Paste this at the <code>sqlite&gt;</code> prompt. It must end with a semicolon:</p>
+      <pre><code>CREATE TABLE tasks (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    title       TEXT    NOT NULL,
+    description TEXT,
+    completed   INTEGER NOT NULL DEFAULT 0,
+    created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+);</code></pre>
+      <p>Confirm it exists and inspect its definition:</p>
+      <pre><code>.tables
+-- tasks
+
+.schema tasks
+-- CREATE TABLE tasks (
+--     id          INTEGER PRIMARY KEY AUTOINCREMENT,
+--     ...
+-- );</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Insert sample tasks (Create)</h3>
+      <p>Add several rows. We provide <code>title</code> (and sometimes <code>description</code>/<code>completed</code>); <code>id</code> and <code>created_at</code> fill in automatically:</p>
+      <pre><code>INSERT INTO tasks (title, description) VALUES
+    ('Buy milk', '2% organic'),
+    ('Call dentist', 'Reschedule cleaning'),
+    ('Water plants', NULL),
+    ('Read SQL chapter', 'Module 6 lecture');
+
+INSERT INTO tasks (title, description, completed)
+VALUES ('Finish report', 'Q2 summary', 1);</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Read your data (Read)</h3>
+      <p><strong>All rows, all columns:</strong></p>
+      <pre><code>SELECT * FROM tasks;</code></pre>
+      <pre><code>id  title             description          completed  created_at
+--  ----------------  -------------------  ---------  -------------------
+1   Buy milk          2% organic           0          2026-06-26 09:00:00
+2   Call dentist      Reschedule cleaning  0          2026-06-26 09:00:01
+3   Water plants                           0          2026-06-26 09:00:01
+4   Read SQL chapter  Module 6 lecture     0          2026-06-26 09:00:01
+5   Finish report     Q2 summary           1          2026-06-26 09:00:02</code></pre>
+      <p><strong>Just two columns:</strong></p>
+      <pre><code>SELECT id, title FROM tasks;</code></pre>
+      <p><strong>Only unfinished tasks:</strong></p>
+      <pre><code>SELECT * FROM tasks WHERE completed = 0;</code></pre>
+      <p><strong>Newest first:</strong></p>
+      <pre><code>SELECT * FROM tasks ORDER BY created_at DESC;</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Update a task (Update)</h3>
+      <p>Mark "Buy milk" (id 1) as done, then read it back:</p>
+      <pre><code>UPDATE tasks SET completed = 1 WHERE id = 1;
+
+SELECT id, title, completed FROM tasks WHERE id = 1;</code></pre>
+      <pre><code>id  title     completed
+--  --------  ---------
+1   Buy milk  1</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Delete a task (Delete)</h3>
+      <p>Remove "Water plants" (id 3) and confirm:</p>
+      <pre><code>DELETE FROM tasks WHERE id = 3;
+
+SELECT id, title FROM tasks;</code></pre>
+      <p>Row 3 is gone. Note that <code>id</code> values are <em>not</em> renumbered — gaps are normal and expected.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Prove it persisted</h3>
+      <pre><code>.quit</code></pre>
+      <pre><code>ls -l tasks.db
+# -rw-r--r--  1 you  staff  12288 Jun 26 09:01 tasks.db
+
+sqlite3 tasks.db
+sqlite&gt; .mode column
+sqlite&gt; .headers on
+sqlite&gt; SELECT * FROM tasks;
+# your rows are still here 🎉</code></pre>
+      <p>The data lived on disk through a full restart of the program. That is exactly the durability your Tasks API has been missing.</p>
+    </div>
+  </section>
+
+  <section class="full">
+    <h2>📄 Complete <code>seed.sql</code></h2>
+    <p>You can keep every statement in one file and run it all at once with <code>sqlite3 tasks.db &lt; seed.sql</code>. (Delete <code>tasks.db</code> first if you want a clean slate.)</p>
+    <pre><code>-- seed.sql — create and populate the tasks table
+
+CREATE TABLE IF NOT EXISTS tasks (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    title       TEXT    NOT NULL,
+    description TEXT,
+    completed   INTEGER NOT NULL DEFAULT 0,
+    created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
+INSERT INTO tasks (title, description) VALUES
+    ('Buy milk', '2% organic'),
+    ('Call dentist', 'Reschedule cleaning'),
+    ('Water plants', NULL),
+    ('Read SQL chapter', 'Module 6 lecture');
+
+INSERT INTO tasks (title, description, completed)
+VALUES ('Finish report', 'Q2 summary', 1);
+
+-- read it back
+SELECT id, title, completed FROM tasks ORDER BY id;</code></pre>
+  </section>
+
+  <section>
+    <h2>🛠 Troubleshooting</h2>
+    <table>
+      <tr><th>Symptom</th><th>Fix</th></tr>
+      <tr><td><code>command not found: sqlite3</code></td><td>On macOS it should exist; reopen your terminal. On Linux <code>sudo apt install sqlite3</code>; on Windows download the CLI tools from sqlite.org or use DB Browser.</td></tr>
+      <tr><td>Nothing happens after a statement</td><td>You probably forgot the trailing <code>;</code>. SQLite waits (the prompt becomes <code>...&gt;</code>) until it sees a semicolon. Type <code>;</code> and Enter.</td></tr>
+      <tr><td>Results are cramped / no headers</td><td>Run <code>.mode column</code> and <code>.headers on</code> (dot-commands need no semicolon).</td></tr>
+      <tr><td><code>Error: no such table: tasks</code></td><td>You're in a different/empty database file. Make sure you opened the same <code>tasks.db</code> and that the <code>CREATE TABLE</code> succeeded.</td></tr>
+      <tr><td>An <code>UPDATE</code>/<code>DELETE</code> changed everything</td><td>You forgot the <code>WHERE</code>. Re-run <code>seed.sql</code> on a fresh file to reset, and always check the <code>WHERE</code> first.</td></tr>
+      <tr><td>Stuck at a <code>...&gt;</code> continuation prompt</td><td>SQLite is waiting for you to finish the statement. Type <code>;</code> or press Enter after the closing quote/paren.</td></tr>
+    </table>
+  </section>
+
+  <section class="done">
+    <h2>🎉 You're done</h2>
+    <p>You created a real database file, defined a table, and ran the full CRUD cycle in raw SQL — the foundation under every persistent app you'll ever build.</p>
+    <p><strong>Keep <code>tasks.db</code></strong> nearby. In the next chunk you'll stop typing SQL by hand: you'll point Python at a SQLite file and let <strong>SQLAlchemy</strong> generate these exact statements for you, wiring a database session into your FastAPI Tasks API.</p>
+    <p><strong>Up next → Chunk 6.2: SQLAlchemy ORM with FastAPI.</strong></p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

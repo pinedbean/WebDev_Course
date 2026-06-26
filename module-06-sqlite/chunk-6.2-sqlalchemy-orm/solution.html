@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk 6.2 — SQLAlchemy ORM with FastAPI</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .full{border:2px solid #16a34a;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 6 — Database with SQLite</div>
+    <h1>Chunk 6.2 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>Follow each step to connect your Tasks API to SQLite. Every file is shown complete and copy-pasteable. The target layout:</p>
+    <div class="filetree">tasks-api/
+├── app/
+│   ├── __init__.py
+│   ├── main.py          ← endpoints + create_all
+│   ├── database.py      ← engine, SessionLocal, Base, get_db   (NEW)
+│   ├── models.py        ← Task ORM model                       (NEW)
+│   └── schemas.py       ← Pydantic schemas
+├── .venv/
+└── tasks.db             ← created on first run</div>
+  </section>
+
+  <section>
+    <div class="step">
+      <h3><span class="num">1</span> Install SQLAlchemy</h3>
+      <p>With your virtual environment active:</p>
+      <pre><code>pip install "sqlalchemy&gt;=2.0"</code></pre>
+      <p>Optionally freeze it: <code>pip freeze &gt; requirements.txt</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> <code>app/database.py</code></h3>
+      <p>All the database wiring in one place — the four pieces from the lecture plus the <code>get_db</code> dependency:</p>
+      <pre><code># app/database.py
+from sqlalchemy import create_engine
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
+
+SQLALCHEMY_DATABASE_URL = "sqlite:///./tasks.db"
+
+# check_same_thread is SQLite-specific; required because FastAPI
+# may use the connection across threads.
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL,
+    connect_args={"check_same_thread": False},
+)
+
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+class Base(DeclarativeBase):
+    pass
+
+
+# FastAPI dependency: one session per request, always closed.
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> <code>app/models.py</code></h3>
+      <p>The <code>Task</code> ORM model. It inherits the <code>Base</code> from <code>database.py</code> so <code>create_all</code> can find it:</p>
+      <pre><code># app/models.py
+from datetime import datetime
+
+from sqlalchemy import String, Boolean, DateTime, func
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.database import Base
+
+
+class Task(Base):
+    __tablename__ = "tasks"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[str | None] = mapped_column(String, nullable=True)
+    completed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), nullable=False
+    )</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> <code>app/schemas.py</code></h3>
+      <p>The Pydantic v2 schemas. The key change is <code>ConfigDict(from_attributes=True)</code> on the <em>read</em> schema so it can serialize an ORM object. (<code>TaskCreate</code> / <code>TaskUpdate</code> are shown for completeness — you'll use them fully in 6.3.)</p>
+      <pre><code># app/schemas.py
+from datetime import datetime
+from pydantic import BaseModel, ConfigDict
+
+
+class TaskBase(BaseModel):
+    title: str
+    description: str | None = None
+    completed: bool = False
+
+
+class TaskCreate(TaskBase):
+    pass
+
+
+class TaskUpdate(BaseModel):
+    title: str | None = None
+    description: str | None = None
+    completed: bool | None = None
+
+
+class TaskRead(TaskBase):
+    id: int
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> <code>app/main.py</code></h3>
+      <p>Create the tables on startup, then read tasks from the database via <code>Depends(get_db)</code>. We also seed one row the first time so there's data to see. SQLAlchemy 2.x reads with <code>select()</code> + <code>db.scalars(...)</code>:</p>
+      <pre><code># app/main.py
+from fastapi import Depends, FastAPI, HTTPException
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from app.database import Base, engine, get_db, SessionLocal
+from app import models, schemas
+
+# Create tables (temporary — replaced by Alembic in 6.3).
+Base.metadata.create_all(bind=engine)
+
+app = FastAPI(title="Tasks API")
+
+
+# One-time seed so GET /tasks returns something on a fresh DB.
+def seed_if_empty() -&gt; None:
+    db = SessionLocal()
+    try:
+        existing = db.scalars(select(models.Task)).first()
+        if existing is None:
+            db.add(models.Task(title="Buy milk", description="2% organic"))
+            db.add(models.Task(title="Finish report", completed=True))
+            db.commit()
+    finally:
+        db.close()
+
+
+seed_if_empty()
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
+@app.get("/tasks", response_model=list[schemas.TaskRead])
+def list_tasks(db: Session = Depends(get_db)):
+    tasks = db.scalars(select(models.Task)).all()
+    return tasks
+
+
+@app.get("/tasks/{task_id}", response_model=schemas.TaskRead)
+def get_task(task_id: int, db: Session = Depends(get_db)):
+    task = db.get(models.Task, task_id)
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return task</code></pre>
+      <div class="callout note">
+        <div class="label">📝 Why <code>db.scalars(...)</code>?</div>
+        In SQLAlchemy 2.x, <code>db.scalars(select(Task))</code> returns the <code>Task</code> objects themselves; <code>.all()</code> gives a list, <code>.first()</code> gives one or <code>None</code>. For a lookup by primary key, <code>db.get(Task, id)</code> is the shortcut.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Run it</h3>
+      <pre><code>uvicorn app.main:app --reload</code></pre>
+      <pre><code>INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Application startup complete.</code></pre>
+      <p>A <code>tasks.db</code> file now sits in your project root. Open <code>http://127.0.0.1:8000/docs</code>, run <strong>GET /tasks</strong>, and you'll get:</p>
+      <pre><code>[
+  {
+    "title": "Buy milk",
+    "description": "2% organic",
+    "completed": false,
+    "id": 1,
+    "created_at": "2026-06-26T09:00:00"
+  },
+  {
+    "title": "Finish report",
+    "description": null,
+    "completed": true,
+    "id": 2,
+    "created_at": "2026-06-26T09:00:00"
+  }
+]</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Prove persistence</h3>
+      <p>Stop the server (<kbd>Ctrl</kbd>+<kbd>C</kbd>) and start it again. Because <code>seed_if_empty()</code> only inserts when the table is empty, no duplicates are added — and <strong>GET /tasks</strong> still returns your two rows. The data lives in <code>tasks.db</code>, not in memory.</p>
+      <p>Confirm directly with the CLI from Chunk 6.1:</p>
+      <pre><code>sqlite3 tasks.db ".schema tasks"</code></pre>
+      <pre><code>CREATE TABLE tasks (
+    id INTEGER NOT NULL,
+    title VARCHAR NOT NULL,
+    description VARCHAR,
+    completed BOOLEAN NOT NULL,
+    created_at DATETIME DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
+    PRIMARY KEY (id)
+);</code></pre>
+      <p>That's the table SQLAlchemy generated from your model. You never wrote that SQL — the ORM did.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>🛠 Troubleshooting</h2>
+    <table>
+      <tr><th>Symptom</th><th>Fix</th></tr>
+      <tr><td><code>tasks.db</code> never appears / no <code>tasks</code> table</td><td>Make sure <code>models</code> is imported in <code>main.py</code> <em>before</em> <code>create_all</code>, and that the model inherits the same <code>Base</code> from <code>database.py</code>.</td></tr>
+      <tr><td><code>sqlite3.OperationalError: ... another thread</code></td><td>You forgot <code>connect_args={"check_same_thread": False}</code> on <code>create_engine</code>.</td></tr>
+      <tr><td><code>ResponseValidationError</code> on GET /tasks</td><td>Add <code>model_config = ConfigDict(from_attributes=True)</code> to <code>TaskRead</code>, and set <code>response_model</code> on the endpoint.</td></tr>
+      <tr><td><code>ImportError: cannot import name 'Base'</code></td><td>Circular import. Keep <code>Base</code> only in <code>database.py</code>; <code>models.py</code> imports from <code>database</code>, not the other way around.</td></tr>
+      <tr><td>Duplicate seed rows on every restart</td><td>The empty-check (<code>db.scalars(...).first() is None</code>) prevents this. If you removed it, delete <code>tasks.db</code> and restart.</td></tr>
+      <tr><td><code>ModuleNotFoundError: No module named 'app'</code></td><td>Run uvicorn from the project root (the folder that <em>contains</em> <code>app/</code>), and make sure <code>app/__init__.py</code> exists.</td></tr>
+    </table>
+  </section>
+
+  <section class="done">
+    <h2>🎉 You're done</h2>
+    <p>Your Tasks API now owns a real SQLite database. You defined an ORM model, opened sessions through dependency injection, and read live data from disk — all without writing SQL by hand.</p>
+    <p>Right now only the read endpoints touch the database, and there's a leftover in-memory list. <strong>Next chunk</strong> you'll convert <em>every</em> endpoint to durable, DB-backed CRUD using a clean repository layer, and replace <code>create_all</code> with proper <strong>Alembic migrations</strong>.</p>
+    <p><strong>Up next → Chunk 6.3: Persisting CRUD &amp; Migrations.</strong></p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

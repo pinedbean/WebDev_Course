@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk 7.2 — JWT Tokens &amp; Protected Routes</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .full{border:2px solid #16a34a;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 7 — Authentication &amp; Security</div>
+    <h1>Chunk 7.2 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>We'll add JWT issuing, a <code>get_current_user</code> dependency, <code>/auth/me</code>, and owner-scoped task routes. New/changed files:</p>
+    <div class="filetree">tasks-api/
+└── app/
+    ├── security.py            (add JWT functions)
+    ├── schemas.py             (add Token)
+    ├── deps.py                (new: oauth2_scheme + get_current_user)
+    ├── routers/
+    │   ├── auth.py            (token login + /me)
+    │   └── tasks.py           (scope to owner_id)</div>
+  </section>
+
+  <section>
+    <div class="step">
+      <h3><span class="num">1</span> Install &amp; set the secret</h3>
+      <pre><code>pip install "python-jose[cryptography]"
+pip freeze &gt; requirements.txt
+
+python -c "import secrets; print(secrets.token_hex(32))"
+export SECRET_KEY="paste-the-64-char-value"   # PowerShell: $env:SECRET_KEY="..."</code></pre>
+      <div class="callout note">
+        <div class="label">📝 Same terminal</div>
+        <code>export</code> only lives in the current shell. Start <code>uvicorn</code> in that <em>same</em> terminal so it sees <code>SECRET_KEY</code>. (7.4 makes this permanent with a <code>.env</code> file.)
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> JWT functions in <code>security.py</code></h3>
+      <pre><code># app/security.py  (full file)
+import os
+from datetime import datetime, timedelta, timezone
+
+from passlib.context import CryptContext
+from jose import jwt, JWTError
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+SECRET_KEY = os.getenv("SECRET_KEY", "dev-only-change-me")
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+def hash_password(plain: str) -> str:
+    return pwd_context.hash(plain)
+
+def verify_password(plain: str, hashed: str) -> bool:
+    return pwd_context.verify(plain, hashed)
+
+def create_access_token(subject: str) -> str:
+    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    payload = {"sub": subject, "exp": expire}
+    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+
+def decode_access_token(token: str) -> str | None:
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload.get("sub")
+    except JWTError:
+        return None</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Token schema</h3>
+      <pre><code># app/schemas.py  (add)
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> <code>app/deps.py</code> — the dependency</h3>
+      <pre><code># app/deps.py
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app.security import decode_access_token
+from app import models
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+
+def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db),
+) -> models.User:
+    credentials_error = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    user_id = decode_access_token(token)
+    if user_id is None:
+        raise credentials_error
+    user = db.get(models.User, int(user_id))
+    if user is None:
+        raise credentials_error
+    return user</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Login (form) + <code>/auth/me</code></h3>
+      <pre><code># app/routers/auth.py  (full file)
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app.security import hash_password, verify_password, create_access_token
+from app.deps import get_current_user
+from app import models, schemas
+
+router = APIRouter(prefix="/auth", tags=["auth"])
+
+@router.post("/register", response_model=schemas.UserOut,
+             status_code=status.HTTP_201_CREATED)
+def register(data: schemas.UserCreate, db: Session = Depends(get_db)):
+    email = data.email.lower()
+    if db.query(models.User).filter(models.User.email == email).first():
+        raise HTTPException(status_code=400, detail="Email already registered")
+    user = models.User(email=email, hashed_password=hash_password(data.password))
+    db.add(user); db.commit(); db.refresh(user)
+    return user
+
+@router.post("/login", response_model=schemas.Token)
+def login(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db),
+):
+    # OAuth2 form sends "username" + "password"; we use the email as username.
+    user = db.query(models.User).filter(
+        models.User.email == form_data.username.lower()
+    ).first()
+    if not user or not verify_password(form_data.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    token = create_access_token(subject=str(user.id))
+    return {"access_token": token, "token_type": "bearer"}
+
+@router.get("/me", response_model=schemas.UserOut)
+def read_me(current_user: models.User = Depends(get_current_user)):
+    return current_user</code></pre>
+      <div class="callout note">
+        <div class="label">📝 Why login no longer takes JSON</div>
+        Switching to <code>OAuth2PasswordRequestForm</code> means login expects form fields (<code>username</code>, <code>password</code>). That's what the docs Authorize button and the <code>OAuth2PasswordBearer</code> spec expect, and what your React app will send in 7.3 (as <code>application/x-www-form-urlencoded</code>).
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Scope the task routes</h3>
+      <pre><code># app/routers/tasks.py  (full file)
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app.deps import get_current_user
+from app import models, schemas
+
+router = APIRouter(prefix="/tasks", tags=["tasks"])
+
+def get_owned_task(task_id: int, db: Session, current_user: models.User) -> models.Task:
+    task = db.get(models.Task, task_id)
+    if task is None or task.owner_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return task
+
+@router.get("", response_model=list[schemas.TaskOut])
+def list_tasks(db: Session = Depends(get_db),
+               current_user: models.User = Depends(get_current_user)):
+    return (db.query(models.Task)
+              .filter(models.Task.owner_id == current_user.id)
+              .all())
+
+@router.post("", response_model=schemas.TaskOut, status_code=status.HTTP_201_CREATED)
+def create_task(data: schemas.TaskCreate, db: Session = Depends(get_db),
+                current_user: models.User = Depends(get_current_user)):
+    task = models.Task(**data.model_dump(), owner_id=current_user.id)
+    db.add(task); db.commit(); db.refresh(task)
+    return task
+
+@router.get("/{task_id}", response_model=schemas.TaskOut)
+def get_task(task_id: int, db: Session = Depends(get_db),
+             current_user: models.User = Depends(get_current_user)):
+    return get_owned_task(task_id, db, current_user)
+
+@router.put("/{task_id}", response_model=schemas.TaskOut)
+def update_task(task_id: int, data: schemas.TaskUpdate, db: Session = Depends(get_db),
+                current_user: models.User = Depends(get_current_user)):
+    task = get_owned_task(task_id, db, current_user)
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(task, field, value)
+    db.commit(); db.refresh(task)
+    return task
+
+@router.delete("/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_task(task_id: int, db: Session = Depends(get_db),
+                current_user: models.User = Depends(get_current_user)):
+    task = get_owned_task(task_id, db, current_user)
+    db.delete(task); db.commit()</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Run &amp; verify the flow</h3>
+      <pre><code>uvicorn app.main:app --reload</code></pre>
+      <p>At <code>/docs</code>: register <code>a@x.com</code> and <code>b@x.com</code>, click <strong>Authorize</strong>, log in as A (username = email).</p>
+      <p><strong>Login response (200):</strong></p>
+      <pre><code>{ "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...", "token_type": "bearer" }</code></pre>
+      <p>Create a task as A, then list — only A's tasks come back. Authorize as B and list — empty. Try B fetching A's task id:</p>
+      <pre><code>GET /tasks/1   (as B)   -&gt;  404 {"detail":"Task not found"}
+GET /tasks     (no auth) -&gt; 401 {"detail":"Not authenticated"}
+GET /auth/me   (as A)    -&gt; 200 {"id":1,"email":"a@x.com","role":"user",...}</code></pre>
+    </div>
+  </section>
+
+  <section>
+    <h2>🔧 Troubleshooting</h2>
+    <table>
+      <tr><th>Symptom</th><th>Fix</th></tr>
+      <tr><td>Every protected call is <code>401</code> even after login</td><td>You logged in but didn't click <strong>Authorize</strong> in docs, or your client isn't sending <code>Authorization: Bearer &lt;token&gt;</code>.</td></tr>
+      <tr><td><code>Signature verification failed</code> / random 401s</td><td>The <code>SECRET_KEY</code> changed between issuing and verifying (you restarted uvicorn in a shell without the env var). Use the same key consistently.</td></tr>
+      <tr><td><code>422 Unprocessable Entity</code> on login</td><td>You're sending JSON to the form endpoint. Use form fields <code>username</code>/<code>password</code> (the docs form does this automatically).</td></tr>
+      <tr><td><code>ImportError: cannot import name 'jwt'</code></td><td>Install the right package: <code>pip install "python-jose[cryptography]"</code> (not <code>jose</code>).</td></tr>
+      <tr><td>Circular import between <code>deps.py</code> and <code>auth.py</code></td><td>Keep <code>oauth2_scheme</code> + <code>get_current_user</code> in <code>deps.py</code>, import it into routers — never the reverse.</td></tr>
+      <tr><td><code>sub</code> must be a string</td><td>python-jose is strict: pass <code>str(user.id)</code> to <code>create_access_token</code> and <code>int(user_id)</code> when loading.</td></tr>
+    </table>
+  </section>
+
+  <section class="full">
+    <h2>📄 Complete <code>app/deps.py</code></h2>
+    <pre><code>from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app.security import decode_access_token
+from app import models
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+
+def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db),
+) -> models.User:
+    credentials_error = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    user_id = decode_access_token(token)
+    if user_id is None:
+        raise credentials_error
+    user = db.get(models.User, int(user_id))
+    if user is None:
+        raise credentials_error
+    return user</code></pre>
+  </section>
+
+  <section class="done">
+    <h2>🎉 You're done</h2>
+    <p>The Tasks API is now a real authenticated backend: login mints a signed JWT, <code>get_current_user</code> guards every protected route, and each user's data is isolated by <code>owner_id</code>. You proved it by confirming user B can't see or fetch user A's tasks.</p>
+    <p>So far you've tested through <code>/docs</code>. Next you'll put a friendly face on it: a React login/register UI that stores the token, attaches it to every request, and protects pages behind a real auth flow.</p>
+    <p><strong>Up next → Chunk 7.3: Frontend Auth Flow in React.</strong></p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 6.3 — Persisting CRUD &amp; Migrations</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 6 — Database with SQLite</div>
+    <h1>Chunk 6.3 — Persisting CRUD &amp; Migrations</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>The <strong>repository pattern</strong>: keeping database logic in a <code>crud.py</code> layer, separate from your endpoints.</li>
+      <li>The core session operations: <code>add</code>, <code>commit</code>, <code>refresh</code>, <code>get</code>, <code>select</code>/<code>scalars</code>, <code>delete</code>.</li>
+      <li>Converting <em>every</em> Tasks endpoint to durable, DB-backed CRUD — including partial <code>PATCH</code> updates.</li>
+      <li>Why <code>create_all</code> isn't enough, and how <strong>Alembic</strong> manages schema changes with versioned migrations.</li>
+    </ul>
+    <p>In the lab you'll replace the in-memory store entirely and create your first Alembic migration.</p>
+  </section>
+
+  <section>
+    <h2>1. The goal: a fully persistent API</h2>
+    <p>After 6.2 your API can <em>read</em> from SQLite, but creates/updates/deletes may still touch an in-memory list, and the schema is built with a throwaway <code>create_all</code>. Today we finish the job:</p>
+    <ol>
+      <li>Move all database access into a clean <strong>CRUD layer</strong> (<code>crud.py</code>).</li>
+      <li>Rewrite every endpoint to use that layer through <code>get_db</code>.</li>
+      <li>Replace <code>create_all</code> with <strong>Alembic</strong> so schema changes are tracked and repeatable.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>2. The repository pattern</h2>
+    <p>So far, an endpoint mixes two jobs: handling HTTP (status codes, 404s, request bodies) <em>and</em> talking to the database. As the app grows that gets messy and hard to test. The <strong>repository pattern</strong> (often just called a "CRUD layer") splits them:</p>
+    <table>
+      <tr><th>Layer</th><th>Responsibility</th></tr>
+      <tr><td><code>main.py</code> / routers</td><td>HTTP concerns: parse the request, return the right status, raise 404s.</td></tr>
+      <tr><td><code>crud.py</code></td><td>Database concerns: build queries, add/commit/delete rows.</td></tr>
+    </table>
+    <p>Every function in <code>crud.py</code> takes a <code>Session</code> as its first argument and returns plain ORM objects (or <code>None</code>). It knows nothing about HTTP. Benefits: endpoints stay thin, database logic is reusable, and you can test the CRUD layer on its own.</p>
+    <div class="filetree">tasks-api/
+├── app/
+│   ├── main.py        ← endpoints (thin)
+│   ├── database.py    ← engine, session, Base, get_db
+│   ├── models.py      ← Task ORM model
+│   ├── schemas.py     ← Pydantic schemas
+│   └── crud.py        ← all DB logic                 (NEW)
+├── alembic/           ← migrations                   (NEW)
+├── alembic.ini        ← Alembic config               (NEW)
+└── tasks.db</div>
+  </section>
+
+  <section>
+    <h2>3. The session operations you'll use</h2>
+    <p>Five session methods cover everything in basic CRUD:</p>
+    <table>
+      <tr><th>Operation</th><th>What it does</th></tr>
+      <tr><td><code>db.add(obj)</code></td><td>Stage a new (or modified) object to be saved.</td></tr>
+      <tr><td><code>db.commit()</code></td><td>Write all staged changes to the database (the real <code>INSERT</code>/<code>UPDATE</code>/<code>DELETE</code>).</td></tr>
+      <tr><td><code>db.refresh(obj)</code></td><td>Reload the object from the DB so server-generated fields (<code>id</code>, <code>created_at</code>) are populated.</td></tr>
+      <tr><td><code>db.get(Model, id)</code></td><td>Fetch one row by primary key; returns the object or <code>None</code>.</td></tr>
+      <tr><td><code>db.scalars(select(Model))</code></td><td>Run a query and get back model objects; chain <code>.all()</code> or <code>.first()</code>.</td></tr>
+      <tr><td><code>db.delete(obj)</code></td><td>Stage an object for deletion (then <code>commit</code>).</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>4. Writing <code>crud.py</code></h2>
+    <p>Here are the five functions for the Tasks API. Read how each maps to a SQL verb from Chunk 6.1:</p>
+
+    <h3>Read many / read one</h3>
+    <pre><code># app/crud.py
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from app import models, schemas
+
+
+def get_tasks(db: Session) -&gt; list[models.Task]:
+    return list(db.scalars(select(models.Task)))
+
+
+def get_task(db: Session, task_id: int) -&gt; models.Task | None:
+    return db.get(models.Task, task_id)</code></pre>
+
+    <h3>Create</h3>
+    <p><code>add</code> → <code>commit</code> → <code>refresh</code> is the standard insert dance. <code>refresh</code> fills in the new <code>id</code> and <code>created_at</code>:</p>
+    <pre><code>def create_task(db: Session, data: schemas.TaskCreate) -&gt; models.Task:
+    task = models.Task(**data.model_dump())
+    db.add(task)
+    db.commit()
+    db.refresh(task)
+    return task</code></pre>
+
+    <h3>Update (partial / PATCH)</h3>
+    <p>A <code>PATCH</code> should change only the fields the client actually sent. Pydantic's <code>model_dump(exclude_unset=True)</code> gives just those fields, so untouched columns keep their values:</p>
+    <pre><code>def update_task(
+    db: Session, task: models.Task, data: schemas.TaskUpdate
+) -&gt; models.Task:
+    updates = data.model_dump(exclude_unset=True)
+    for field, value in updates.items():
+        setattr(task, field, value)
+    db.commit()
+    db.refresh(task)
+    return task</code></pre>
+
+    <h3>Delete</h3>
+    <pre><code>def delete_task(db: Session, task: models.Task) -&gt; None:
+    db.delete(task)
+    db.commit()</code></pre>
+    <div class="callout tip">
+      <div class="label">💡 exclude_unset vs exclude_none</div>
+      <code>exclude_unset=True</code> means "only fields the client included in the JSON" — so a client <em>can</em> explicitly set <code>description</code> to <code>null</code>. <code>exclude_none=True</code> would instead drop any field that's <code>None</code>, making it impossible to clear a value. For PATCH, you almost always want <code>exclude_unset</code>.
+    </div>
+  </section>
+
+  <section>
+    <h2>5. Thin endpoints that use the CRUD layer</h2>
+    <p>Now the endpoints just translate between HTTP and <code>crud</code>. Notice how the 404 logic lives here, not in <code>crud.py</code>:</p>
+    <pre><code># app/main.py (excerpt)
+from fastapi import Depends, FastAPI, HTTPException, status
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app import crud, schemas
+
+app = FastAPI(title="Tasks API")
+
+
+@app.get("/tasks", response_model=list[schemas.TaskRead])
+def list_tasks(db: Session = Depends(get_db)):
+    return crud.get_tasks(db)
+
+
+@app.post("/tasks", response_model=schemas.TaskRead, status_code=status.HTTP_201_CREATED)
+def create_task(data: schemas.TaskCreate, db: Session = Depends(get_db)):
+    return crud.create_task(db, data)
+
+
+@app.get("/tasks/{task_id}", response_model=schemas.TaskRead)
+def read_task(task_id: int, db: Session = Depends(get_db)):
+    task = crud.get_task(db, task_id)
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return task
+
+
+@app.patch("/tasks/{task_id}", response_model=schemas.TaskRead)
+def update_task(task_id: int, data: schemas.TaskUpdate, db: Session = Depends(get_db)):
+    task = crud.get_task(db, task_id)
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return crud.update_task(db, task, data)
+
+
+@app.delete("/tasks/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_task(task_id: int, db: Session = Depends(get_db)):
+    task = crud.get_task(db, task_id)
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+    crud.delete_task(db, task)</code></pre>
+    <p>The in-memory <code>tasks = []</code> list is now gone entirely. Every operation goes through the database.</p>
+  </section>
+
+  <section>
+    <h2>6. Why <code>create_all</code> isn't enough</h2>
+    <p><code>Base.metadata.create_all()</code> creates tables that don't exist — and stops there. The moment your schema <em>changes</em>, it can't help you:</p>
+    <ul>
+      <li>You add an <code>owner_id</code> column to <code>tasks</code> (you will, in 6.4). <code>create_all</code> won't add it to the existing table.</li>
+      <li>You have a production database with real data — you can't just drop and recreate it.</li>
+      <li>A teammate clones the repo and needs the exact same schema as you.</li>
+    </ul>
+    <p>What you need is a <strong>version-controlled history of schema changes</strong> that can be applied step by step to any database. That's a <strong>migration tool</strong>.</p>
+  </section>
+
+  <section>
+    <h2>7. Alembic: migrations for SQLAlchemy</h2>
+    <p><strong>Alembic</strong> is SQLAlchemy's official migration tool. Each schema change becomes a <strong>migration file</strong> (a versioned script with an <code>upgrade()</code> and a <code>downgrade()</code>). Think of it as <em>git for your database schema</em>.</p>
+    <table>
+      <tr><th>Concept</th><th>Meaning</th></tr>
+      <tr><td><strong>Migration / revision</strong></td><td>One versioned change, e.g. "create tasks table". Has a unique id.</td></tr>
+      <tr><td><code>upgrade()</code></td><td>Apply the change (create the table, add the column).</td></tr>
+      <tr><td><code>downgrade()</code></td><td>Undo it (drop the table/column) — your safety net.</td></tr>
+      <tr><td><strong>autogenerate</strong></td><td>Alembic compares your models to the DB and writes the migration for you.</td></tr>
+      <tr><td><code>alembic_version</code> table</td><td>A tiny table Alembic adds to track which revision the DB is on.</td></tr>
+    </table>
+
+    <h3>Setting up Alembic</h3>
+    <pre><code>pip install alembic
+alembic init alembic</code></pre>
+    <p>This creates an <code>alembic/</code> folder and an <code>alembic.ini</code> file. Two edits connect Alembic to your project:</p>
+    <p><strong>1. Point it at your database</strong> — in <code>alembic.ini</code>, set the URL to match <code>database.py</code>:</p>
+    <pre><code># alembic.ini
+sqlalchemy.url = sqlite:///./tasks.db</code></pre>
+    <p><strong>2. Give it your models' metadata</strong> — in <code>alembic/env.py</code>, import your <code>Base</code> and every model, then set <code>target_metadata</code>. This is how autogenerate "sees" your tables:</p>
+    <pre><code># alembic/env.py (near the top, after the default imports)
+from app.database import Base
+from app import models  # noqa: F401  -- import so models register on Base
+
+target_metadata = Base.metadata</code></pre>
+    <div class="callout warning">
+      <div class="label">⚠️ Import the models, or autogenerate sees nothing</div>
+      If you set <code>target_metadata = Base.metadata</code> but never import <code>models</code>, the <code>Task</code> class never registers on <code>Base</code>, and autogenerate produces an <em>empty</em> migration. Always import your models in <code>env.py</code>.
+    </div>
+  </section>
+
+  <section>
+    <h2>8. Creating &amp; running your first migration</h2>
+    <p>With the model registered, autogenerate the initial migration. The <code>-m</code> message is a human-readable label:</p>
+    <pre><code>alembic revision --autogenerate -m "create tasks table"</code></pre>
+    <p>Alembic writes a file under <code>alembic/versions/</code> containing the generated <code>upgrade()</code>/<code>downgrade()</code>. <strong>Always open and read it</strong> before applying — autogenerate is good but not infallible. Then apply it:</p>
+    <pre><code>alembic upgrade head</code></pre>
+    <p><code>head</code> means "the latest revision". Your database now has the <code>tasks</code> table <em>and</em> an <code>alembic_version</code> row recording the migration. To roll back the last step:</p>
+    <pre><code>alembic downgrade -1</code></pre>
+    <div class="callout note">
+      <div class="label">📝 Remove the create_all call</div>
+      Once Alembic manages your schema, delete (or comment out) <code>Base.metadata.create_all(bind=engine)</code> from <code>main.py</code>. Migrations are now the single source of truth for the schema. (If your DB already had tables from 6.2, start from a fresh <code>tasks.db</code> so the first migration applies cleanly — see the solution.)
+    </div>
+  </section>
+
+  <section>
+    <h2>9. The everyday migration workflow</h2>
+    <p>From now on, whenever you change a model, you do the same two steps. You'll use this constantly in 6.4 and beyond:</p>
+    <pre><code># 1. Change a model in models.py (add a column, a table, an index…)
+# 2. Generate a migration from the change:
+alembic revision --autogenerate -m "add priority to tasks"
+# 3. Read the generated file, then apply it:
+alembic upgrade head</code></pre>
+    <div class="callout warning">
+      <div class="label">⚠️ SQLite has limited ALTER TABLE</div>
+      SQLite can't drop or heavily alter columns the way Postgres can. Alembic works around this with "batch mode" (it rebuilds the table). For simple additions you usually won't notice; if a migration fails on SQLite, look up Alembic's <code>render_as_batch=True</code> option. We'll flag this again if it bites in 6.4.
+    </div>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li>The <strong>repository pattern</strong> puts all DB logic in <code>crud.py</code>; endpoints stay thin and handle only HTTP (including 404s).</li>
+      <li>Core session ops: <code>add</code> → <code>commit</code> → <code>refresh</code> to create; <code>db.get</code> / <code>db.scalars(select(...))</code> to read; mutate attributes + <code>commit</code> to update; <code>db.delete</code> + <code>commit</code> to delete.</li>
+      <li><code>PATCH</code> uses <code>model_dump(exclude_unset=True)</code> so only sent fields change.</li>
+      <li><code>create_all</code> can't evolve a schema; <strong>Alembic</strong> tracks changes as versioned migrations (<code>upgrade</code>/<code>downgrade</code>).</li>
+      <li>Wire Alembic by setting <code>sqlalchemy.url</code> in <code>alembic.ini</code> and importing <code>Base</code> + models in <code>env.py</code> for <code>target_metadata</code>.</li>
+      <li>Daily loop: change model → <code>alembic revision --autogenerate</code> → read it → <code>alembic upgrade head</code>.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and make the whole Tasks API persistent with a migration.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

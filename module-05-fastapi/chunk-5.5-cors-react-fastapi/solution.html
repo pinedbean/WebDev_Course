@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk 5.5 — CORS &amp; Connecting React ↔ FastAPI</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .full{border:2px solid #16a34a;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 5 — Backend with FastAPI</div>
+    <h1>Chunk 5.5 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>We'll run two servers, enable CORS on the backend, and build a small React UI that does live CRUD against the Tasks API. Frontend files we'll touch:</p>
+    <div class="filetree">tasks-frontend/
+├── .env
+├── .gitignore
+└── src/
+    ├── api.js        (new)
+    ├── App.jsx       (replaced)
+    └── App.css       (a few styles)</div>
+  </section>
+
+  <section>
+    <div class="step">
+      <h3><span class="num">1</span> Run both servers</h3>
+      <p>Terminal 1 — backend (in <code>tasks-api</code>, venv active):</p>
+      <pre><code>uvicorn app.main:app --reload</code></pre>
+      <p>Terminal 2 — frontend (in <code>tasks-frontend</code>):</p>
+      <pre><code>npm run dev</code></pre>
+      <p>Note the exact frontend origin Vite prints (usually <code>http://localhost:5173/</code>). Before adding CORS, a fetch to the API will fail in the console with something like:</p>
+      <pre><code>Access to fetch at 'http://localhost:8000/tasks' from origin
+'http://localhost:5173' has been blocked by CORS policy:
+No 'Access-Control-Allow-Origin' header is present on the requested resource.</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Enable CORS in <code>app/main.py</code></h3>
+      <pre><code>from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.config import get_settings
+from app.routers import health, tasks
+
+settings = get_settings()
+app = FastAPI(title=settings.app_name)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(health.router)
+app.include_router(tasks.router)</code></pre>
+      <p>If your browser uses <code>127.0.0.1</code>, widen the setting in <code>app/config.py</code>:</p>
+      <pre><code>cors_origins: list[str] = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]</code></pre>
+      <p>Uvicorn auto-reloads. The CORS error should disappear on the next request.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Frontend <code>.env</code></h3>
+      <pre><code># tasks-frontend/.env
+VITE_API_URL=http://localhost:8000</code></pre>
+      <p>Add it to <code>.gitignore</code>, then <strong>restart</strong> <code>npm run dev</code> (Vite reads <code>.env</code> only at startup).</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> <code>src/api.js</code></h3>
+      <pre><code>const BASE_URL = import.meta.env.VITE_API_URL;
+
+export async function getTasks() {
+  const res = await fetch(`${BASE_URL}/tasks`);
+  if (!res.ok) throw new Error(`Failed to load tasks (${res.status})`);
+  return res.json();
+}
+
+export async function createTask(title) {
+  const res = await fetch(`${BASE_URL}/tasks`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title }),
+  });
+  if (!res.ok) throw new Error(`Failed to create task (${res.status})`);
+  return res.json();
+}
+
+export async function toggleTask(id, completed) {
+  const res = await fetch(`${BASE_URL}/tasks/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ completed }),
+  });
+  if (!res.ok) throw new Error(`Failed to update task (${res.status})`);
+  return res.json();
+}
+
+export async function deleteTask(id) {
+  const res = await fetch(`${BASE_URL}/tasks/${id}`, { method: "DELETE" });
+  if (!res.ok) throw new Error(`Failed to delete task (${res.status})`);
+}</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> <code>src/App.jsx</code></h3>
+      <pre><code>import { useEffect, useState } from "react";
+import { getTasks, createTask, toggleTask, deleteTask } from "./api";
+import "./App.css";
+
+function App() {
+  const [tasks, setTasks] = useState([]);
+  const [title, setTitle] = useState("");
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  async function load() {
+    try {
+      setError(null);
+      setTasks(await getTasks());
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() =&gt; { load(); }, []);
+
+  async function handleAdd(e) {
+    e.preventDefault();
+    const t = title.trim();
+    if (!t) return;
+    try {
+      await createTask(t);
+      setTitle("");
+      load();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function handleToggle(task) {
+    try {
+      await toggleTask(task.id, !task.completed);
+      load();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function handleDelete(id) {
+    try {
+      await deleteTask(id);
+      load();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  return (
+    &lt;main className="app"&gt;
+      &lt;h1&gt;✅ Tasks&lt;/h1&gt;
+
+      &lt;form onSubmit={handleAdd} className="add-form"&gt;
+        &lt;input
+          value={title}
+          onChange={(e) =&gt; setTitle(e.target.value)}
+          placeholder="New task…"
+        /&gt;
+        &lt;button type="submit"&gt;Add&lt;/button&gt;
+      &lt;/form&gt;
+
+      {error &amp;&amp; &lt;p className="error"&gt;⚠️ {error}&lt;/p&gt;}
+      {loading &amp;&amp; &lt;p&gt;Loading…&lt;/p&gt;}
+      {!loading &amp;&amp; tasks.length === 0 &amp;&amp; &lt;p&gt;No tasks yet — add one above.&lt;/p&gt;}
+
+      &lt;ul className="task-list"&gt;
+        {tasks.map((task) =&gt; (
+          &lt;li key={task.id} className={task.completed ? "done" : ""}&gt;
+            &lt;label&gt;
+              &lt;input
+                type="checkbox"
+                checked={task.completed}
+                onChange={() =&gt; handleToggle(task)}
+              /&gt;
+              {task.title}
+            &lt;/label&gt;
+            &lt;button onClick={() =&gt; handleDelete(task.id)}&gt;🗑&lt;/button&gt;
+          &lt;/li&gt;
+        ))}
+      &lt;/ul&gt;
+    &lt;/main&gt;
+  );
+}
+
+export default App;</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> A little <code>src/App.css</code></h3>
+      <pre><code>.app { max-width: 480px; margin: 40px auto; font-family: system-ui, sans-serif; }
+.add-form { display: flex; gap: 8px; margin-bottom: 16px; }
+.add-form input { flex: 1; padding: 8px; }
+.task-list { list-style: none; padding: 0; }
+.task-list li { display: flex; justify-content: space-between; align-items: center;
+  padding: 8px; border-bottom: 1px solid #e2e8f0; }
+.task-list li.done label { text-decoration: line-through; color: #94a3b8; }
+.error { color: #b91c1c; }</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Verify end to end</h3>
+      <table>
+        <tr><th>Action</th><th>Expected</th></tr>
+        <tr><td>Type a title, click Add</td><td>Task appears in the list (POST 201)</td></tr>
+        <tr><td>Check a task's box</td><td>Strikethrough; persists on refresh (PATCH 200)</td></tr>
+        <tr><td>Click 🗑</td><td>Task disappears (DELETE 204)</td></tr>
+        <tr><td>Create a task in <code>/docs</code>, refresh the app</td><td>It shows up — same backend</td></tr>
+        <tr><td>Restart Uvicorn, refresh the app</td><td>List is empty — in-memory reset</td></tr>
+        <tr><td>Network tab on a POST</td><td>An <code>OPTIONS</code> preflight, then the <code>POST</code></td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>🛠 Troubleshooting</h2>
+    <table>
+      <tr><th>Symptom</th><th>Fix</th></tr>
+      <tr><td>CORS error persists after adding middleware</td><td>The browser origin doesn't match <code>cors_origins</code>. Add the exact one (mind <code>localhost</code> vs <code>127.0.0.1</code>) and let Uvicorn reload.</td></tr>
+      <tr><td><code>import.meta.env.VITE_API_URL</code> is <code>undefined</code></td><td>The var must start with <code>VITE_</code>, live in the frontend root <code>.env</code>, and you must restart <code>npm run dev</code>.</td></tr>
+      <tr><td><code>Failed to fetch</code> / connection refused</td><td>The backend isn't running, or the URL/port is wrong. Confirm Uvicorn is up on <code>:8000</code>.</td></tr>
+      <tr><td>POST returns 422</td><td>Body shape is wrong — send <code>{"title": "..."}</code> with <code>Content-Type: application/json</code> and <code>JSON.stringify</code>.</td></tr>
+      <tr><td>405 Method Not Allowed on PATCH/DELETE</td><td>Check the URL includes the id (<code>/tasks/3</code>) and the method string is correct.</td></tr>
+      <tr><td>Checkbox won't stay checked</td><td>You must re-fetch (or update state) after the PATCH resolves; ensure <code>handleToggle</code> calls <code>load()</code>.</td></tr>
+    </table>
+  </section>
+
+  <section class="done">
+    <h2>🎉 You're done</h2>
+    <p>Frontend and backend now talk: a click in React travels through CORS, Uvicorn, and FastAPI, mutates your data, and returns JSON that updates the UI. That's a real full-stack loop — the same architecture the capstone uses.</p>
+    <p><strong>Up next → Chunk 5.6: Error Handling &amp; API Best Practices</strong> — consistent error responses, global exception handlers, pagination, and versioning. It closes with the 🏁 Module 5 Checkpoint: a full CRUD Tasks API consumed by your React frontend.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

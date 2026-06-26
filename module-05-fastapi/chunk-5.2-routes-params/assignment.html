@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment · Chunk 5.2 — Routes, Path &amp; Query Params</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #ede9fe;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:#ede9fe;border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#5b21b6;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--task);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .deliverable{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .deliverable h2{border-color:#a7f3d0;color:#065f46;}
+  .check{list-style:none;padding-left:0;} .check li{padding-left:30px;position:relative;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:18px;color:var(--task);}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 5 — Backend with FastAPI</div>
+    <h1>Chunk 5.2 — Lab: In-Memory CRUD for Tasks</h1>
+    <span class="badge">🧪 ASSIGNMENT</span>
+    <span class="badge">⏱️ 45–75 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 Your mission</h2>
+    <p>Extend your <code>tasks-api</code> with a complete set of CRUD endpoints over an <strong>in-memory list of tasks</strong>. You'll practice path params, query params, status codes, and 404 handling — testing everything through <code>/docs</code>.</p>
+  </section>
+
+  <section>
+    <h2>Before you start</h2>
+    <ul>
+      <li>Continue in the same <code>tasks-api</code> project from Chunk 5.1.</li>
+      <li>Activate the venv (<code>source .venv/bin/activate</code>) and run <code>uvicorn main:app --reload</code>.</li>
+      <li>Keep the <code>/docs</code> tab open — you'll send POST/PATCH/DELETE from there.</li>
+    </ul>
+    <p>Each task is a dict with these fields: <code>id: int</code>, <code>title: str</code>, <code>description: str | None</code>, <code>completed: bool</code> (default <code>False</code>), <code>created_at</code> (an ISO timestamp string).</p>
+    <div class="callout warning">
+      <div class="label">⚠️ Try it yourself first</div>
+      Use the lecture's worked examples as building blocks, but write the endpoints yourself. Only open the solution to compare.
+    </div>
+  </section>
+
+  <section>
+    <h2>Tasks</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Add in-memory storage</h3>
+      <p>At the top of <code>main.py</code>, add a module-level <code>tasks: list[dict] = []</code> and a <code>next_id</code> counter starting at 1. Write a small <code>find_task(task_id)</code> helper that returns the matching dict or <code>None</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Create — <code>POST /tasks</code></h3>
+      <p>Accept <code>title: str</code> (required) and <code>description: str | None = None</code> as query parameters. Build the task dict (auto-assign <code>id</code>, set <code>completed=False</code> and <code>created_at</code>), append it, increment the counter, and return it with status <strong>201</strong>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> List — <code>GET /tasks</code></h3>
+      <p>Return the full list. Add an optional query param <code>completed: bool | None = None</code>: when provided, return only tasks whose <code>completed</code> matches; when omitted, return everything.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Read one — <code>GET /tasks/{task_id}</code></h3>
+      <p>Use a path param <code>task_id: int</code>. If the task exists, return it. If not, raise <code>HTTPException</code> with status <strong>404</strong> and a clear <code>detail</code> message.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Update — <code>PATCH /tasks/{task_id}</code></h3>
+      <p>Accept optional query params <code>title</code>, <code>description</code>, and <code>completed</code> (all default to <code>None</code>). Find the task (404 if missing) and update <em>only</em> the fields that were provided. Return the updated task.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Delete — <code>DELETE /tasks/{task_id}</code></h3>
+      <p>Find the task (404 if missing), remove it from the list, and return nothing with status <strong>204</strong>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Exercise the API in <code>/docs</code></h3>
+      <p>Create 3 tasks. List them. Mark one completed via PATCH. Filter with <code>GET /tasks?completed=true</code>. Fetch a missing id (e.g. 999) and confirm a 404. Delete one and confirm a 204, then confirm it's gone from the list.</p>
+    </div>
+  </section>
+
+  <section class="deliverable">
+    <h2>✅ Deliverable — acceptance checklist</h2>
+    <ul class="check">
+      <li><code>GET /tasks</code> lists tasks and supports the <code>completed</code> filter.</li>
+      <li><code>GET /tasks/{task_id}</code> returns one task, or 404 with a <code>detail</code> message.</li>
+      <li><code>POST /tasks</code> creates a task and responds with status 201.</li>
+      <li><code>PATCH /tasks/{task_id}</code> updates only the provided fields; 404 if missing.</li>
+      <li><code>DELETE /tasks/{task_id}</code> removes a task and responds with status 204; 404 if missing.</li>
+      <li>The <code>/health</code> endpoint from 5.1 still works.</li>
+      <li>Every endpoint is testable in <code>/docs</code> and behaves as described.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🚀 Stretch goals (optional)</h2>
+    <ul>
+      <li>Add a <code>GET /tasks/stats</code> route returning counts of total/completed/pending. (Remember: define it <em>before</em> <code>/tasks/{task_id}</code>.)</li>
+      <li>Add query params <code>limit</code> and <code>offset</code> to <code>GET /tasks</code> for simple pagination.</li>
+      <li>Validate that <code>title</code> isn't empty/whitespace; raise a 400 if it is.</li>
+      <li>Add a <code>search: str | None</code> query param that filters tasks whose title contains the text (case-insensitive).</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a class="current">🧪 Assignment</a>
+    <a href="solution.html">✅ Solution →</a>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk 7.4 — Authorization, Refresh &amp; Security Hardening</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  .checkpoint{background:#fffbeb;border:2px solid #f59e0b;}
+  .checkpoint h2{border-color:#fde68a;color:#92400e;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .full{border:2px solid #16a34a;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 7 — Authentication &amp; Security</div>
+    <h1>Chunk 7.4 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>We'll add roles, refresh tokens, env-based secrets, and run the 🏁 Module 7 Checkpoint. New/changed files:</p>
+    <div class="filetree">tasks-api/
+├── .env                       (new: secrets, git-ignored)
+├── .env.example               (new: placeholders, committed)
+├── .gitignore                 (ignore .env, *.db, .venv)
+└── app/
+    ├── config.py              (new: pydantic-settings)
+    ├── security.py            (refresh + type claim, settings)
+    ├── schemas.py             (Token gains refresh_token)
+    ├── deps.py                (require_role / get_current_admin)
+    ├── main.py                (CORS allowlist, admin router)
+    └── routers/
+        ├── auth.py            (return refresh, /auth/refresh)
+        └── admin.py           (new: GET /admin/users)</div>
+  </section>
+
+  <section>
+    <h2>Part A — Authorization (roles)</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> <code>require_role</code> in <code>deps.py</code></h3>
+      <pre><code># app/deps.py  (add to the existing file)
+def require_role(*allowed_roles: str):
+    def checker(current_user: models.User = Depends(get_current_user)) -&gt; models.User:
+        if current_user.role not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not enough permissions",
+            )
+        return current_user
+    return checker
+
+get_current_admin = require_role("admin")</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> The admin router</h3>
+      <pre><code># app/routers/admin.py
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app.deps import get_current_admin
+from app import models, schemas
+
+router = APIRouter(prefix="/admin", tags=["admin"])
+
+@router.get("/users", response_model=list[schemas.UserOut])
+def list_all_users(
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(get_current_admin),
+):
+    return db.query(models.User).all()</code></pre>
+      <pre><code># app/main.py  (add)
+from app.routers import auth, tasks, admin
+app.include_router(admin.router)</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Promote an admin</h3>
+      <pre><code>sqlite3 tasks.db "UPDATE users SET role='admin' WHERE email='admin@x.com';"
+sqlite3 tasks.db "SELECT email, role FROM users;"
+# admin@x.com|admin</code></pre>
+    </div>
+  </section>
+
+  <section>
+    <h2>Part B — Refresh tokens</h2>
+
+    <div class="step">
+      <h3><span class="num">4</span> Token helpers with a <code>type</code> claim</h3>
+      <pre><code># app/security.py  (token section, using settings from Part C)
+from datetime import datetime, timedelta, timezone
+from jose import jwt, JWTError
+from app.config import settings
+
+ALGORITHM = "HS256"
+
+def create_token(subject: str, token_type: str, expires_delta: timedelta) -&gt; str:
+    payload = {
+        "sub": subject,
+        "type": token_type,
+        "exp": datetime.now(timezone.utc) + expires_delta,
+    }
+    return jwt.encode(payload, settings.secret_key, algorithm=ALGORITHM)
+
+def create_access_token(subject: str) -&gt; str:
+    return create_token(subject, "access",
+                        timedelta(minutes=settings.access_token_expire_minutes))
+
+def create_refresh_token(subject: str) -&gt; str:
+    return create_token(subject, "refresh",
+                        timedelta(days=settings.refresh_token_expire_days))
+
+def decode_token(token: str, expected_type: str) -&gt; str | None:
+    """Return the subject if valid AND of the expected type, else None."""
+    try:
+        payload = jwt.decode(token, settings.secret_key, algorithms=[ALGORITHM])
+    except JWTError:
+        return None
+    if payload.get("type") != expected_type:
+        return None
+    return payload.get("sub")</code></pre>
+      <div class="callout note">
+        <div class="label">📝 Update get_current_user</div>
+        Point your existing dependency at the new decoder: <code>user_id = decode_token(token, "access")</code>. Now an access token is required for protected routes, and a refresh token won't be accepted there.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Return both tokens + a refresh endpoint</h3>
+      <pre><code># app/schemas.py
+class Token(BaseModel):
+    access_token: str
+    refresh_token: str | None = None
+    token_type: str = "bearer"
+
+class RefreshRequest(BaseModel):
+    refresh_token: str</code></pre>
+      <pre><code># app/routers/auth.py  (updated login + new refresh)
+from app.security import (hash_password, verify_password,
+                          create_access_token, create_refresh_token, decode_token)
+
+@router.post("/login", response_model=schemas.Token)
+def login(form_data: OAuth2PasswordRequestForm = Depends(),
+          db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(
+        models.User.email == form_data.username.lower()).first()
+    if not user or not verify_password(form_data.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    return {
+        "access_token": create_access_token(str(user.id)),
+        "refresh_token": create_refresh_token(str(user.id)),
+        "token_type": "bearer",
+    }
+
+@router.post("/refresh", response_model=schemas.Token)
+def refresh(data: schemas.RefreshRequest, db: Session = Depends(get_db)):
+    user_id = decode_token(data.refresh_token, expected_type="refresh")
+    if user_id is None or db.get(models.User, int(user_id)) is None:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+    return {"access_token": create_access_token(user_id), "token_type": "bearer"}</code></pre>
+    </div>
+  </section>
+
+  <section>
+    <h2>Part C — Secrets &amp; hardening</h2>
+
+    <div class="step">
+      <h3><span class="num">6</span> Env-based settings</h3>
+      <pre><code>pip install pydantic-settings
+pip freeze &gt; requirements.txt</code></pre>
+      <pre><code># app/config.py
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+class Settings(BaseSettings):
+    secret_key: str
+    access_token_expire_minutes: int = 30
+    refresh_token_expire_days: int = 7
+    database_url: str = "sqlite:///./tasks.db"
+    frontend_origin: str = "http://localhost:5173"
+    model_config = SettingsConfigDict(env_file=".env")
+
+settings = Settings()</code></pre>
+      <pre><code># .env   (NEVER commit)
+SECRET_KEY=3f9a...paste-64-hex-chars...
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+REFRESH_TOKEN_EXPIRE_DAYS=7
+FRONTEND_ORIGIN=http://localhost:5173</code></pre>
+      <pre><code># .env.example   (commit this — placeholders only)
+SECRET_KEY=
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+REFRESH_TOKEN_EXPIRE_DAYS=7
+FRONTEND_ORIGIN=http://localhost:5173</code></pre>
+      <pre><code># .gitignore
+.env
+*.db
+.venv/
+__pycache__/</code></pre>
+      <div class="callout warning">
+        <div class="label">⚠️ Generate a real key</div>
+        <code>python -c "import secrets; print(secrets.token_hex(32))"</code> and paste it into <code>.env</code>. Settings validation will fail at startup if <code>SECRET_KEY</code> is missing — that's a feature: no silent insecure default.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> CORS allowlist</h3>
+      <pre><code># app/main.py
+from fastapi.middleware.cors import CORSMiddleware
+from app.config import settings
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[settings.frontend_origin],   # exact origin, not "*"
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)</code></pre>
+      <p>Password length is already enforced server-side via <code>UserCreate.password = Field(min_length=8)</code>, and login still returns the vague <code>"Invalid credentials"</code> — both confirmed from earlier chunks.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Part D — Frontend auto-refresh (optional)</h2>
+    <div class="step">
+      <h3><span class="num">8</span> Store refresh token &amp; retry on 401</h3>
+      <pre><code>// src/api.js  (enhanced apiFetch)
+export async function apiFetch(path, options = {}, _retry = true) {
+  const headers = { ...(options.headers || {}) };
+  const token = localStorage.getItem("token");
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  const res = await fetch(`${BASE}${path}`, { ...options, headers });
+
+  if (res.status === 401 &amp;&amp; _retry) {
+    const refreshed = await tryRefresh();           // attempt once
+    if (refreshed) return apiFetch(path, options, false);  // retry original
+    localStorage.removeItem("token");
+    localStorage.removeItem("refresh");
+    throw new Error("Unauthorized");
+  }
+  if (!res.ok) {
+    const data = await res.json().catch(() =&gt; ({}));
+    throw new Error(data.detail || "Request failed");
+  }
+  return res.status === 204 ? null : res.json();
+}
+
+async function tryRefresh() {
+  const refresh_token = localStorage.getItem("refresh");
+  if (!refresh_token) return false;
+  const res = await fetch(`${BASE}/auth/refresh`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refresh_token }),
+  });
+  if (!res.ok) return false;
+  const { access_token } = await res.json();
+  localStorage.setItem("token", access_token);
+  return true;
+}</code></pre>
+      <p>In <code>AuthContext.login</code>, also save the refresh token: <code>localStorage.setItem("refresh", refresh_token)</code>, and clear it in <code>logout</code>.</p>
+    </div>
+  </section>
+
+  <section class="checkpoint">
+    <h2>🏁 Module 7 Checkpoint — verification walkthrough</h2>
+    <p>Run the backend (in the shell where <code>.env</code> is read) and the React app, then confirm each:</p>
+    <pre><code># 1. Auth required
+curl -i http://localhost:8000/tasks
+# -&gt; HTTP/1.1 401 Unauthorized
+
+# 2. Data isolation  (log in as B, try A's task)
+curl -s -X POST localhost:8000/auth/login -d "username=b@x.com&amp;password=secret12345" \
+  -H "Content-Type: application/x-www-form-urlencoded"   # grab B's access_token
+curl -i localhost:8000/tasks/1 -H "Authorization: Bearer &lt;B_TOKEN&gt;"
+# -&gt; 404 {"detail":"Task not found"}   (task 1 belongs to A)
+
+# 3. Passwords safe
+sqlite3 tasks.db "SELECT email, hashed_password FROM users;"
+# -&gt; every value starts with $2b$ ...
+
+# 4. Roles
+curl -i localhost:8000/admin/users -H "Authorization: Bearer &lt;NORMAL_USER_TOKEN&gt;"
+# -&gt; 403 {"detail":"Not enough permissions"}
+curl -s localhost:8000/admin/users -H "Authorization: Bearer &lt;ADMIN_TOKEN&gt;"
+# -&gt; [ {...}, {...} ]   full user list
+
+# 5. Refresh
+curl -s -X POST localhost:8000/auth/refresh \
+  -H "Content-Type: application/json" -d '{"refresh_token":"&lt;REFRESH&gt;"}'
+# -&gt; { "access_token": "eyJ...", "token_type": "bearer" }
+
+# 6. Secrets
+git status   # .env and tasks.db should NOT appear (they're ignored)
+grep -r "SECRET_KEY" app/   # only reads settings.secret_key — no literal key</code></pre>
+    <p>In the browser: logged out → dashboard redirects to <code>/login</code>; log in as A and B in turn → each sees only their own tasks; refresh the page → still logged in; log out → blocked again. When all six pass, your <strong>secure full-stack app where users only see their own data</strong> is complete.</p>
+  </section>
+
+  <section>
+    <h2>🔧 Troubleshooting</h2>
+    <table>
+      <tr><th>Symptom</th><th>Fix</th></tr>
+      <tr><td>App won't start: <code>field required: secret_key</code></td><td>Good — settings is doing its job. Create <code>.env</code> with <code>SECRET_KEY=...</code> in the project root and run uvicorn from there.</td></tr>
+      <tr><td>Admin route returns <code>403</code> for your admin</td><td>The DB role wasn't updated, or you're using an <em>old</em> token minted before promotion. Log in again to get a fresh token.</td></tr>
+      <tr><td><code>/auth/refresh</code> accepts an access token</td><td>You skipped the <code>type</code> check. Use <code>decode_token(token, "refresh")</code> and return <code>None</code> when the type doesn't match.</td></tr>
+      <tr><td>CORS breaks after the allowlist change</td><td><code>allow_origins</code> must match the browser origin exactly, including scheme and port (no trailing slash).</td></tr>
+      <tr><td>Old tokens all invalid after editing <code>.env</code></td><td>Expected — changing <code>SECRET_KEY</code> invalidates every existing token. Log in again.</td></tr>
+    </table>
+  </section>
+
+  <section class="full">
+    <h2>📄 Complete <code>app/config.py</code></h2>
+    <pre><code>from pydantic_settings import BaseSettings, SettingsConfigDict
+
+class Settings(BaseSettings):
+    secret_key: str
+    access_token_expire_minutes: int = 30
+    refresh_token_expire_days: int = 7
+    database_url: str = "sqlite:///./tasks.db"
+    frontend_origin: str = "http://localhost:5173"
+    model_config = SettingsConfigDict(env_file=".env")
+
+settings = Settings()</code></pre>
+  </section>
+
+  <section class="done">
+    <h2>🎉 Module 7 complete</h2>
+    <p>You built a real authentication &amp; authorization system on the Tasks API and proved its security properties end to end:</p>
+    <ul>
+      <li><strong>7.1</strong> — bcrypt password hashing; secure register/login.</li>
+      <li><strong>7.2</strong> — JWT issuing, <code>get_current_user</code>, owner-scoped routes.</li>
+      <li><strong>7.3</strong> — React login experience: token storage, auth context, protected routes, logout.</li>
+      <li><strong>7.4</strong> — roles &amp; admin access, refresh tokens, env-based secrets, hardened CORS — and the 🏁 Checkpoint.</li>
+    </ul>
+    <p>Your app now knows <em>who</em> every request is and enforces <em>what</em> they may do. The natural next question in production is: when something goes wrong (a failed login, a 500, a slow request), <strong>how would you even know?</strong> That's observability.</p>
+    <p><strong>Up next → Module 8: Logging &amp; Observability</strong> — structured logs, request IDs, and error tracking so you can see what your app is doing in production.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

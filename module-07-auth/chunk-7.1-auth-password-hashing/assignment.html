@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment · Chunk 7.1 — Auth Concepts &amp; Password Hashing</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #ede9fe;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .objective{background:#ede9fe;border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#5b21b6;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--task);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .deliverable{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .deliverable h2{border-color:#a7f3d0;color:#065f46;}
+  .check{list-style:none;padding-left:0;} .check li{padding-left:30px;position:relative;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:18px;color:var(--task);}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 7 — Authentication &amp; Security</div>
+    <h1>Chunk 7.1 — Lab: Secure Register &amp; Login Endpoints</h1>
+    <span class="badge">🧪 ASSIGNMENT</span>
+    <span class="badge">⏱️ 45–75 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 Your mission</h2>
+    <p>Add a password layer to the <strong>Tasks API</strong>. You'll extend the <code>User</code> model with a <code>hashed_password</code> and a <code>role</code>, create a reusable <code>security.py</code> with bcrypt hashing, and build two endpoints: <code>POST /auth/register</code> (hashes the password) and <code>POST /auth/login</code> (verifies it). No JWTs yet — that's 7.2. The goal here is that <strong>plaintext passwords never touch your database</strong>.</p>
+  </section>
+
+  <section>
+    <h2>Before you start</h2>
+    <ul>
+      <li>Your <strong>Tasks API</strong> from Module 6 should run: FastAPI + SQLAlchemy 2.x + SQLite (<code>tasks.db</code>), with a <code>get_db()</code> dependency and Alembic configured.</li>
+      <li>You already have a <code>Task</code> model and a minimal <code>User</code> model (<code>id</code>, <code>email</code> unique, <code>created_at</code>) with User → Tasks.</li>
+      <li>Activate your virtual environment (macOS/zsh): <code>source .venv/bin/activate</code> &nbsp;<span style="opacity:.7">(Windows: <code>.venv\Scripts\activate</code>)</span></li>
+      <li>The server runs with <code>uvicorn app.main:app --reload</code> and docs live at <code>http://localhost:8000/docs</code>.</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ Try it yourself first</div>
+      Build from the lecture and these tasks. Only open <code>solution.html</code> when you're stuck or to compare at the end.
+    </div>
+  </section>
+
+  <section>
+    <h2>Tasks</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Install passlib + bcrypt</h3>
+      <p>With your venv active, install the password library and pin it to your requirements.</p>
+      <pre><code>pip install "passlib[bcrypt]"
+pip freeze &gt; requirements.txt</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Extend the User model</h3>
+      <p>In your SQLAlchemy <code>User</code> model add two columns:</p>
+      <ul>
+        <li><code>hashed_password</code> — a non-nullable string.</li>
+        <li><code>role</code> — a string with a default of <code>"user"</code> (you'll use <code>"admin"</code> in 7.4).</li>
+      </ul>
+      <p>Keep the existing <code>id</code>, <code>email</code> (unique), <code>created_at</code>, and the relationship to tasks.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Create an Alembic migration</h3>
+      <p>Your DB schema changed, so generate and apply a migration so <code>tasks.db</code> gets the new columns.</p>
+      <pre><code>alembic revision --autogenerate -m "add hashed_password and role to users"
+alembic upgrade head</code></pre>
+      <div class="callout tip">
+        <div class="label">💡 Existing rows</div>
+        If you already have users without a password, it's simplest to delete the dev DB rows (or the file) and start fresh, since <code>hashed_password</code> is required.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Build <code>app/security.py</code></h3>
+      <p>Create a single module that owns password hashing. It should export a <code>pwd_context</code> (a <code>CryptContext</code> using bcrypt) plus <code>hash_password(plain)</code> and <code>verify_password(plain, hashed)</code> helpers.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Add Pydantic schemas</h3>
+      <p>In your schemas module add:</p>
+      <ul>
+        <li><code>UserCreate</code> — incoming: <code>email</code> (use <code>EmailStr</code>) + <code>password</code>.</li>
+        <li><code>UserLogin</code> — incoming: <code>email</code> + <code>password</code>.</li>
+        <li><code>UserOut</code> — outgoing: <code>id</code>, <code>email</code>, <code>role</code>, <code>created_at</code>. <strong>Never</strong> include the password or the hash. Set <code>model_config = ConfigDict(from_attributes=True)</code> (Pydantic v2).</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Build the auth router — <code>POST /auth/register</code></h3>
+      <p>Create <code>app/routers/auth.py</code> with an <code>APIRouter(prefix="/auth", tags=["auth"])</code>. The register endpoint should:</p>
+      <ul>
+        <li>Reject a duplicate email with <code>400</code>.</li>
+        <li>Hash the incoming password with <code>hash_password</code> and store the user.</li>
+        <li>Return <code>UserOut</code> with status <code>201</code>.</li>
+      </ul>
+      <p>Remember to include the router in <code>app/main.py</code> with <code>app.include_router(auth.router)</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Add <code>POST /auth/login</code></h3>
+      <p>Look up the user by email and call <code>verify_password</code>. If the user is missing <em>or</em> the password is wrong, raise <code>401</code> with the <strong>same</strong> vague message (<code>"Invalid credentials"</code>). On success, return <code>{"message": "Login successful"}</code> for now — you'll swap this for a JWT in 7.2.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">8</span> Test in the docs</h3>
+      <p>Run the server and open <code>/docs</code>. Register a user, then check the DB to confirm the stored value is a bcrypt hash, not plaintext:</p>
+      <pre><code>sqlite3 tasks.db "SELECT email, hashed_password, role FROM users;"</code></pre>
+      <p>Then hit <code>/auth/login</code> with the right password (expect success) and a wrong one (expect <code>401</code>).</p>
+    </div>
+  </section>
+
+  <section class="deliverable">
+    <h2>✅ Deliverable — acceptance checklist</h2>
+    <ul class="check">
+      <li><code>passlib[bcrypt]</code> is installed and in <code>requirements.txt</code>.</li>
+      <li>The <code>User</code> model has <code>hashed_password</code> and <code>role</code> (default <code>"user"</code>), applied via an Alembic migration.</li>
+      <li><code>app/security.py</code> exposes <code>pwd_context</code>, <code>hash_password</code>, and <code>verify_password</code>.</li>
+      <li><code>POST /auth/register</code> hashes the password, rejects duplicate emails (400), and returns <code>UserOut</code> (201) with no password field.</li>
+      <li><code>POST /auth/login</code> returns success for correct credentials and <code>401 "Invalid credentials"</code> for a wrong password <em>or</em> unknown email.</li>
+      <li>Inspecting <code>tasks.db</code> shows a bcrypt hash (starts with <code>$2b$</code>) — never plaintext.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🚀 Stretch goals (optional)</h2>
+    <ul>
+      <li>Add a minimum password length to <code>UserCreate</code> with Pydantic: <code>password: str = Field(min_length=8)</code>.</li>
+      <li>Normalize emails to lowercase before storing and comparing, so <code>Jane@x.com</code> and <code>jane@x.com</code> are the same account.</li>
+      <li>Print two hashes of the <em>same</em> password in a Python shell and confirm they differ (the salt at work).</li>
+      <li>Read the bcrypt cost factor in your stored hash (the number after <code>$2b$</code>) and try bumping it via the <code>CryptContext</code> (e.g. <code>bcrypt__rounds=13</code>); notice login gets slower.</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a class="current">🧪 Assignment</a>
+    <a href="solution.html">✅ Solution →</a>
+  </div>
+</footer>
+</body>
+</html>
