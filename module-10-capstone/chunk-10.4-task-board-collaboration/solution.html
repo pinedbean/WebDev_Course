@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk 10.4 — Task Board &amp; Collaboration</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  .checkpoint{background:#fffbeb;border:2px solid #f59e0b;}
+  .checkpoint h2{border-color:#fde68a;color:#92400e;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .full{border:2px solid #16a34a;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 10 — Capstone: TaskFlow</div>
+    <h1>Chunk 10.4 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>We build the board out of small components. New files:</p>
+    <div class="filetree">frontend/src/
+├── App.jsx                 (add /projects/:id route)
+├── pages/Board.jsx
+└── components/
+    ├── TaskCard.jsx
+    ├── TaskForm.jsx
+    └── MembersBar.jsx
+plus board styles appended to index.css</div>
+  </section>
+
+  <section>
+    <div class="step">
+      <h3><span class="num">1</span> Add the route</h3>
+      <p>In <code>App.jsx</code>, add the Board inside the protected Layout routes:</p>
+      <pre><code>// src/App.jsx  (additions)
+import Board from "./pages/Board";
+// ...
+&lt;Route element={&lt;Layout /&gt;}&gt;
+  &lt;Route path="/" element={&lt;Projects /&gt;} /&gt;
+  &lt;Route path="/projects/:id" element={&lt;Board /&gt;} /&gt;
+&lt;/Route&gt;</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> TaskCard component</h3>
+      <pre><code>// src/components/TaskCard.jsx
+export default function TaskCard({ task, members, onMove, onEdit, onDelete }) {
+  const assignee = members.find((m) =&gt; m.user_id === task.assignee_id);
+  const overdue =
+    task.due_date &amp;&amp; task.status !== "done" &amp;&amp;
+    task.due_date &lt; new Date().toISOString().slice(0, 10);
+
+  return (
+    &lt;article className="task-card"&gt;
+      &lt;h4&gt;{task.title}&lt;/h4&gt;
+      {task.description &amp;&amp; &lt;p className="muted small"&gt;{task.description}&lt;/p&gt;}
+      &lt;div className="meta"&gt;
+        &lt;span className="chip"&gt;{assignee ? assignee.name : "Unassigned"}&lt;/span&gt;
+        {task.due_date &amp;&amp; (
+          &lt;span className={overdue ? "due overdue" : "due"}&gt;📅 {task.due_date}&lt;/span&gt;
+        )}
+      &lt;/div&gt;
+      &lt;div className="card-actions"&gt;
+        &lt;select value={task.status}
+                onChange={(e) =&gt; onMove(task, e.target.value)}&gt;
+          &lt;option value="todo"&gt;To Do&lt;/option&gt;
+          &lt;option value="in_progress"&gt;In Progress&lt;/option&gt;
+          &lt;option value="done"&gt;Done&lt;/option&gt;
+        &lt;/select&gt;
+        &lt;button className="link" onClick={() =&gt; onEdit(task)}&gt;Edit&lt;/button&gt;
+        &lt;button className="link danger" onClick={() =&gt; onDelete(task)}&gt;Delete&lt;/button&gt;
+      &lt;/div&gt;
+    &lt;/article&gt;
+  );
+}</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> TaskForm component (create + edit)</h3>
+      <pre><code>// src/components/TaskForm.jsx
+import { useState } from "react";
+
+export default function TaskForm({ task, members, onSave, onCancel }) {
+  const [form, setForm] = useState({
+    title: task?.title ?? "",
+    description: task?.description ?? "",
+    status: task?.status ?? "todo",
+    assignee_id: task?.assignee_id ?? "",
+    due_date: task?.due_date ?? "",
+  });
+  const [error, setError] = useState("");
+
+  const update = (field, value) =&gt; setForm((f) =&gt; ({ ...f, [field]: value }));
+
+  async function submit(e) {
+    e.preventDefault();
+    setError("");
+    try {
+      await onSave({
+        title: form.title,
+        description: form.description,
+        status: form.status,
+        assignee_id: form.assignee_id === "" ? null : Number(form.assignee_id),
+        due_date: form.due_date === "" ? null : form.due_date,
+      });
+    } catch (err) { setError(err.message); }
+  }
+
+  return (
+    &lt;form className="task-form" onSubmit={submit}&gt;
+      &lt;h3&gt;{task ? "Edit task" : "New task"}&lt;/h3&gt;
+      {error &amp;&amp; &lt;p className="error"&gt;{error}&lt;/p&gt;}
+      &lt;input value={form.title} required placeholder="Title"
+             onChange={(e) =&gt; update("title", e.target.value)} /&gt;
+      &lt;textarea value={form.description} placeholder="Description"
+                onChange={(e) =&gt; update("description", e.target.value)} /&gt;
+      &lt;div className="row"&gt;
+        &lt;label&gt;Status
+          &lt;select value={form.status}
+                  onChange={(e) =&gt; update("status", e.target.value)}&gt;
+            &lt;option value="todo"&gt;To Do&lt;/option&gt;
+            &lt;option value="in_progress"&gt;In Progress&lt;/option&gt;
+            &lt;option value="done"&gt;Done&lt;/option&gt;
+          &lt;/select&gt;
+        &lt;/label&gt;
+        &lt;label&gt;Assignee
+          &lt;select value={form.assignee_id}
+                  onChange={(e) =&gt; update("assignee_id", e.target.value)}&gt;
+            &lt;option value=""&gt;Unassigned&lt;/option&gt;
+            {members.map((m) =&gt; (
+              &lt;option key={m.user_id} value={m.user_id}&gt;{m.name}&lt;/option&gt;
+            ))}
+          &lt;/select&gt;
+        &lt;/label&gt;
+        &lt;label&gt;Due date
+          &lt;input type="date" value={form.due_date ?? ""}
+                 onChange={(e) =&gt; update("due_date", e.target.value)} /&gt;
+        &lt;/label&gt;
+      &lt;/div&gt;
+      &lt;div className="row"&gt;
+        &lt;button type="submit"&gt;Save&lt;/button&gt;
+        &lt;button type="button" className="ghost-dark" onClick={onCancel}&gt;Cancel&lt;/button&gt;
+      &lt;/div&gt;
+    &lt;/form&gt;
+  );
+}</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> MembersBar component</h3>
+      <pre><code>// src/components/MembersBar.jsx
+import { useState } from "react";
+
+export default function MembersBar({ members, isOwner, onInvite }) {
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
+
+  async function submit(e) {
+    e.preventDefault();
+    setError("");
+    try {
+      await onInvite(email);
+      setEmail("");
+    } catch (err) { setError(err.message); }
+  }
+
+  return (
+    &lt;div className="members-bar"&gt;
+      &lt;div className="chips"&gt;
+        {members.map((m) =&gt; (
+          &lt;span key={m.user_id} className="chip"&gt;
+            {m.name}{m.role === "owner" ? " (owner)" : ""}
+          &lt;/span&gt;
+        ))}
+      &lt;/div&gt;
+      {isOwner &amp;&amp; (
+        &lt;form className="invite" onSubmit={submit}&gt;
+          &lt;input type="email" value={email} placeholder="Invite by email" required
+                 onChange={(e) =&gt; setEmail(e.target.value)} /&gt;
+          &lt;button&gt;+ Invite&lt;/button&gt;
+        &lt;/form&gt;
+      )}
+      {error &amp;&amp; &lt;p className="error small"&gt;{error}&lt;/p&gt;}
+    &lt;/div&gt;
+  );
+}</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> The Board page (ties it together)</h3>
+      <pre><code>// src/pages/Board.jsx
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { api } from "../api/client";
+import { useAuth } from "../context/AuthContext";
+import TaskCard from "../components/TaskCard";
+import TaskForm from "../components/TaskForm";
+import MembersBar from "../components/MembersBar";
+
+const COLUMNS = [
+  { key: "todo", title: "To Do" },
+  { key: "in_progress", title: "In Progress" },
+  { key: "done", title: "Done" },
+];
+
+export default function Board() {
+  const { id } = useParams();
+  const { user } = useAuth();
+
+  const [project, setProject] = useState(null);
+  const [members, setMembers] = useState([]);
+  const [tasks, setTasks] = useState([]);
+  const [filters, setFilters] = useState({ status: "", assignee_id: "" });
+  const [editing, setEditing] = useState(null);   // task | "new" | null
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // load project + members once
+  useEffect(() =&gt; {
+    Promise.all([
+      api(`/projects/${id}`),
+      api(`/projects/${id}/members`),
+    ])
+      .then(([p, m]) =&gt; { setProject(p); setMembers(m); })
+      .catch((e) =&gt; setError(e.message))
+      .finally(() =&gt; setLoading(false));
+  }, [id]);
+
+  // (re)load tasks whenever filters change
+  useEffect(() =&gt; {
+    const params = new URLSearchParams();
+    if (filters.status) params.set("status", filters.status);
+    if (filters.assignee_id) params.set("assignee_id", filters.assignee_id);
+    const qs = params.toString() ? `?${params}` : "";
+    api(`/projects/${id}/tasks${qs}`).then(setTasks).catch((e) =&gt; setError(e.message));
+  }, [id, filters]);
+
+  async function saveTask(data) {
+    if (editing &amp;&amp; editing !== "new") {
+      const updated = await api(`/projects/${id}/tasks/${editing.id}`,
+        { method: "PATCH", body: data });
+      setTasks((prev) =&gt; prev.map((t) =&gt; (t.id === updated.id ? updated : t)));
+    } else {
+      const created = await api(`/projects/${id}/tasks`,
+        { method: "POST", body: data });
+      setTasks((prev) =&gt; [...prev, created]);
+    }
+    setEditing(null);
+  }
+
+  async function moveTask(task, status) {
+    const updated = await api(`/projects/${id}/tasks/${task.id}`,
+      { method: "PATCH", body: { status } });
+    setTasks((prev) =&gt; prev.map((t) =&gt; (t.id === updated.id ? updated : t)));
+  }
+
+  async function deleteTask(task) {
+    if (!confirm(`Delete "${task.title}"?`)) return;
+    await api(`/projects/${id}/tasks/${task.id}`, { method: "DELETE" });
+    setTasks((prev) =&gt; prev.filter((t) =&gt; t.id !== task.id));
+  }
+
+  async function invite(email) {
+    const member = await api(`/projects/${id}/members`,
+      { method: "POST", body: { email } });
+    setMembers((prev) =&gt; [...prev, member]);
+  }
+
+  if (loading) return &lt;p&gt;Loading board…&lt;/p&gt;;
+  if (error) return &lt;p className="error"&gt;{error}&lt;/p&gt;;
+
+  const isOwner = project &amp;&amp; user &amp;&amp; project.owner_id === user.id;
+
+  return (
+    &lt;section&gt;
+      &lt;div className="page-head"&gt;
+        &lt;h1&gt;{project.name}&lt;/h1&gt;
+        &lt;button onClick={() =&gt; setEditing("new")}&gt;+ New Task&lt;/button&gt;
+      &lt;/div&gt;
+
+      &lt;MembersBar members={members} isOwner={isOwner} onInvite={invite} /&gt;
+
+      &lt;div className="filters"&gt;
+        &lt;select value={filters.status}
+                onChange={(e) =&gt; setFilters((f) =&gt; ({ ...f, status: e.target.value }))}&gt;
+          &lt;option value=""&gt;All statuses&lt;/option&gt;
+          &lt;option value="todo"&gt;To Do&lt;/option&gt;
+          &lt;option value="in_progress"&gt;In Progress&lt;/option&gt;
+          &lt;option value="done"&gt;Done&lt;/option&gt;
+        &lt;/select&gt;
+        &lt;select value={filters.assignee_id}
+                onChange={(e) =&gt; setFilters((f) =&gt; ({ ...f, assignee_id: e.target.value }))}&gt;
+          &lt;option value=""&gt;All assignees&lt;/option&gt;
+          {members.map((m) =&gt; (
+            &lt;option key={m.user_id} value={m.user_id}&gt;{m.name}&lt;/option&gt;
+          ))}
+        &lt;/select&gt;
+        &lt;button className="ghost-dark"
+                onClick={() =&gt; setFilters({ status: "", assignee_id: "" })}&gt;
+          Clear
+        &lt;/button&gt;
+      &lt;/div&gt;
+
+      {editing &amp;&amp; (
+        &lt;div className="modal-backdrop" onClick={() =&gt; setEditing(null)}&gt;
+          &lt;div className="modal" onClick={(e) =&gt; e.stopPropagation()}&gt;
+            &lt;TaskForm
+              task={editing === "new" ? null : editing}
+              members={members}
+              onSave={saveTask}
+              onCancel={() =&gt; setEditing(null)}
+            /&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      )}
+
+      &lt;div className="board"&gt;
+        {COLUMNS.map((col) =&gt; {
+          const colTasks = tasks.filter((t) =&gt; t.status === col.key);
+          return (
+            &lt;div key={col.key} className="column"&gt;
+              &lt;h2&gt;{col.title} &lt;span className="count"&gt;{colTasks.length}&lt;/span&gt;&lt;/h2&gt;
+              {colTasks.map((t) =&gt; (
+                &lt;TaskCard key={t.id} task={t} members={members}
+                          onMove={moveTask} onEdit={setEditing} onDelete={deleteTask} /&gt;
+              ))}
+            &lt;/div&gt;
+          );
+        })}
+      &lt;/div&gt;
+    &lt;/section&gt;
+  );
+}</code></pre>
+      <div class="callout note">
+        <div class="label">📝 One <code>editing</code> state, three jobs</div>
+        <code>editing</code> is <code>null</code> (closed), <code>"new"</code> (create), or a task object (edit). The same modal + form serve all three. Less state, fewer bugs.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Board styles (append to <code>index.css</code>)</h3>
+      <pre><code>/* board */
+.page-head { display: flex; align-items: center; justify-content: space-between; }
+.board {
+  display: grid; gap: 16px;
+  grid-template-columns: repeat(3, 1fr); margin-top: 16px;
+}
+@media (max-width: 760px) { .board { grid-template-columns: 1fr; } }
+.column { background: #eef2f7; border-radius: 12px; padding: 12px; min-height: 120px; }
+.column h2 { font-size: 15px; border: 0; margin: 4px 6px 12px; }
+.count { background: #cbd5e1; border-radius: 999px; padding: 1px 8px; font-size: 12px; }
+.task-card {
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+  padding: 12px; margin-bottom: 10px;
+}
+.task-card h4 { margin: 0 0 6px; }
+.small { font-size: 13px; }
+.meta { display: flex; gap: 8px; align-items: center; margin: 6px 0; flex-wrap: wrap; }
+.chip { background: #e0e7ff; color: #3730a3; border-radius: 999px; padding: 2px 10px; font-size: 12px; }
+.due { font-size: 12px; color: #475569; }
+.overdue { color: #b91c1c; font-weight: 600; }
+.card-actions { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+.card-actions select { padding: 4px; }
+.link { background: none; color: #2563eb; padding: 4px; }
+.link.danger { color: #b91c1c; }
+.members-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 8px 0 16px; }
+.invite { display: flex; gap: 8px; }
+.filters { display: flex; gap: 10px; margin-bottom: 8px; }
+.ghost-dark { background: #e2e8f0; color: #1e293b; }
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(15,23,42,.4);
+  display: grid; place-items: center; z-index: 10;
+}
+.modal { background: #fff; border-radius: 14px; padding: 22px; width: 460px; max-width: 92vw; }
+.task-form { display: grid; gap: 10px; }
+.task-form .row { display: flex; gap: 10px; }
+.task-form label { display: grid; gap: 4px; font-size: 13px; flex: 1; }
+.task-form textarea { min-height: 70px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 8px; }</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Verify end-to-end</h3>
+      <ol>
+        <li>Open a project → board shows three columns.</li>
+        <li>"+ New Task" → fill the form, assign someone, set a due date → card appears in To Do.</li>
+        <li>Change its status dropdown to In Progress → card jumps columns; reload → it stays.</li>
+        <li>Edit it → change the title → saves. Delete one → it's gone.</li>
+        <li>Filter by assignee → only their tasks show; Clear → all return.</li>
+        <li>As owner, invite a second user by email → chip appears, and they show up in the assignee dropdown.</li>
+        <li>Log in as that user (private window) → the project is on their list and they can use the board.</li>
+      </ol>
+    </div>
+  </section>
+
+  <section>
+    <h2>Troubleshooting</h2>
+    <table>
+      <tr><th>Symptom</th><th>Fix</th></tr>
+      <tr><td>422 when creating a task</td><td>Sending <code>assignee_id: ""</code> or <code>due_date: ""</code>. Normalize empty strings to <code>null</code> in the form's submit.</td></tr>
+      <tr><td>Card doesn't move after status change</td><td>You must replace the task in state with the PATCH response (<code>map</code>), not mutate it.</td></tr>
+      <tr><td>Invite always 404</td><td>The invited email must belong to a <em>registered</em> user. Register them first.</td></tr>
+      <tr><td>Invite form missing</td><td>It only shows for the owner. Confirm <code>project.owner_id === user.id</code>.</td></tr>
+      <tr><td>Filters don't apply</td><td>The tasks <code>useEffect</code> must depend on <code>filters</code> and rebuild the query string.</td></tr>
+    </table>
+  </section>
+
+  <section class="done">
+    <h2>🎉 Done — what's next</h2>
+    <p>TaskFlow is now a real, collaborative app: a working kanban board with assignees, due dates, filtering, and team invitations — fully wired to your secured backend. This is the feature you'll demo.</p>
+    <ul>
+      <li>✅ Status columns derived from one task list.</li>
+      <li>✅ Create / edit / assign / due date / move / delete.</li>
+      <li>✅ Server-side filtering + member invitations.</li>
+    </ul>
+    <p><strong>Up next → Chunk 10.5: Logging, Observability &amp; Hardening.</strong> You'll make it production-trustworthy with structured logging, request IDs, health checks, an error boundary, and a security pass.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

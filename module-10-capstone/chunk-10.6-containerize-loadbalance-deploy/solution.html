@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk 10.6 — Containerize, Load-Balance &amp; Deploy</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  .checkpoint{background:#fffbeb;border:2px solid #f59e0b;}
+  .checkpoint h2{border-color:#fde68a;color:#92400e;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .grad{background:linear-gradient(135deg,#ecfdf5,#dbeafe);border:2px solid #16a34a;}
+  .full{border:2px solid #16a34a;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 10 — Capstone: TaskFlow · 🎓 FINALE</div>
+    <h1>Chunk 10.6 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>We containerize both halves, put Nginx in front of replicated backends, run migrations on start, add CI, and polish the README. New files:</p>
+    <div class="filetree">capstone-taskflow/
+├── .env                       (SECRET_KEY for compose — gitignored)
+├── docker-compose.yml
+├── .github/workflows/ci.yml
+├── docs/                      (screenshots)
+├── backend/
+│   ├── Dockerfile
+│   ├── .dockerignore
+│   └── entrypoint.sh
+└── frontend/
+    ├── Dockerfile
+    ├── .dockerignore
+    └── nginx.conf</div>
+  </section>
+
+  <section>
+    <div class="step">
+      <h3><span class="num">1</span> Backend Dockerfile + ignore + entrypoint</h3>
+      <pre><code># backend/Dockerfile
+FROM python:3.12-slim
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+RUN chmod +x entrypoint.sh
+
+EXPOSE 8000
+HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
+  CMD python -c "import urllib.request as u; u.urlopen('http://localhost:8000/api/v1/health')"
+
+CMD ["./entrypoint.sh"]</code></pre>
+      <pre><code># backend/.dockerignore
+venv/
+__pycache__/
+*.pyc
+*.db
+.env</code></pre>
+      <pre><code># backend/entrypoint.sh
+#!/bin/sh
+set -e
+alembic upgrade head
+exec uvicorn app.main:app --host 0.0.0.0 --port 8000</code></pre>
+      <div class="callout note">
+        <div class="label">📝 Alembic finds the DB</div>
+        Your <code>alembic/env.py</code> reads <code>DATABASE_URL</code> from the environment (10.2). In the container that's <code>sqlite:////data/taskflow.db</code> — four slashes = an absolute path to the mounted volume.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Frontend Dockerfile + ignore</h3>
+      <pre><code># frontend/Dockerfile
+# ---- build ----
+FROM node:20-alpine AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+ARG VITE_API_URL=/api/v1
+ENV VITE_API_URL=$VITE_API_URL
+RUN npm run build
+
+# ---- serve ----
+FROM nginx:1.27-alpine
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/dist /usr/share/nginx/html
+EXPOSE 80</code></pre>
+      <pre><code># frontend/.dockerignore
+node_modules/
+dist/
+.env</code></pre>
+      <div class="callout warning">
+        <div class="label">⚠️ Vite bakes env at build time</div>
+        <code>VITE_API_URL</code> is compiled into the bundle during <code>npm run build</code> — it is <em>not</em> read at runtime. That's why we set it as a build <code>ARG</code> to <code>/api/v1</code> (same-origin), so the production SPA calls the API through Nginx.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Nginx config</h3>
+      <pre><code># frontend/nginx.conf
+upstream taskflow_api {
+    server backend:8000;     # Docker DNS round-robins across replicas
+}
+
+server {
+    listen 80;
+
+    location /api/ {
+        proxy_pass http://taskflow_api;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Request-ID $request_id;
+    }
+
+    location / {
+        root /usr/share/nginx/html;
+        try_files $uri /index.html;
+    }
+
+    add_header X-Content-Type-Options nosniff;
+    add_header Referrer-Policy strict-origin-when-cross-origin;
+}</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> docker-compose</h3>
+      <pre><code># docker-compose.yml
+services:
+  backend:
+    build: ./backend
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - CORS_ORIGINS=http://localhost
+      - DATABASE_URL=sqlite:////data/taskflow.db
+      - ENV=production
+    volumes:
+      - taskflow_data:/data
+    expose:
+      - "8000"
+    deploy:
+      replicas: 3
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  taskflow_data:</code></pre>
+      <p>Create the root <code>.env</code> with a secret, then build &amp; run:</p>
+      <pre><code>cd capstone-taskflow
+echo "SECRET_KEY=$(python3 -c 'import secrets;print(secrets.token_hex(32))')" &gt; .env
+docker compose up --build</code></pre>
+      <pre><code>[+] Running 5/5
+ ✔ Network capstone-taskflow_default       Created
+ ✔ Container capstone-taskflow-backend-1   Started
+ ✔ Container capstone-taskflow-backend-2   Started
+ ✔ Container capstone-taskflow-backend-3   Started
+ ✔ Container capstone-taskflow-frontend-1  Started
+backend-1  | {"ts":"...","level":"INFO","msg":"request","path":"/api/v1/health","status":200}</code></pre>
+      <p>Open <code>http://localhost</code> — the full app runs through Nginx. Register, create a project, use the board. No CORS errors, because it's all same-origin now.</p>
+      <div class="callout note">
+        <div class="label">📝 Compose v2 `deploy.replicas`</div>
+        Modern <code>docker compose</code> honors <code>deploy.replicas</code> for plain <code>up</code>. If your version ignores it, scale explicitly: <code>docker compose up --build --scale backend=3</code>.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Prove the load balancing</h3>
+      <p>Add the container hostname to each request log so you can see the rotation. In <code>app/middleware.py</code>, include <code>socket.gethostname()</code>:</p>
+      <pre><code># app/middleware.py  (add to the logged extra_fields)
+import socket
+HOSTNAME = socket.gethostname()
+# ...
+log.info("request", extra={"extra_fields": {
+    "request_id": request_id, "host": HOSTNAME,
+    "method": request.method, "path": request.url.path,
+    "status": response.status_code, "duration_ms": duration_ms,
+}})</code></pre>
+      <p>Rebuild, then hammer the health route and watch the <code>host</code> field cycle across replicas:</p>
+      <pre><code>for i in $(seq 1 6); do curl -s http://localhost/api/v1/health &gt; /dev/null; done
+docker compose logs backend | grep '"path":"/api/v1/health"' | tail -6</code></pre>
+      <pre><code>backend-1  | {... "host":"a1b2c3", "path":"/api/v1/health", "status":200}
+backend-2  | {... "host":"d4e5f6", "path":"/api/v1/health", "status":200}
+backend-3  | {... "host":"g7h8i9", "path":"/api/v1/health", "status":200}
+backend-1  | {... "host":"a1b2c3", ...}</code></pre>
+      <p>Different <code>host</code> values = Nginx is balancing. Now kill one replica and confirm the app stays up:</p>
+      <pre><code>docker compose stop backend-2     # or: docker stop &lt;container&gt;
+# refresh http://localhost — still works; Nginx routes around the dead node</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> CI workflow</h3>
+      <pre><code># .github/workflows/ci.yml
+name: CI
+on: [push, pull_request]
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -r backend/requirements.txt
+      - run: cd backend &amp;&amp; pytest -q || echo "no tests yet"
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - run: cd frontend &amp;&amp; npm ci &amp;&amp; npm run build
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose build</code></pre>
+      <p>Commit and push — the checks run on GitHub. A green check on every PR is the habit Bonus Track B.1 builds on.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Polish the README</h3>
+      <p>Take screenshots (login, projects, board) into <code>docs/</code>, then make the README sell it:</p>
+      <pre><code># TaskFlow
+
+A collaborative team task &amp; project tracker. Register, create projects,
+invite teammates, and manage work on a kanban board.
+
+![Task board](docs/board.png)
+
+## Stack
+React + Vite · FastAPI · SQLAlchemy · SQLite · JWT auth · Nginx · Docker
+
+## Architecture
+Browser -&gt; Nginx (serves SPA, load-balances /api) -&gt; 3x FastAPI -&gt; SQLite volume
+
+## Run it
+    git clone &lt;your-repo&gt; &amp;&amp; cd capstone-taskflow
+    echo "SECRET_KEY=$(python3 -c 'import secrets;print(secrets.token_hex(32))')" &gt; .env
+    docker compose up --build
+    # open http://localhost
+
+## Features
+- Email/password auth (JWT), protected routes
+- Projects with owner + member roles; invite teammates by email
+- Task board: To Do / In Progress / Done, assignees, due dates, filtering
+- Structured JSON logs with request IDs; /health + /health/ready
+- Nginx load balancing across stateless backend replicas
+
+## Security notes
+(see the list from Chunk 10.5)
+
+## Known limits / next steps
+- SQLite serializes writes — swap for Postgres to scale (Bonus Track B.3)
+- Add refresh tokens, real rate-limit store (Redis), e2e tests
+- Deploy to GCP Cloud Run with HTTPS load balancer (Bonus Track B.2–B.3)</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">8</span> Final verification</h3>
+      <ol>
+        <li><code>docker compose down</code> then <code>docker compose up</code> — your data is still there (the volume persists).</li>
+        <li>The app works end-to-end through <code>http://localhost</code> with no CORS errors.</li>
+        <li>Logs show requests spread across <code>backend-1/2/3</code>.</li>
+        <li>Stopping a replica doesn't break the app.</li>
+        <li>README renders with the screenshot and run instructions.</li>
+      </ol>
+    </div>
+  </section>
+
+  <section>
+    <h2>Troubleshooting</h2>
+    <table>
+      <tr><th>Symptom</th><th>Fix</th></tr>
+      <tr><td>Frontend loads but API 502</td><td>Nginx can't reach the backend. Check the <code>upstream</code> name matches the compose service (<code>backend:8000</code>) and backends are healthy.</td></tr>
+      <tr><td>404 on refresh at <code>/projects/3</code></td><td>Missing the SPA fallback. Confirm <code>try_files $uri /index.html;</code> in nginx.conf.</td></tr>
+      <tr><td>API calls go to <code>localhost:8000</code> in prod</td><td>You didn't rebuild with <code>VITE_API_URL=/api/v1</code>. Rebuild the frontend image.</td></tr>
+      <tr><td><code>SECRET_KEY</code> empty / app refuses to start</td><td>Create the root <code>.env</code> before <code>up</code>; compose reads <code>${SECRET_KEY}</code> from it.</td></tr>
+      <tr><td>DB resets every restart</td><td>The volume isn't mounted or the path is wrong. Use <code>sqlite:////data/taskflow.db</code> + the <code>taskflow_data:/data</code> volume.</td></tr>
+      <tr><td>Only one replica in logs</td><td>Your compose version ignores <code>deploy.replicas</code>; use <code>--scale backend=3</code>.</td></tr>
+    </table>
+  </section>
+
+  <section class="grad">
+    <h2>🎓 Course complete — congratulations!</h2>
+    <p>You did it. Starting from a blank HTML file, you built <strong>TaskFlow</strong>: a real, collaborative, full-stack web application — and you shipped it containerized and load-balanced. Take a moment; this is a genuine milestone.</p>
+    <p>Look at everything you assembled, end to end:</p>
+    <ul>
+      <li><strong>Frontend</strong> — React + Vite SPA: auth context, protected routes, an app shell, a projects view, and a collaborative kanban board with filtering. (Modules 1–4)</li>
+      <li><strong>Backend</strong> — FastAPI + SQLAlchemy: four related tables, JWT auth, and CRUD guarded by composable ownership/membership rules. (Modules 5–7)</li>
+      <li><strong>Observability</strong> — structured JSON logs, request IDs, health checks, a global error handler, and a React error boundary. (Module 8)</li>
+      <li><strong>Production</strong> — Dockerized both halves, Nginx load-balancing across stateless replicas, migrations on start, CI, and a portfolio README. (Module 9)</li>
+    </ul>
+    <p>That is a portfolio-grade, interview-ready project. Put it on your résumé, link the repo, and walk an interviewer through the architecture diagram — you can defend every decision because you made each one.</p>
+    <h3>➡️ Where to go next: the optional Bonus Track</h3>
+    <p>You've taken TaskFlow as far as "runs great on one host." The <strong>Bonus Track</strong> takes it to the cloud the way teams actually ship:</p>
+    <ul>
+      <li><strong>B.1 — Git Strategy &amp; Collaborative Workflows:</strong> GitHub Flow, PRs &amp; review, merge vs. rebase, branch protection, and a tagged <code>v1.0.0</code> release on your TaskFlow repo.</li>
+      <li><strong>B.2 — Deploy to GCP (Cloud Run):</strong> push your images to Artifact Registry and run TaskFlow on serverless containers with a public URL.</li>
+      <li><strong>B.3 — GCP Load Balancing, Managed Data &amp; CI/CD:</strong> an HTTPS load balancer, migrate SQLite → Cloud SQL (Postgres), and auto-deploy on every merge.</li>
+    </ul>
+    <p>Your stateless JWT, health checks, env-based config, and <code>/api/v1</code> versioning were all designed to make that cloud jump smooth. When you're ready, start at <strong>bonus-track/b1-git-strategy</strong>. Otherwise — go build something of your own with the exact skills you just proved you have. 🚀</p>
+  </section>
+
+  <section class="done">
+    <h2>✅ Capstone deliverable</h2>
+    <ul>
+      <li>✅ Dockerized frontend + backend; one-command <code>docker compose up</code>.</li>
+      <li>✅ Nginx load-balancing across multiple stateless replicas, demonstrated.</li>
+      <li>✅ Migrations on start, persistent volume, CI workflow.</li>
+      <li>✅ A polished, screenshot-rich README — a deployed, load-balanced TaskFlow for your résumé.</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk B.3 — GCP Load Balancing, Managed Data &amp; CI/CD</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .full{border:2px solid #16a34a;}
+  .cleanup{background:#fff7ed;border:1px solid #fed7aa;}
+  .cleanup h2{border-color:#fed7aa;color:#9a3412;}
+  .finish{background:#fffbeb;border:1px solid #fde68a;}
+  .finish h2{border-color:#fde68a;color:#92400e;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · ⭐ Bonus Track — Git Strategy &amp; GCP</div>
+    <h1>Chunk B.3 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>Continue from your B.2 deployment. Reuse (or re-export) these shell variables; add the new ones for this chunk:</p>
+    <pre><code>export PROJECT=$(gcloud config get-value project)
+export REGION=asia-southeast1
+export REG=$REGION-docker.pkg.dev/$PROJECT/taskflow
+export INSTANCE=taskflow-db                 # Cloud SQL instance name
+export CONNNAME=$PROJECT:$REGION:$INSTANCE   # Cloud SQL "connection name"</code></pre>
+    <div class="callout warning">
+      <div class="label">⚠️ Cloud SQL is billing now — set a budget &amp; plan to delete</div>
+      The instance you create in step 1 costs money continuously until you delete it. Use the smallest tier, set a budget alert, and run the teardown (bottom of page) as soon as you've demoed.
+    </div>
+  </section>
+
+  <section>
+    <div class="step">
+      <h3><span class="num">1</span> Provision Cloud SQL (Postgres)</h3>
+      <pre><code>gcloud services enable sqladmin.googleapis.com
+
+# smallest tier, smallest disk; pick a strong root password
+gcloud sql instances create $INSTANCE \
+  --database-version=POSTGRES_15 \
+  --tier=db-f1-micro \
+  --region=$REGION \
+  --storage-size=10GB
+
+gcloud sql databases create taskflow --instance=$INSTANCE
+
+# app user + password stored in Secret Manager (not typed in plain commands)
+export DBPASS=$(openssl rand -base64 24)
+gcloud sql users create taskflow --instance=$INSTANCE --password="$DBPASS"
+printf '%s' "$DBPASS" | gcloud secrets create db-password --data-file=-
+
+# let Cloud Run's service account read it
+export PROJNUM=$(gcloud projects describe $PROJECT --format='value(projectNumber)')
+gcloud secrets add-iam-policy-binding db-password \
+  --member="serviceAccount:$PROJNUM-compute@developer.gserviceaccount.com" \
+  --role="roles/secretmanager.secretAccessor"</code></pre>
+      <p>Find the connection name to confirm <code>$CONNNAME</code>:</p>
+      <pre><code>gcloud sql instances describe $INSTANCE --format='value(connectionName)'
+# taskflow-prod-12345:asia-southeast1:taskflow-db</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Point the backend at Postgres + add pooling</h3>
+      <p>On a feature branch (B.1 workflow), make sure the Postgres driver is a dependency and the engine reads <code>DATABASE_URL</code> with a small pool. In <code>requirements.txt</code>:</p>
+      <pre><code>sqlalchemy&gt;=2.0
+psycopg[binary]&gt;=3.1</code></pre>
+      <p>In your DB setup module:</p>
+      <pre><code>import os
+from sqlalchemy import create_engine
+
+DATABASE_URL = os.environ["DATABASE_URL"]   # set per-environment
+
+connect_args = {}
+engine = create_engine(
+    DATABASE_URL,
+    pool_size=5,
+    max_overflow=2,
+    pool_pre_ping=True,
+    pool_recycle=1800,
+    connect_args=connect_args,
+)</code></pre>
+      <p>The Cloud Run connection string uses the Unix socket (no host/port):</p>
+      <pre><code>postgresql+psycopg://taskflow:PASSWORD@/taskflow?host=/cloudsql/PROJECT:REGION:INSTANCE</code></pre>
+      <pre><code>git switch -c feature/postgres-support
+git add backend/requirements.txt backend/app/db.py
+git commit -m "feat(db): support postgres via DATABASE_URL with connection pooling"
+git push -u origin feature/postgres-support
+gh pr create --base main --fill</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Run migrations against the cloud DB</h3>
+      <p>Download the <strong>Cloud SQL Auth Proxy</strong> (one binary), start the tunnel, and run Alembic against it:</p>
+      <pre><code># terminal 1 — start the proxy (uses your gcloud creds)
+cloud-sql-proxy $CONNNAME --port 5432
+
+# terminal 2 — run migrations through the tunnel
+cd backend
+export DATABASE_URL="postgresql+psycopg://taskflow:$DBPASS@127.0.0.1:5432/taskflow"
+alembic upgrade head</code></pre>
+      <p>Expected: Alembic prints each revision applied, ending at <code>head</code>. Verify the tables:</p>
+      <pre><code>gcloud sql connect $INSTANCE --user=taskflow --database=taskflow
+# at the psql prompt:
+\dt
+# users | projects | memberships | tasks ...</code></pre>
+      <div class="callout note">
+        <div class="label">📝 macOS install of the proxy</div>
+        <code>brew install cloud-sql-proxy</code> (or download the release binary). On Linux/Windows grab the matching binary from the Cloud SQL Auth Proxy releases. Authentication uses your existing <code>gcloud auth</code> — the tunnel opens in your own terminal.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Redeploy the backend connected to Cloud SQL</h3>
+      <pre><code>gcloud run deploy taskflow-backend \
+  --image $REG/backend:1.0.0 \
+  --region $REGION \
+  --port 8000 \
+  --allow-unauthenticated \
+  --add-cloudsql-instances $CONNNAME \
+  --set-env-vars ENV=production \
+  --set-env-vars "DATABASE_URL=postgresql+psycopg://taskflow:PLACEHOLDER@/taskflow?host=/cloudsql/$CONNNAME" \
+  --set-secrets JWT_SECRET=jwt-secret:latest \
+  --update-secrets DB_PASSWORD=db-password:latest</code></pre>
+      <div class="callout tip">
+        <div class="label">💡 Keep the password out of the URL</div>
+        Cleanest pattern: mount the password as the <code>DB_PASSWORD</code> secret and have the app assemble <code>DATABASE_URL</code> from <code>DB_PASSWORD</code> + the socket path at startup, so no secret ever sits in an env var string. If you inline it in <code>DATABASE_URL</code> instead, build that value from the mounted secret — never paste the literal password into the command.
+      </div>
+      <p><strong>Prove persistence:</strong> create a task, then force a new revision and reload:</p>
+      <pre><code>gcloud run services update taskflow-backend --region $REGION \
+  --update-env-vars TOUCH=$RANDOM
+# log back in — your task is STILL THERE. Cloud SQL fixed the B.2 data loss. ✅</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Put an HTTP(S) Load Balancer in front of Cloud Run</h3>
+      <p>Build the LB from its pieces. Each maps to a Chunk 9.3 Nginx concept (NEG≈upstream, backend service≈the proxy block, URL map≈location routing).</p>
+      <pre><code>gcloud services enable compute.googleapis.com
+
+# 1. global static IP
+gcloud compute addresses create taskflow-ip --global
+export LB_IP=$(gcloud compute addresses describe taskflow-ip --global --format='value(address)')
+echo $LB_IP
+
+# 2. serverless NEG targeting the Cloud Run service
+gcloud compute network-endpoint-groups create taskflow-neg \
+  --region=$REGION \
+  --network-endpoint-type=serverless \
+  --cloud-run-service=taskflow-backend
+
+# 3. backend service + attach the NEG
+gcloud compute backend-services create taskflow-bes --global
+gcloud compute backend-services add-backend taskflow-bes \
+  --global \
+  --network-endpoint-group=taskflow-neg \
+  --network-endpoint-group-region=$REGION
+
+# 4. URL map → backend service
+gcloud compute url-maps create taskflow-urlmap --default-service=taskflow-bes</code></pre>
+      <p>For a quick HTTP check before adding TLS:</p>
+      <pre><code>gcloud compute target-http-proxies create taskflow-http-proxy --url-map=taskflow-urlmap
+gcloud compute forwarding-rules create taskflow-http-rule \
+  --global --target-http-proxy=taskflow-http-proxy \
+  --address=taskflow-ip --ports=80
+# wait a few minutes, then:
+curl http://$LB_IP/health      # routed through the global LB to Cloud Run</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Add HTTPS + a custom domain</h3>
+      <p>Requires a domain you control. Point DNS, then attach a Google-managed cert:</p>
+      <pre><code># in your DNS provider: create an A record
+#   app.yourdomain.com  ->  $LB_IP
+
+gcloud compute ssl-certificates create taskflow-cert \
+  --domains=app.yourdomain.com --global
+
+gcloud compute target-https-proxies create taskflow-https-proxy \
+  --url-map=taskflow-urlmap \
+  --ssl-certificates=taskflow-cert
+
+gcloud compute forwarding-rules create taskflow-https-rule \
+  --global --target-https-proxy=taskflow-https-proxy \
+  --address=taskflow-ip --ports=443</code></pre>
+      <p>Watch the cert until it's <code>ACTIVE</code> (can take 10–60 min while DNS validates):</p>
+      <pre><code>gcloud compute ssl-certificates describe taskflow-cert --global \
+  --format='value(managed.status)'
+# PROVISIONING ... then ACTIVE</code></pre>
+      <p>Add an HTTP→HTTPS redirect so port 80 bumps users to 443 (create a tiny redirect URL map and point the existing HTTP proxy at it). Once <code>ACTIVE</code>, open <code>https://app.yourdomain.com</code>. 🔒</p>
+      <div class="callout note">
+        <div class="label">📝 No domain?</div>
+        Skip step 6. Your deliverable is still met by the LB IP over HTTP (step 5) plus the Cloud Run HTTPS URLs. The managed-cert path is the only part that needs a real domain.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Wire up CI/CD</h3>
+      <p>Pick one. <strong>Option A — Cloud Build</strong>. Commit <code>cloudbuild.yaml</code> at the repo root:</p>
+      <pre><code>steps:
+  - name: gcr.io/cloud-builders/docker
+    args: ['build','-t','$_REGION-docker.pkg.dev/$PROJECT_ID/taskflow/backend:$SHORT_SHA','./backend']
+  - name: '$_REGION-docker.pkg.dev/$PROJECT_ID/taskflow/backend:$SHORT_SHA'
+    entrypoint: pytest
+    args: ['-q']
+  - name: gcr.io/cloud-builders/docker
+    args: ['push','$_REGION-docker.pkg.dev/$PROJECT_ID/taskflow/backend:$SHORT_SHA']
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args: ['run','deploy','taskflow-backend',
+           '--image','$_REGION-docker.pkg.dev/$PROJECT_ID/taskflow/backend:$SHORT_SHA',
+           '--region','$_REGION','--quiet']
+substitutions:
+  _REGION: asia-southeast1
+images:
+  - '$_REGION-docker.pkg.dev/$PROJECT_ID/taskflow/backend:$SHORT_SHA'</code></pre>
+      <p>Create a trigger that runs it on pushes to <code>main</code> (connect your GitHub repo first when prompted, in your browser):</p>
+      <pre><code>gcloud builds triggers create github \
+  --name=taskflow-deploy \
+  --repo-name=taskflow --repo-owner=YOUR-USER \
+  --branch-pattern='^main$' \
+  --build-config=cloudbuild.yaml</code></pre>
+      <p><strong>Option B — GitHub Actions</strong>. Commit <code>.github/workflows/deploy.yml</code>:</p>
+      <pre><code>name: Deploy to Cloud Run
+on:
+  push:
+    branches: [main]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.DEPLOY_SA }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - run: |
+          gcloud builds submit --tag \
+            "$REGION-docker.pkg.dev/$PROJECT/taskflow/backend:$GITHUB_SHA" ./backend
+          gcloud run deploy taskflow-backend \
+            --image "$REGION-docker.pkg.dev/$PROJECT/taskflow/backend:$GITHUB_SHA" \
+            --region "$REGION" --quiet
+        env:
+          PROJECT: ${{ secrets.GCP_PROJECT }}
+          REGION: asia-southeast1</code></pre>
+      <div class="callout warning">
+        <div class="label">⚠️ Use keyless auth</div>
+        For GitHub Actions, set up <strong>Workload Identity Federation</strong> and reference it via <code>secrets.WIF_PROVIDER</code> / <code>secrets.DEPLOY_SA</code> — don't download and commit a service-account JSON key. That's the B.1 "no secrets in the repo" rule enforced in CI.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">8</span> Prove the loop: PR → merge → auto-deploy</h3>
+      <pre><code>git switch main &amp;&amp; git pull origin main
+git switch -c feature/footer-version
+# edit the frontend footer to show e.g. "TaskFlow v1.1"
+git commit -am "feat(ui): show version in footer"
+git push -u origin feature/footer-version
+gh pr create --base main --fill
+# review (B.1), then:
+gh pr merge --squash --delete-branch</code></pre>
+      <p>The merge to protected <code>main</code> triggers the pipeline. Watch it:</p>
+      <pre><code># Cloud Build:
+gcloud builds list --limit=1
+# or GitHub Actions: the "Actions" tab on your repo</code></pre>
+      <p>When it finishes, reload the app — your footer change is live, deployed entirely by the pipeline. <strong>That's the whole point: a reviewed merge to <code>main</code> shipped to production with zero manual steps.</strong></p>
+    </div>
+  </section>
+
+  <section class="full">
+    <h2>📄 Quick reference — what you built</h2>
+    <pre><code>Cloud SQL Postgres   →  durable, shared DB (alembic upgrade head)
+       ▲
+Cloud Run backend    →  --add-cloudsql-instances, pooled SQLAlchemy
+       ▲  serverless NEG
+HTTP(S) Load Balancer →  global IP, managed TLS, custom domain
+       ▲
+Users (https)
+
+CI/CD:  PR → review → squash-merge to protected main → build → test → deploy</code></pre>
+  </section>
+
+  <section>
+    <h2>🛠️ Troubleshooting</h2>
+    <table>
+      <tr><th>Symptom</th><th>Fix</th></tr>
+      <tr><td>Backend logs: <code>could not connect to server</code> / socket error</td><td>Missing <code>--add-cloudsql-instances $CONNNAME</code> on deploy, or <code>DATABASE_URL</code> host isn't <code>/cloudsql/$CONNNAME</code>. Both must match the instance connection name.</td></tr>
+      <tr><td><code>remaining connection slots are reserved</code> / too many connections</td><td>Pool too large × many instances. Lower <code>pool_size</code>/<code>max_overflow</code>, or cap <code>--max-instances</code> on Cloud Run.</td></tr>
+      <tr><td><code>server closed the connection unexpectedly</code></td><td>Stale pooled connection. Ensure <code>pool_pre_ping=True</code> and a sensible <code>pool_recycle</code>.</td></tr>
+      <tr><td>Alembic: <code>relation "alembic_version" does not exist</code></td><td>First run — that's fine; <code>alembic upgrade head</code> creates it. If it errors, confirm the proxy is up and <code>DATABASE_URL</code> points at <code>127.0.0.1:5432</code>.</td></tr>
+      <tr><td>LB returns 404 / 502 for a while</td><td>LB config takes a few minutes to propagate globally. Wait, then retry <code>curl http://$LB_IP/health</code>.</td></tr>
+      <tr><td>Managed cert stuck in <code>PROVISIONING</code></td><td>DNS isn't pointing at the LB IP yet, or hasn't propagated. Verify the <code>A</code> record resolves to <code>$LB_IP</code>; wait up to ~60 min.</td></tr>
+      <tr><td>Cloud Build trigger: permission denied deploying</td><td>Grant the Cloud Build service account the <em>Cloud Run Admin</em> + <em>Service Account User</em> roles.</td></tr>
+    </table>
+  </section>
+
+  <section class="cleanup">
+    <h2>🧹 Clean up (do this — Cloud SQL &amp; the LB bill continuously)</h2>
+    <p>Delete in roughly reverse order. The simplest, safest option for a learning project is to delete the whole project at the end.</p>
+    <pre><code># load balancer pieces
+gcloud compute forwarding-rules delete taskflow-https-rule --global --quiet
+gcloud compute forwarding-rules delete taskflow-http-rule  --global --quiet
+gcloud compute target-https-proxies delete taskflow-https-proxy --quiet
+gcloud compute target-http-proxies  delete taskflow-http-proxy  --quiet
+gcloud compute ssl-certificates delete taskflow-cert --global --quiet
+gcloud compute url-maps delete taskflow-urlmap --quiet
+gcloud compute backend-services delete taskflow-bes --global --quiet
+gcloud compute network-endpoint-groups delete taskflow-neg --region=$REGION --quiet
+gcloud compute addresses delete taskflow-ip --global --quiet
+
+# Cloud SQL (the big cost) + Cloud Run + secrets
+gcloud sql instances delete $INSTANCE --quiet
+gcloud run services delete taskflow-backend  --region $REGION --quiet
+gcloud run services delete taskflow-frontend --region $REGION --quiet
+gcloud secrets delete db-password --quiet
+gcloud secrets delete jwt-secret  --quiet
+
+# nuclear option — removes EVERYTHING and stops all billing for the project
+gcloud projects delete $PROJECT</code></pre>
+    <div class="callout warning">
+      <div class="label">⚠️ Verify nothing is left running</div>
+      After teardown, check Console → Billing → Reports the next day, and confirm Cloud SQL shows no instances. A forgotten Cloud SQL instance is the most common source of surprise charges.
+    </div>
+  </section>
+
+  <section class="finish">
+    <h2>🏁 Bonus Track Complete</h2>
+    <p>You did it. TaskFlow is now a genuinely <strong>cloud-native</strong> application, deployed the way real teams ship software:</p>
+    <ul>
+      <li><strong>Durable, shared data</strong> on managed Cloud SQL Postgres with connection pooling — the SQLite data-loss problem solved.</li>
+      <li>A <strong>global HTTP(S) load balancer</strong> with managed TLS and (optionally) a custom domain — the managed evolution of Chunk 9.3's hand-rolled Nginx.</li>
+      <li>A <strong>CI/CD pipeline</strong> where every reviewed, branch-protected merge to <code>main</code> (your B.1 workflow) automatically builds, tests, and deploys.</li>
+    </ul>
+    <p>Tie it together in your head: <strong>B.1</strong> gave you the safe collaboration workflow, <strong>B.2</strong> got the containers onto Cloud Run, and <strong>B.3</strong> made it durable, scalable, secure, and automatic. That's a story you can demo live and defend in an interview — exactly the goal.</p>
+  </section>
+
+  <section class="done">
+    <h2>🎓 Course Complete — what's next</h2>
+    <p>This was the final chunk of the entire course. From a blank HTML file in Module 1 to a load-balanced, auto-deploying, cloud-hosted full-stack app, you've built the whole thing. 🎉</p>
+    <p>Where to go from here:</p>
+    <ul>
+      <li><strong>Polish TaskFlow as a portfolio piece</strong> — README with architecture diagram, screenshots, and a link to the live URL (keep it deployed on the free-tier-friendly bits, or redeploy on demand).</li>
+      <li><strong>Add depth</strong> — automated tests in CI, observability dashboards, Cloud SQL backups/PITR, a staging environment, or feature flags.</li>
+      <li><strong>Go wider</strong> — try the same deploy on another cloud, add Cloud CDN/Cloud Armor, or explore Kubernetes (GKE) once you want orchestration beyond Cloud Run.</li>
+    </ul>
+    <p>Remember to <strong>keep your cloud resources cleaned up</strong> when you're not demoing. Congratulations — you're now a full-stack developer who can ship to production. 🚀</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

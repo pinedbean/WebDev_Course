@@ -15,9 +15,9 @@ Track the build & learning status of every chunk. Each chunk has three HTML deli
 | Metric | Count |
 |--------|------:|
 | Total chunks | 52 |
-| Modules built | 8 of 11 (Modules 0–7 ✅) |
-| Chunks built | 37 |
-| Chunks remaining | 15 |
+| Modules built | 11 of 11 — 🎉 ALL COMPLETE (Modules 0–10 + Bonus ✅) |
+| Chunks built | 52 |
+| Chunks remaining | 0 |
 | Chunks learned | 0 |
 
 > Last updated: 2026-06-26
@@ -105,36 +105,36 @@ Track the build & learning status of every chunk. Each chunk has three HTML deli
 
 | Chunk | Title | Lecture | Assignment | Solution | Build | Learned |
 |------|-------|:------:|:----------:|:--------:|:-----:|:-------:|
-| 8.1 | Structured Logging in FastAPI | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 8.2 | Error Tracking & Frontend Logging | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 8.1 | Structured Logging in FastAPI | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| 8.2 | Error Tracking & Frontend Logging | ✅ | ✅ | ✅ | ✅ | ⬜ |
 
 ## Module 9 — Production & Load Balancing
 
 | Chunk | Title | Lecture | Assignment | Solution | Build | Learned |
 |------|-------|:------:|:----------:|:--------:|:-----:|:-------:|
-| 9.1 | Production Builds & Environments | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 9.2 | Containerizing with Docker | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 9.3 | Nginx Reverse Proxy & Load Balancing | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 9.4 | Deployment & CI/CD Basics | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 9.1 | Production Builds & Environments | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| 9.2 | Containerizing with Docker | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| 9.3 | Nginx Reverse Proxy & Load Balancing | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| 9.4 | Deployment & CI/CD Basics | ✅ | ✅ | ✅ | ✅ | ⬜ |
 
 ## Module 10 — Capstone: TaskFlow
 
 | Chunk | Title | Lecture | Assignment | Solution | Build | Learned |
 |------|-------|:------:|:----------:|:--------:|:-----:|:-------:|
-| 10.1 | Capstone Planning & Data Modeling | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 10.2 | Backend: Models, Auth & Core API | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 10.3 | Frontend: Auth, Layout & Project Views | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 10.4 | Feature: Task Board & Collaboration | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 10.5 | Logging, Observability & Hardening | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 10.6 | Containerize, Load-Balance & Deploy | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 10.1 | Capstone Planning & Data Modeling | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| 10.2 | Backend: Models, Auth & Core API | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| 10.3 | Frontend: Auth, Layout & Project Views | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| 10.4 | Feature: Task Board & Collaboration | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| 10.5 | Logging, Observability & Hardening | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| 10.6 | Containerize, Load-Balance & Deploy | ✅ | ✅ | ✅ | ✅ | ⬜ |
 
 ## ⭐ Bonus Track
 
 | Chunk | Title | Lecture | Assignment | Solution | Build | Learned |
 |------|-------|:------:|:----------:|:--------:|:-----:|:-------:|
-| B.1 | Git Strategy & Collaborative Workflows | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| B.2 | Deploy the Capstone to GCP (Cloud Run) | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| B.3 | GCP Load Balancing, Managed Data & CI/CD | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| B.1 | Git Strategy & Collaborative Workflows | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| B.2 | Deploy the Capstone to GCP (Cloud Run) | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| B.3 | GCP Load Balancing, Managed Data & CI/CD | ✅ | ✅ | ✅ | ✅ | ⬜ |
 
 ---
 
@@ -151,3 +151,8 @@ Track the build & learning status of every chunk. Each chunk has three HTML deli
 | 2026-06-26 | 5.1–5.6 | Built Module 5 (FastAPI) via parallel subagent: setup, routes/params, Pydantic v2 validation, routers/structure, CORS+React, error handling/pagination + checkpoint. Shared `tasks-api` project (Task entity) threads through Modules 5–7. **Module 5 complete.** |
 | 2026-06-26 | 6.1–6.4 | Built Module 6 (SQLite) via parallel subagent: SQL fundamentals, SQLAlchemy ORM, persisting CRUD + Alembic, relationships/queries (User↔Task) + full-stack checkpoint. **Module 6 complete.** |
 | 2026-06-26 | 7.1–7.4 | Built Module 7 (Auth) via parallel subagent: password hashing, JWT/protected routes, React auth flow, RBAC/refresh/hardening + secure checkpoint. **Module 7 complete.** |
+| 2026-06-26 | 8.1–8.2 | Built Module 8 (Logging & Observability) via parallel subagent: structured logging + request IDs, error tracking + health checks + React error boundary. **Module 8 complete.** |
+| 2026-06-26 | 9.1–9.4 | Built Module 9 (Production & Load Balancing) via parallel subagent: prod builds, Docker, Nginx LB across replicas, deployment/CI-CD + checkpoint. **Module 9 complete.** |
+| 2026-06-26 | 10.1–10.6 | Built Module 10 (Capstone: TaskFlow) via parallel subagent: planning/ERD, backend models+auth, frontend, task board+collaboration, logging/hardening, containerize/load-balance/deploy. New TaskFlow app (User/Project/Membership/Task). **Module 10 complete.** |
+| 2026-06-26 | B.1–B.3 | Built Bonus Track via parallel subagent: Git strategy/workflows, GCP Cloud Run deploy, GCP load balancing + Cloud SQL + CI/CD. Deploys TaskFlow. **Bonus Track complete.** |
+| 2026-06-26 | — | 🎉 **ENTIRE COURSE COMPLETE** — all 52 chunks (156 HTML files) built across 11 modules + bonus track. |

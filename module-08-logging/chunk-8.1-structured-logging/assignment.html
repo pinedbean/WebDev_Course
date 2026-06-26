@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment · Chunk 8.1 — Structured Logging in FastAPI</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #ede9fe;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .objective{background:#ede9fe;border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#5b21b6;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--task);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .deliverable{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .deliverable h2{border-color:#a7f3d0;color:#065f46;}
+  .check{list-style:none;padding-left:0;} .check li{padding-left:30px;position:relative;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:18px;color:var(--task);}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 8 — Logging &amp; Observability</div>
+    <h1>Chunk 8.1 — Lab: Structured Logs with Request IDs</h1>
+    <span class="badge">🧪 ASSIGNMENT</span>
+    <span class="badge">⏱️ 45–75 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 Your mission</h2>
+    <p>Give the <strong>Tasks API</strong> production-grade logging. You'll add a logging configuration that emits <strong>JSON log lines</strong>, a <strong>request-logging middleware</strong> that times every request, and a <strong>request ID</strong> (correlation ID) carried in a <code>ContextVar</code> and attached to every log line plus an <code>X-Request-ID</code> response header. By the end, every request the API handles produces one structured, traceable JSON log entry.</p>
+  </section>
+
+  <section>
+    <h2>Before you start</h2>
+    <ul>
+      <li>Your <strong>Tasks API</strong> from Module 7 runs: FastAPI + SQLAlchemy + SQLite, JWT auth, an <code>app/</code> package, routes under <code>/auth</code> and <code>/tasks</code>, settings via <code>app/config.py</code>.</li>
+      <li>Activate your virtual environment (macOS/zsh): <code>source .venv/bin/activate</code> &nbsp;<span style="opacity:.7">(Windows: <code>.venv\Scripts\activate</code>)</span></li>
+      <li>The server runs with <code>uvicorn app.main:app --reload</code>; docs at <code>http://localhost:8000/docs</code>.</li>
+    </ul>
+    <div class="callout note">
+      <div class="label">📝 No new dependencies required</div>
+      Everything here uses the Python standard library (<code>logging</code>, <code>json</code>, <code>uuid</code>, <code>contextvars</code>, <code>time</code>). You don't need to <code>pip install</code> anything for the core tasks.
+    </div>
+    <div class="callout warning">
+      <div class="label">⚠️ Try it yourself first</div>
+      Build from the lecture and these tasks. Only open <code>solution.html</code> when stuck or to compare at the end.
+    </div>
+  </section>
+
+  <section>
+    <h2>Tasks</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Create the request-ID context</h3>
+      <p>Decide where request-scoped state lives. Create a <code>ContextVar</code> named <code>request_id_ctx</code> (default <code>"-"</code>) — you can keep it in a new <code>app/logging_config.py</code>. The middleware will <code>.set()</code> it; the log filter will <code>.get()</code> it.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Write a JSON formatter</h3>
+      <p>In <code>app/logging_config.py</code>, write a <code>logging.Formatter</code> subclass whose <code>format()</code> returns a JSON string. It must always include: <code>timestamp</code> (UTC ISO-8601), <code>level</code>, <code>logger</code> (the record name), <code>message</code>, and <code>request_id</code>. It should also fold in any custom keys you pass via <code>extra=</code> (e.g. <code>method</code>, <code>path</code>, <code>status_code</code>, <code>duration_ms</code>), and include exception text when one is present.</p>
+      <div class="callout tip">
+        <div class="label">💡 How to find the "extra" keys</div>
+        Custom <code>extra</code> values become attributes on the record. Compare each record's <code>__dict__</code> against a set of the standard <code>LogRecord</code> attributes, and include whatever is left over.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Write a filter that injects the request ID</h3>
+      <p>Add a tiny <code>logging.Filter</code> subclass whose <code>filter()</code> reads <code>request_id_ctx.get()</code> and sets <code>record.request_id</code> on the record (then returns <code>True</code>). Attaching it to the handler means <em>every</em> log line — even ones deep inside your routers — carries the current request's id.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> A <code>setup_logging()</code> function</h3>
+      <p>Add <code>setup_logging(level: str = "INFO")</code> that configures the <strong>root logger</strong>: one <code>StreamHandler</code> (to stdout) using your JSON formatter and your request-ID filter, at the given level. Call it once when the app starts. Make it idempotent (clear existing handlers first) so <code>--reload</code> doesn't stack duplicate handlers.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Add the request-logging middleware</h3>
+      <p>Register an HTTP middleware (in <code>app/main.py</code>, or a small <code>app/middleware.py</code>) that for every request:</p>
+      <ul>
+        <li>Generates a request id with <code>uuid4().hex[:8]</code> (or reuses an incoming <code>X-Request-ID</code> header if present) and stores it via <code>request_id_ctx.set(...)</code>.</li>
+        <li>Times the request with <code>time.perf_counter()</code>.</li>
+        <li>Calls the route, then logs <strong>one</strong> <code>INFO</code> line <code>"request completed"</code> with <code>extra</code> = <code>method</code>, <code>path</code>, <code>status_code</code>, <code>duration_ms</code>.</li>
+        <li>Adds the id to the response as an <code>X-Request-ID</code> header.</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Replace prints &amp; add a couple of real logs</h3>
+      <p>Grep your project for <code>print(</code> and convert any to <code>logger.*</code> calls. Then add at least two meaningful logs: a <code>WARNING</code> on a failed login (in <code>auth.py</code>) and an <code>INFO</code> when a task is created (in <code>tasks.py</code>), e.g. <code>logger.info("task created", extra={"task_id": task.id, "owner_id": current_user.id})</code>. Use <code>logger = logging.getLogger(__name__)</code> at the top of each module.</p>
+      <div class="callout warning">
+        <div class="label">⚠️ Never log secrets</div>
+        Do not log the <code>Authorization</code> header, passwords, tokens, or full request bodies. Log identifiers and shapes, not sensitive values.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Run it and read your logs</h3>
+      <p>Start the server and make a few requests (via <code>/docs</code> or <code>curl</code>). Confirm each request prints one JSON line with a <code>request_id</code>, and that the same id comes back in the <code>X-Request-ID</code> response header.</p>
+      <pre><code>uvicorn app.main:app --reload
+# in another terminal:
+curl -i http://localhost:8000/health     # look for the X-Request-ID header</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">8</span> Prove correlation works</h3>
+      <p>Hit a protected route without a token and create a task with a token. Confirm the failed-login warning and the "task created" info each carry their own request id, and that a single request's lines all share one id.</p>
+    </div>
+  </section>
+
+  <section class="deliverable">
+    <h2>✅ Deliverable — acceptance checklist</h2>
+    <ul class="check">
+      <li><code>app/logging_config.py</code> exists with a JSON formatter, a request-ID filter, and <code>setup_logging()</code>.</li>
+      <li>Logs print as <strong>one JSON object per line</strong> to stdout, each with <code>timestamp</code>, <code>level</code>, <code>logger</code>, <code>message</code>, and <code>request_id</code>.</li>
+      <li>A request-logging middleware emits one <code>"request completed"</code> line per request with <code>method</code>, <code>path</code>, <code>status_code</code>, and <code>duration_ms</code>.</li>
+      <li>Each response includes an <code>X-Request-ID</code> header equal to the <code>request_id</code> in that request's logs.</li>
+      <li>No <code>print()</code> calls remain; at least one <code>WARNING</code> (failed login) and one <code>INFO</code> (task created) are logged.</li>
+      <li>Two concurrent/separate requests have <em>different</em> request ids, and all log lines from one request share <em>the same</em> id.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🚀 Stretch goals (optional)</h2>
+    <ul>
+      <li>Add an <code>ENVIRONMENT</code> setting to <code>config.py</code>: use pretty text logs in <code>development</code> and JSON in <code>production</code>.</li>
+      <li>Also log a <code>"request started"</code> line (handy for spotting requests that hang and never complete).</li>
+      <li>Log the authenticated <code>user_id</code> on each request when a token is present (without logging the token itself).</li>
+      <li>Quiet the noisy <code>uvicorn.access</code> logger (set its level to <code>WARNING</code>) so your structured line is the single source of truth per request.</li>
+      <li>Pretty-print one log line: <code>curl -s localhost:8000/tasks | head</code> — then pipe a captured JSON log through <code>python -m json.tool</code>.</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a class="current">🧪 Assignment</a>
+    <a href="solution.html">✅ Solution →</a>
+  </div>
+</footer>
+</body>
+</html>

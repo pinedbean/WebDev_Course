@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 9.2 — Containerizing with Docker</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .flow{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 9 — Production &amp; Load Balancing</div>
+    <h1>Chunk 9.2 — Containerizing with Docker</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 90–120 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>The "works on my machine" problem and how <strong>containers</strong> solve it.</li>
+      <li>The difference between an <strong>image</strong> and a <strong>container</strong>.</li>
+      <li>How to read and write a <strong>Dockerfile</strong> (the key instructions and why order matters).</li>
+      <li>How <strong>layer caching</strong> and <code>.dockerignore</code> make builds fast and small.</li>
+      <li><strong>Multi-stage builds</strong> — build the frontend with Node, ship it with Nginx.</li>
+      <li>How <strong>Docker Compose</strong> runs the whole app (frontend + backend + a persistent DB) with one command.</li>
+    </ul>
+    <p>In the lab you'll containerize the Tasks app and bring it all up with <code>docker compose up</code>.</p>
+  </section>
+
+  <section>
+    <h2>1. The problem containers solve</h2>
+    <p>Your app currently depends on <em>your</em> machine: a specific Python version, a venv, Node, the right packages, environment variables you set by hand. Move it to a server (or a teammate's laptop) and any difference breaks it — "but it works on my machine!" is a genuine, costly problem.</p>
+    <p>A <strong>container</strong> packages your app <em>together with everything it needs to run</em> — the OS libraries, the Python/Node runtime, your dependencies, your code — into one sealed, portable unit. If it runs in the container on your laptop, it runs identically in the container on the server. The environment travels <em>with</em> the app.</p>
+    <div class="callout note">
+      <div class="label">📝 Container vs virtual machine</div>
+      A VM virtualizes a whole computer (its own OS kernel) — heavy, slow to boot. A container shares the host's kernel and isolates just your app and its dependencies — lightweight, starts in milliseconds. That's why containers became the standard unit of deployment.
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Images vs containers</h2>
+    <p>Two words people mix up constantly. The relationship is exactly like a class and an object, or a recipe and a meal:</p>
+    <table>
+      <tr><th>Image</th><th>Container</th></tr>
+      <tr><td>A read-only <strong>template</strong> (your app + deps, frozen)</td><td>A <strong>running instance</strong> of an image</td></tr>
+      <tr><td>Built once, stored, shared</td><td>Started, stopped, deleted, replaced</td></tr>
+      <tr><td>The recipe / the class</td><td>The meal / the object</td></tr>
+    </table>
+    <p>You <strong>build</strong> an image from a <code>Dockerfile</code>, then <strong>run</strong> one or more containers from that image. This is the key to scaling: in 9.3 you'll run <em>several</em> containers from the <em>same</em> backend image behind a load balancer.</p>
+    <div class="flow">Dockerfile  ──build──&gt;  Image  ──run──&gt;  Container(s)
+ (instructions)        (template)        (live processes)</div>
+  </section>
+
+  <section>
+    <h2>3. Anatomy of a Dockerfile</h2>
+    <p>A <code>Dockerfile</code> is a text file of instructions for building an image, top to bottom. Here's a backend one for the Tasks API, fully annotated:</p>
+    <pre><code># Start from an official image that already has Python 3.11.
+FROM python:3.11-slim
+
+# All following commands run inside this directory in the image.
+WORKDIR /app
+
+# Copy ONLY requirements first (see layer caching below), then install.
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Now copy the rest of the source code.
+COPY . .
+
+# Document the port the app listens on (informational).
+EXPOSE 8000
+
+# The command that runs when a container starts.
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]</code></pre>
+    <table>
+      <tr><th>Instruction</th><th>What it does</th></tr>
+      <tr><td><code>FROM</code></td><td>The base image to build on (here, a slim Linux + Python 3.11).</td></tr>
+      <tr><td><code>WORKDIR</code></td><td>Sets/creates the working directory for later instructions.</td></tr>
+      <tr><td><code>COPY</code></td><td>Copies files from your project into the image.</td></tr>
+      <tr><td><code>RUN</code></td><td>Executes a command <em>at build time</em> (installing deps, etc.).</td></tr>
+      <tr><td><code>EXPOSE</code></td><td>Documents which port the app uses (doesn't publish it — Compose does that).</td></tr>
+      <tr><td><code>CMD</code></td><td>The default command run <em>at container start</em>. Note <code>--host 0.0.0.0</code> (from 9.1!).</td></tr>
+    </table>
+    <div class="callout tip">
+      <div class="label">💡 Why <code>--host 0.0.0.0</code> is mandatory in a container</div>
+      Inside the container, <code>localhost</code> means "only this container." Bind to <code>0.0.0.0</code> so the port is reachable from outside the container. Forgetting this is the most common "my container runs but I can't reach it" bug.
+    </div>
+  </section>
+
+  <section>
+    <h2>4. Layer caching &amp; <code>.dockerignore</code></h2>
+    <p>Each instruction creates a <strong>layer</strong>, and Docker caches layers. On rebuild, it reuses cached layers until it hits one whose inputs changed — then it (and everything after) reruns. This is why the backend Dockerfile copies <code>requirements.txt</code> and installs <em>before</em> copying the code:</p>
+    <ul>
+      <li>You edit your app code (common) → only the <code>COPY . .</code> layer and below rerun. The expensive <code>pip install</code> layer is reused. Builds take seconds.</li>
+      <li>If you'd copied everything first, every code change would bust the install cache and reinstall all dependencies. Builds take minutes.</li>
+    </ul>
+    <p>Order your Dockerfile from <strong>least-frequently-changing to most-frequently-changing</strong>.</p>
+    <p>A <code>.dockerignore</code> file (like <code>.gitignore</code>) keeps junk out of the image — smaller, faster, safer builds:</p>
+    <pre><code># backend .dockerignore
+__pycache__/
+*.pyc
+.venv/
+tasks.db
+.env
+.git/</code></pre>
+    <div class="callout warning">
+      <div class="label">⚠️ Never bake secrets or the dev DB into an image</div>
+      Ignore <code>.env</code> and <code>tasks.db</code>. Secrets come in at <em>run</em> time via environment variables (Compose does this), and the database lives in a <strong>volume</strong> outside the image — never inside it.
+    </div>
+  </section>
+
+  <section>
+    <h2>5. Multi-stage builds (the frontend)</h2>
+    <p>The frontend is interesting: you need <strong>Node</strong> to <em>build</em> it (<code>npm run build</code>), but you only need a tiny web server to <em>serve</em> the resulting static files. Shipping a full Node image just to serve static files would be bloated. A <strong>multi-stage build</strong> uses one stage to build and a second, clean stage to run — and the build tools are left behind.</p>
+    <pre><code># --- Stage 1: build the static files with Node ---
+FROM node:20-alpine AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build              # produces /app/dist
+
+# --- Stage 2: serve them with Nginx ---
+FROM nginx:alpine
+COPY --from=build /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]</code></pre>
+    <p>The magic is <code>COPY --from=build</code>: the final image is just Nginx + your <code>dist/</code> — a few megabytes, no Node, no <code>node_modules</code>. The build stage did its job and was discarded.</p>
+    <p>That tiny <code>nginx.conf</code> serves the SPA and, crucially, sends every unknown path back to <code>index.html</code> so client-side routing (React Router from Module 4) works on refresh:</p>
+    <pre><code>server {
+    listen 80;
+    location / {
+        root /usr/share/nginx/html;
+        try_files $uri $uri/ /index.html;   # SPA fallback
+    }
+}</code></pre>
+    <div class="callout note">
+      <div class="label">📝 Why the SPA fallback matters</div>
+      Your built app is one <code>index.html</code> + JS. If a user refreshes on <code>/dashboard</code>, the server gets a request for a file that doesn't exist. <code>try_files … /index.html</code> says "serve index.html and let React Router sort out the route." Without it, refresh on any sub-route 404s.
+    </div>
+  </section>
+
+  <section>
+    <h2>6. Docker Compose — running the whole app</h2>
+    <p>Building and running each container by hand (with the right ports, env vars, networks, volumes) is tedious and error-prone. <strong>Docker Compose</strong> describes your whole multi-container app in one <code>docker-compose.yml</code> and runs it with a single command:</p>
+    <pre><code>docker compose up --build      # build images &amp; start everything
+docker compose down            # stop &amp; remove everything
+docker compose logs -f api     # follow one service's logs</code></pre>
+    <p>A Compose file lists <strong>services</strong> (each becomes a container), their build context, ports, environment, volumes, and dependencies:</p>
+    <pre><code>services:
+  api:
+    build: ./tasks-api
+    environment:
+      SECRET_KEY: ${SECRET_KEY}            # passed in at runtime
+      DATABASE_URL: sqlite:////data/tasks.db
+    volumes:
+      - tasks-data:/data                   # DB persists outside the container
+    ports:
+      - "8000:8000"
+
+  web:
+    build: ./tasks-web
+    ports:
+      - "5173:80"
+    depends_on:
+      - api
+
+volumes:
+  tasks-data:                              # named volume = durable storage</code></pre>
+    <p>Three ideas to lock in:</p>
+    <ul>
+      <li><strong>Services talk by name.</strong> Compose puts them on a shared network, so the web container can reach the backend at <code>http://api:8000</code> — no IP addresses, no <code>localhost</code>.</li>
+      <li><strong>Ports map host→container.</strong> <code>"8000:8000"</code> means "host port 8000 → container port 8000." That's how <em>you</em> reach it from your browser.</li>
+      <li><strong>Volumes give durability.</strong> Containers are disposable; their filesystem vanishes when they're removed. A <strong>named volume</strong> mounted at the DB path keeps <code>tasks.db</code> alive across restarts and rebuilds.</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ Without a volume, your data evaporates</div>
+      If SQLite's file lives inside the container's own filesystem, <code>docker compose down</code> deletes it. Mounting a named volume at the database directory is what makes data survive. This is doubly important in 9.3 when multiple API replicas must share <em>the same</em> database file.
+    </div>
+  </section>
+
+  <section>
+    <h2>7. The shape you're building</h2>
+    <div class="flow">         ┌──────────────────────────────────────────────┐
+         │              docker compose                    │
+         │                                                │
+  you ──&gt;│  web (Nginx + dist)  ──&gt;  api (FastAPI/uvicorn) │
+         │     :5173 -&gt; :80            :8000 -&gt; :8000      │
+         │                               │                │
+         │                          tasks-data volume     │
+         │                          (SQLite file)         │
+         └──────────────────────────────────────────────┘</div>
+    <p>One command spins up the frontend container and the backend container, wires them on a private network, and persists the database in a volume. In 9.3 you'll insert an Nginx load balancer and scale <code>api</code> to several replicas — and because you containerized cleanly here, that's a small change, not a rewrite.</p>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li>Containers package your app <em>with</em> its environment, killing "works on my machine."</li>
+      <li>An <strong>image</strong> is the frozen template; a <strong>container</strong> is a running instance. Build once, run many.</li>
+      <li>A <strong>Dockerfile</strong> uses <code>FROM/WORKDIR/COPY/RUN/EXPOSE/CMD</code>; order it for <strong>layer caching</strong> (deps before code) and use <code>.dockerignore</code>.</li>
+      <li><strong>Multi-stage builds</strong> build the frontend with Node, then ship only <code>dist/</code> on Nginx — tiny final image.</li>
+      <li><strong>Compose</strong> runs the whole app: services talk by name, ports map host→container, and a <strong>named volume</strong> keeps the SQLite data durable.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and bring the whole app up with one command.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

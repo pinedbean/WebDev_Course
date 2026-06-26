@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 9.4 — Deployment &amp; CI/CD Basics</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .flow{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 9 — Production &amp; Load Balancing</div>
+    <h1>Chunk 9.4 — Deployment &amp; CI/CD Basics</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 90–120 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>The landscape of <strong>deployment options</strong> — VPS, PaaS, container hosts, cloud — and how to choose.</li>
+      <li>How to run <strong>database migrations in production</strong> safely (and automatically).</li>
+      <li>How <strong>secrets in production</strong> differ from your local <code>.env</code>.</li>
+      <li>What <strong>CI/CD</strong> is and how to write a first <strong>GitHub Actions</strong> pipeline (lint → test → build).</li>
+      <li>The real <strong>limits of SQLite in production</strong> and exactly when/how to move to <strong>PostgreSQL</strong>.</li>
+    </ul>
+    <p>In the lab you'll add a CI workflow and an automated-migration entrypoint, then complete the 🏁 <strong>Module 9 Checkpoint</strong>: a documented, load-balanced, containerized deployment.</p>
+  </section>
+
+  <section>
+    <h2>1. Where can this thing actually run?</h2>
+    <p>You have a containerized, load-balanced stack. "Deploying" means running it on a computer that isn't yours, reachable from the internet. There's a spectrum, trading control for convenience:</p>
+    <table>
+      <tr><th>Option</th><th>What it is</th><th>Good when</th><th>Examples</th></tr>
+      <tr><td><strong>VPS</strong> (a rented Linux box)</td><td>You SSH in, install Docker, run <code>docker compose up -d</code>.</td><td>You want full control &amp; lowest cost; happy to manage the server.</td><td>DigitalOcean Droplet, Linode, EC2</td></tr>
+      <tr><td><strong>Container host</strong></td><td>You hand it an image; it runs &amp; scales containers.</td><td>You want managed scaling without babysitting a server.</td><td>Cloud Run, ECS/Fargate, Fly.io, Render</td></tr>
+      <tr><td><strong>PaaS</strong></td><td>You push code; it builds &amp; runs everything.</td><td>Fastest path; least ops.</td><td>Railway, Render, Heroku-style</td></tr>
+      <tr><td><strong>Orchestrator</strong></td><td>Declarative clusters of containers.</td><td>Many services, large scale, a team.</td><td>Kubernetes</td></tr>
+    </table>
+    <p>The beautiful thing: because you containerized in 9.2, <em>all</em> of these are open to you with little change. A VPS literally runs your existing <code>docker compose up -d</code>. A container host wants the same image you already build. You're not locked in.</p>
+    <div class="callout note">
+      <div class="label">📝 Our path</div>
+      For this module we treat a <strong>VPS-style deploy</strong> as the model (Compose on a Linux host) and <strong>simulate it locally</strong> — that's a faithful dry run. The Bonus Track then deploys the very same images to <strong>GCP Cloud Run</strong> (a managed container host) for the cloud-native version.
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Running migrations in production</h2>
+    <p>Your schema lives in Alembic migrations (Module 6). In development you run <code>alembic upgrade head</code> by hand. In production that has to happen <em>reliably</em>, on the right database, <em>before</em> the new code starts serving — and you don't want to SSH in to do it every deploy.</p>
+    <p>The standard pattern is a <strong>release/entrypoint step</strong>: run migrations as part of starting the container, before launching the server.</p>
+    <pre><code>#!/bin/sh
+# entrypoint.sh — run migrations, then start the server
+set -e
+alembic upgrade head
+exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4</code></pre>
+    <p>Point your Dockerfile's <code>CMD</code> (or <code>ENTRYPOINT</code>) at this script. Now every time the container starts, the DB is brought up to date first, then the app boots. <code>set -e</code> means if the migration fails, the container fails loudly instead of serving against a wrong schema.</p>
+    <div class="callout warning">
+      <div class="label">⚠️ With multiple replicas, don't migrate N times at once</div>
+      If 3 replicas all start and all run <code>alembic upgrade head</code> simultaneously, they race. Alembic is fairly safe (migrations are transactional and it tracks the version), but the clean pattern at scale is a <strong>dedicated one-off migration job</strong> that runs once, then the replicas start. For a single-host Compose deploy, running it in one place (an entrypoint on a single migrating service, or a one-shot <code>docker compose run api alembic upgrade head</code>) is fine. The principle: <strong>migrate once per release, before traffic.</strong>
+    </div>
+  </section>
+
+  <section>
+    <h2>3. Secrets in production</h2>
+    <p>Locally, secrets live in a git-ignored <code>.env</code>. In production, the principle is the same — <strong>secrets come from the environment, never the image or the repo</strong> — but <em>where</em> the environment gets them differs:</p>
+    <table>
+      <tr><th>Place</th><th>How secrets arrive</th></tr>
+      <tr><td>VPS</td><td>A root-only <code>.env</code> on the server (mode 600), referenced by Compose; never committed.</td></tr>
+      <tr><td>CI/CD</td><td><strong>Encrypted repository secrets</strong> (GitHub → Settings → Secrets), injected as env vars during the run.</td></tr>
+      <tr><td>Cloud / container hosts</td><td>A <strong>secret manager</strong> (GCP Secret Manager, AWS Secrets Manager, etc.) mounted as env vars at runtime.</td></tr>
+    </table>
+    <p>Rules that never change:</p>
+    <ul>
+      <li><strong>Never</strong> bake a secret into a Docker image (anyone who pulls the image can read it) or a <code>VITE_</code> var (it ships to the browser).</li>
+      <li>The repo holds a <code>.env.example</code> with placeholders only — documentation, not values.</li>
+      <li>Use a <strong>different, strong <code>SECRET_KEY</code> in production</strong> than in dev. If a secret ever leaks (or lands in git history), <strong>rotate it</strong> — deleting the line doesn't undo the exposure.</li>
+      <li>Every replica gets the <em>same</em> production <code>SECRET_KEY</code> (so JWTs verify everywhere — 9.3).</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>4. What is CI/CD?</h2>
+    <p>Two related habits that turn "deploying is scary and manual" into "deploying is boring and automatic":</p>
+    <ul>
+      <li><strong>CI — Continuous Integration:</strong> on every push/PR, automatically <em>check</em> the code — install deps, lint, run tests, build. Catch breakage before it merges.</li>
+      <li><strong>CD — Continuous Delivery/Deployment:</strong> on merge to <code>main</code>, automatically <em>ship</em> — build images, run migrations, deploy. Delivery = ready to deploy at the click of a button; Deployment = it happens automatically.</li>
+    </ul>
+    <p>This chunk focuses on <strong>CI</strong> (the universally valuable half) and points at CD. The payoff: a green check on every PR means "this didn't break the build or the tests," and nobody has to remember to run things by hand.</p>
+    <div class="flow">push / PR ──&gt; CI runs ──&gt;  install  ──&gt;  lint  ──&gt;  test  ──&gt;  build
+                                                                  │ (on main)
+                                                                  ▼
+                                                            CD: build image,
+                                                            migrate, deploy</div>
+  </section>
+
+  <section>
+    <h2>5. A first GitHub Actions pipeline</h2>
+    <p><strong>GitHub Actions</strong> runs workflows defined in YAML under <code>.github/workflows/</code>. The vocabulary:</p>
+    <ul>
+      <li><strong>Workflow</strong> — a YAML file; triggered <code>on</code> events (push, pull_request).</li>
+      <li><strong>Job</strong> — a set of steps running on a fresh virtual machine (<code>runs-on</code>).</li>
+      <li><strong>Step</strong> — one action (<code>uses:</code> a prebuilt action) or shell command (<code>run:</code>).</li>
+    </ul>
+    <p>Here's a CI workflow that checks both halves of the Tasks app on every push and PR:</p>
+    <pre><code>name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tasks-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - run: pip install ruff pytest
+      - run: ruff check .                 # lint
+      - run: pytest                       # tests
+        env:
+          SECRET_KEY: test-secret-not-real
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tasks-web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm ci
+      - run: npm run build                # building IS a real check
+</code></pre>
+    <p>Two jobs run in parallel on fresh Ubuntu VMs. The backend job installs, lints with <code>ruff</code>, and runs <code>pytest</code> (note the throwaway <code>SECRET_KEY</code> from a step env — a non-secret value just to satisfy settings validation in CI). The frontend job installs and builds — and because the build is strict (9.1), a build failure catches real problems.</p>
+    <div class="callout tip">
+      <div class="label">💡 The build itself is a test</div>
+      Even before you have many unit tests, <code>npm run build</code> succeeding and the backend importing cleanly catch a surprising number of mistakes. Start there; grow the test suite over time.
+    </div>
+    <div class="callout note">
+      <div class="label">📝 Toward CD (the next step you're ready for)</div>
+      Add a job that runs only <code>on: push: branches:[main]</code>, builds your Docker images, pushes them to a registry, and triggers a deploy — pulling secrets from <strong>GitHub repository secrets</strong> via <code>${{ secrets.SECRET_KEY }}</code>. The Bonus Track wires exactly this to GCP. The mental model is the same workflow file with one more job.
+    </div>
+  </section>
+
+  <section>
+    <h2>6. SQLite in production: the honest limits</h2>
+    <p>SQLite carried you all the way here, and it's genuinely great — zero-config, fast, a single file, perfect for development and many small single-instance apps. But you hit its wall in 9.3, and it's worth naming the limits precisely:</p>
+    <table>
+      <tr><th>Limit</th><th>Why it bites in production</th></tr>
+      <tr><td><strong>Single writer</strong></td><td>Only one write at a time across the whole DB. Multiple replicas under write load → <code>database is locked</code>.</td></tr>
+      <tr><td><strong>It's a file, not a server</strong></td><td>It must live on a disk the process can open. It can't be reached over the network, so replicas on different machines can't share it.</td></tr>
+      <tr><td><strong>Ephemeral filesystems</strong></td><td>On container hosts (Cloud Run, etc.) the local disk is wiped on restart — your data would vanish without an external store.</td></tr>
+      <tr><td><strong>Limited concurrency tooling</strong></td><td>No connection pooling over a network, no role-based access at the DB layer, fewer ops features.</td></tr>
+    </table>
+
+    <h3>When to move to PostgreSQL</h3>
+    <p>Move when any of these is true: you run <strong>multiple instances that write</strong>, you need the DB on a <strong>separate/managed host</strong>, you're on an <strong>ephemeral filesystem</strong>, or you have meaningful <strong>write concurrency</strong>. Postgres is a real client/server database built for exactly this — many concurrent writers over the network, pooling, robust tooling.</p>
+
+    <h3>The good news: the migration is small</h3>
+    <p>Because you used <strong>SQLAlchemy + Alembic</strong>, the switch is mostly configuration, not a rewrite:</p>
+    <pre><code># 1. Install a driver
+pip install "psycopg[binary]"
+
+# 2. Change the URL (SQLite -&gt; Postgres) via env var only
+DATABASE_URL=postgresql+psycopg://user:pass@db-host:5432/tasks
+
+# 3. Run your existing migrations against the new DB
+alembic upgrade head</code></pre>
+    <p>Your models, queries, routers, and the load-balanced topology are unchanged. A few SQLite-specific bits go away (the <code>check_same_thread</code> connect-arg, the WAL/foreign-key pragmas) and you'd add a real connection pool — but the shape of the app is identical. <em>This</em> is the reward for building on an ORM and migrations from the start.</p>
+    <div class="callout tip">
+      <div class="label">💡 You already designed for this</div>
+      Stateless JWT (replicas don't need shared session state) + an ORM + migrations + env-driven config means "scale the data tier" is a contained change. The Bonus Track does it for real with <strong>Cloud SQL (Postgres)</strong> on GCP.
+    </div>
+  </section>
+
+  <section>
+    <h2>7. The deploy runbook</h2>
+    <p>Production isn't just code — it's a <strong>documented, repeatable process</strong>. A good runbook (you started one in 9.1) answers: how to build, what env vars are required, how to run migrations, how to start/stop, how to check health, and how to roll back. The 🏁 Checkpoint asks you to write this down, because "it only deploys when I'm at the keyboard remembering the steps" isn't a deployment — it's a liability.</p>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li>Deployment options run from <strong>VPS</strong> (you manage it) to <strong>container hosts/PaaS</strong> (managed) — your image runs on all of them.</li>
+      <li>Run <strong>migrations as a release step</strong> (entrypoint), once per release, before traffic; <code>set -e</code> so failures are loud.</li>
+      <li><strong>Secrets come from the environment</strong> — server <code>.env</code>, CI repo secrets, or a secret manager — never the image, repo, or frontend. Rotate on leak.</li>
+      <li><strong>CI</strong> checks every push (install/lint/test/build) via <strong>GitHub Actions</strong>; <strong>CD</strong> adds build-image + deploy on merge to <code>main</code>.</li>
+      <li><strong>SQLite</strong> is single-writer and file-bound; move to <strong>Postgres</strong> when you scale writes or need a networked/managed DB — and thanks to SQLAlchemy + Alembic, that's mostly a URL change.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code>, add CI + automated migrations, and complete the 🏁 Module 9 Checkpoint.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

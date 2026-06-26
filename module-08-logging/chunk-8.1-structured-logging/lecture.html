@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 8.1 — Structured Logging in FastAPI</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .flow{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 8 — Logging &amp; Observability</div>
+    <h1>Chunk 8.1 — Structured Logging in FastAPI</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>What <strong>observability</strong> means and why <code>print()</code> is not logging.</li>
+      <li>The five <strong>log levels</strong> and how to choose the right one.</li>
+      <li>How Python's <code>logging</code> module works: <strong>loggers, handlers, formatters</strong>.</li>
+      <li>Why production wants <strong>structured (JSON) logs</strong> instead of free-form text.</li>
+      <li>How to write a <strong>request-logging middleware</strong> and attach a <strong>request ID</strong> to every log line so one request is traceable end to end.</li>
+    </ul>
+    <p>In the lab you'll give the Tasks API real, structured logs with request IDs.</p>
+  </section>
+
+  <section>
+    <h2>1. Why logging? (Observability in one minute)</h2>
+    <p>Through Modules 5–7 you mostly debugged by looking at the terminal or hitting <code>/docs</code>. That works on your laptop. But once the Tasks API runs on a server — behind Docker and a load balancer (Module 9) — you can't watch it. When a user reports "the app broke at 2pm," you need to <em>look back in time</em> and answer: what requests came in? which one failed? why? how long did it take?</p>
+    <p>That ability to understand what a running system is doing, from the outside, is <strong>observability</strong>. Its three classic pillars are <strong>logs</strong> (events that happened), <strong>metrics</strong> (numbers over time), and <strong>traces</strong> (a request's journey across services). This module focuses on the foundation everyone needs first: <strong>logs</strong>.</p>
+    <div class="callout note">
+      <div class="label">📝 Logs are your flight recorder</div>
+      A log is a timestamped record of "something happened." Good logs turn "it broke and I have no idea why" into "request <code>a1b2</code> failed validating the task title at 14:03:11." You're building that flight recorder now, before you need it.
+    </div>
+  </section>
+
+  <section>
+    <h2>2. <code>print()</code> vs logging</h2>
+    <p>It's tempting to sprinkle <code>print("got here")</code> everywhere. For a one-off script that's fine. For a server, <code>print()</code> falls short in every way that matters:</p>
+    <table>
+      <tr><th></th><th><code>print()</code></th><th><code>logging</code></th></tr>
+      <tr><td>Severity</td><td>None — everything is equal</td><td>Levels (DEBUG…CRITICAL) you can filter</td></tr>
+      <tr><td>Turn off in prod</td><td>Edit/delete every line</td><td>Raise the level in one place</td></tr>
+      <tr><td>Timestamps / source</td><td>You add them by hand</td><td>Automatic (time, module, line)</td></tr>
+      <tr><td>Where it goes</td><td>Only stdout</td><td>stdout, files, JSON, external services</td></tr>
+      <tr><td>Machine-readable</td><td>No</td><td>Yes (with a JSON formatter)</td></tr>
+    </table>
+    <p>The rule of thumb: <strong><code>print()</code> is for humans running a script; <code>logging</code> is for programs running in production.</strong> From now on, the Tasks API logs — it never prints.</p>
+  </section>
+
+  <section>
+    <h2>3. Log levels</h2>
+    <p>Every log message has a <strong>level</strong> describing how important/severe it is. Python gives you five, from quietest to loudest:</p>
+    <table>
+      <tr><th>Level</th><th>Use it for</th><th>Example in the Tasks API</th></tr>
+      <tr><td><code>DEBUG</code></td><td>Fine-grained detail while developing</td><td>"query returned 12 tasks for owner_id=3"</td></tr>
+      <tr><td><code>INFO</code></td><td>Normal, expected events</td><td>"request completed 200 in 14ms", "user 5 logged in"</td></tr>
+      <tr><td><code>WARNING</code></td><td>Something odd but handled</td><td>"login failed: bad password for a@x.com"</td></tr>
+      <tr><td><code>ERROR</code></td><td>An operation failed</td><td>"unhandled exception creating task"</td></tr>
+      <tr><td><code>CRITICAL</code></td><td>The app itself is in danger</td><td>"cannot connect to database — shutting down"</td></tr>
+    </table>
+    <p>You set a <strong>threshold</strong>, and anything at or above it is emitted. Set the level to <code>INFO</code> and you'll see INFO, WARNING, ERROR, CRITICAL — but DEBUG is hidden. This is the superpower <code>print()</code> lacks: in development you run at <code>DEBUG</code> for maximum detail; in production you run at <code>INFO</code> and the noise disappears — <strong>without deleting a single line of code</strong>.</p>
+    <div class="callout tip">
+      <div class="label">💡 A simple heuristic</div>
+      If you'd want to be paged at 3am for it → <code>ERROR</code>/<code>CRITICAL</code>. If it's "huh, that's unusual" → <code>WARNING</code>. If it's "the system is working normally" → <code>INFO</code>. If only you, mid-debug, care → <code>DEBUG</code>.
+    </div>
+  </section>
+
+  <section>
+    <h2>4. How Python's <code>logging</code> module is built</h2>
+    <p>Three pieces work together. Understanding them is the whole game:</p>
+    <ul>
+      <li><strong>Logger</strong> — what your code talks to. You get one with <code>logging.getLogger(__name__)</code> and call <code>logger.info(...)</code>. Loggers are named (usually after the module) and organized in a tree.</li>
+      <li><strong>Handler</strong> — decides <em>where</em> a record goes: the console (<code>StreamHandler</code>), a file (<code>FileHandler</code>), etc. A logger can have several handlers.</li>
+      <li><strong>Formatter</strong> — decides <em>what each line looks like</em>: plain text, or — what we want — JSON.</li>
+    </ul>
+    <div class="flow">your code  ──&gt;  Logger  ──&gt;  Handler(s)  ──&gt;  Formatter  ──&gt;  destination
+            logger.info()    "where"        "what it          stdout / file
+                                             looks like"</div>
+    <p>The minimal setup is one line:</p>
+    <pre><code>import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+logger.info("Server started")
+logger.warning("Disk almost full")</code></pre>
+    <p>Output:</p>
+    <pre><code>INFO:__main__:Server started
+WARNING:__main__:Disk almost full</code></pre>
+    <div class="callout note">
+      <div class="label">📝 Get the logger by <code>__name__</code></div>
+      Always do <code>logger = logging.getLogger(__name__)</code> at the top of a module. The name becomes the module's path (<code>app.routers.tasks</code>), so every log line tells you exactly where it came from — and you can tune levels per module later.
+    </div>
+  </section>
+
+  <section>
+    <h2>5. Why structured (JSON) logs?</h2>
+    <p>A traditional log line is a sentence built for human eyes:</p>
+    <pre><code>2026-06-26 14:03:11 INFO app.main Request completed: GET /tasks 200 in 14ms</code></pre>
+    <p>That's readable, but a <em>machine</em> has to rip it apart with fragile regexes to answer "show me every request slower than 500ms." In production your logs don't get read line-by-line — they get shipped to a tool (CloudWatch, Loki, Datadog, an ELK stack) that <strong>indexes and searches</strong> them. Those tools love <strong>JSON</strong>, where every field is already labelled:</p>
+    <pre><code>{"timestamp": "2026-06-26T14:03:11Z", "level": "INFO", "logger": "app.main",
+ "message": "request completed", "method": "GET", "path": "/tasks",
+ "status_code": 200, "duration_ms": 14, "request_id": "a1b2c3d4"}</code></pre>
+    <p>Now "requests slower than 500ms" is a trivial filter on the <code>duration_ms</code> field. Same information, but <strong>queryable</strong>. That's the entire point of structured logging: stop writing prose, start emitting data.</p>
+    <p>We get JSON by writing a custom <strong>formatter</strong> that turns each log record into a JSON object. You'll build a small one in the lab — no extra libraries required (though <code>structlog</code> and <code>python-json-logger</code> exist if you want batteries included).</p>
+    <div class="callout tip">
+      <div class="label">💡 Best of both worlds</div>
+      A common pattern: pretty human-readable text when running locally (<code>ENVIRONMENT=development</code>), JSON when deployed. You choose the formatter based on a setting — same code, two faces.
+    </div>
+  </section>
+
+  <section>
+    <h2>6. Logging extra fields (the "structured" part)</h2>
+    <p>JSON output is only useful if you attach <em>data</em> to each event. Python's logging lets you pass an <code>extra</code> dict, and your formatter can fold those keys into the JSON:</p>
+    <pre><code>logger.info(
+    "request completed",
+    extra={"method": "GET", "path": "/tasks", "status_code": 200, "duration_ms": 14},
+)</code></pre>
+    <p>The message stays a short, stable label (<code>"request completed"</code>) and the variable details live in fields. That's far better than f-stringing everything into the message, because the label is now something you can group and count on.</p>
+  </section>
+
+  <section>
+    <h2>7. Request-logging middleware</h2>
+    <p>You <em>could</em> log inside every endpoint, but that's repetitive and easy to forget. FastAPI (via Starlette) lets you register <strong>middleware</strong>: code that wraps every request, running just before the route and just after the response. It's the perfect place to log one tidy line per request.</p>
+    <pre><code>import time
+from fastapi import Request
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start = time.perf_counter()
+    response = await call_next(request)          # run the actual endpoint
+    duration_ms = round((time.perf_counter() - start) * 1000, 2)
+    logger.info(
+        "request completed",
+        extra={
+            "method": request.method,
+            "path": request.url.path,
+            "status_code": response.status_code,
+            "duration_ms": duration_ms,
+        },
+    )
+    return response</code></pre>
+    <p>Now <em>every</em> request — to any route, present or future — gets a structured log line with method, path, status, and timing, automatically. In the lab you'll put this in its own module for tidiness.</p>
+    <div class="callout warning">
+      <div class="label">⚠️ Don't log secrets</div>
+      Middleware sees everything: headers, bodies, query strings. Never log the <code>Authorization</code> header, passwords, or tokens. Log the <em>shape</em> of a request (method, path, status, timing), not its sensitive contents.
+    </div>
+  </section>
+
+  <section>
+    <h2>8. Correlation IDs — tracing one request</h2>
+    <p>Here's the problem that ties it together. Under load, dozens of requests are in flight at once, and their log lines interleave:</p>
+    <pre><code>INFO request started  GET /tasks
+INFO request started  POST /tasks
+WARNING slow query
+INFO request completed POST /tasks 201
+ERROR task not found
+INFO request completed GET /tasks 200</code></pre>
+    <p>Which request hit the slow query? Which one 404'd? You can't tell — the lines are tangled. The fix is a <strong>correlation ID</strong> (a.k.a. <strong>request ID</strong>): a unique id generated when a request arrives and stamped onto <em>every</em> log line produced while handling it.</p>
+    <pre><code>{"request_id": "a1b2", "message": "request started", "path": "/tasks"}
+{"request_id": "c3d4", "message": "request started", "path": "/tasks"}
+{"request_id": "c3d4", "message": "slow query", "level": "WARNING"}
+{"request_id": "a1b2", "message": "request completed", "status_code": 200}
+{"request_id": "c3d4", "message": "request completed", "status_code": 201}</code></pre>
+    <p>Now you filter by <code>request_id = c3d4</code> and see that one request's whole story in order. In a load-balanced, multi-service world this is indispensable — and you also return the id to the client in an <code>X-Request-ID</code> header, so a user reporting a bug can hand you the exact id to search for.</p>
+
+    <h3>How do logs deep in your code "know" the request ID?</h3>
+    <p>You don't want to pass <code>request_id</code> as an argument through every function. Python's standard library solves this with <code>contextvars.ContextVar</code> — a variable that's <strong>isolated per async task</strong>. The middleware sets it at the start of a request; any log record, anywhere in the call stack, can read it back. Because each request runs in its own task, two concurrent requests never see each other's id.</p>
+    <pre><code>from contextvars import ContextVar
+
+request_id_ctx: ContextVar[str] = ContextVar("request_id", default="-")
+
+# middleware sets it:
+request_id_ctx.set("a1b2c3d4")
+
+# a custom logging.Filter reads it and attaches it to every record:
+record.request_id = request_id_ctx.get()</code></pre>
+    <p>You'll wire exactly this in the lab: a <code>ContextVar</code>, a small logging <code>Filter</code> that copies it onto each record, and middleware that generates the id with <code>uuid4()</code>.</p>
+    <div class="callout note">
+      <div class="label">📝 Why a ContextVar, not a global</div>
+      A plain global variable would be shared by <em>all</em> requests at once — request A's id would leak into request B's logs. A <code>ContextVar</code> gives each async request its own copy. This is the standard Python way to carry "request-scoped" data.
+    </div>
+  </section>
+
+  <section>
+    <h2>9. Where do the logs actually go?</h2>
+    <p>One golden rule for containerized apps (Module 9): <strong>log to standard output (stdout), not to a file.</strong> Your app's only job is to print structured lines to stdout. The platform around it — Docker, the cloud host, a log collector — captures stdout and routes it wherever it needs to go. This keeps your app simple and portable: it doesn't manage log files, rotation, or shipping. We'll lean on this hard in Module 9, but the habit starts now.</p>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li><strong>Observability</strong> = understanding a running system from outside; <strong>logs</strong> are the foundation.</li>
+      <li><code>logging</code> beats <code>print()</code>: levels, central config, timestamps, destinations, machine-readable output.</li>
+      <li>Five levels — <strong>DEBUG, INFO, WARNING, ERROR, CRITICAL</strong> — let you tune verbosity without touching code.</li>
+      <li>The module is <strong>Logger → Handler → Formatter</strong>. A custom JSON <strong>formatter</strong> gives you <strong>structured logs</strong> you can query.</li>
+      <li><strong>Middleware</strong> logs one structured line per request; a <strong>request ID</strong> carried in a <code>ContextVar</code> ties every line of one request together.</li>
+      <li>In containers, <strong>log to stdout</strong> and let the platform ship it.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and add structured logging + request IDs to the Tasks API.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

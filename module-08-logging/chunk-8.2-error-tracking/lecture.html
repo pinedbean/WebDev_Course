@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 8.2 — Error Tracking &amp; Frontend Logging</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .flow{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 8 — Logging &amp; Observability</div>
+    <h1>Chunk 8.2 — Error Tracking &amp; Frontend Logging</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>How <strong>centralized error handling</strong> turns scary stack traces into clean, logged responses.</li>
+      <li>How to log exceptions with full tracebacks using <code>logger.exception</code>.</li>
+      <li>What <strong>log aggregation</strong> and <strong>error tracking</strong> services do (Sentry, Datadog, ELK, CloudWatch) — conceptually.</li>
+      <li>Why apps need <strong>health-check endpoints</strong>, and the difference between <strong>liveness</strong> and <strong>readiness</strong>.</li>
+      <li>How a React <strong>error boundary</strong> stops one broken component from white-screening the whole app — and how to <strong>report</strong> frontend crashes back to your server.</li>
+    </ul>
+    <p>In the lab you'll add global error logging, <code>/health</code> + <code>/health/ready</code>, a React error boundary, and a client-error reporting endpoint.</p>
+  </section>
+
+  <section>
+    <h2>1. The two kinds of failure</h2>
+    <p>In 8.1 you logged the <em>normal</em> life of a request. This chunk is about the <em>abnormal</em> — failures — on both sides of the stack:</p>
+    <ul>
+      <li><strong>Backend errors:</strong> an endpoint raises an exception. Without handling, FastAPI returns a generic <code>500</code> and the traceback is lost unless you happened to be watching the terminal.</li>
+      <li><strong>Frontend errors:</strong> a React component throws while rendering. By default React <em>unmounts the whole tree</em> — the user gets a blank white page and you never hear about it.</li>
+    </ul>
+    <p>Observability means: when either happens, it's <strong>caught</strong>, <strong>logged with enough detail to debug</strong>, and the user sees something <strong>graceful</strong> instead of a crash. Let's do both.</p>
+  </section>
+
+  <section>
+    <h2>2. Centralized error handling on the backend</h2>
+    <p>You met FastAPI's <code>HTTPException</code> in Module 5 — that's for <em>expected</em> errors you raise on purpose (404, 401, 400). They're already clean. The danger is the <em>unexpected</em> exception: a bug, a <code>KeyError</code>, a database hiccup. You want a single place that catches anything unhandled, logs it richly, and returns a tidy JSON body — never a raw traceback to the user (which can leak file paths and internals).</p>
+    <p>FastAPI gives you an <strong>exception handler</strong>: register one function for a given exception type and it runs whenever that type escapes a route.</p>
+    <pre><code>import logging
+from fastapi import Request
+from fastapi.responses import JSONResponse
+
+logger = logging.getLogger("app.errors")
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    logger.exception(            # logs the message AND the full traceback
+        "unhandled exception",
+        extra={"method": request.method, "path": request.url.path},
+    )
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
+    )</code></pre>
+    <p>Two things matter here. First, <code>logger.exception(...)</code> — call it <em>inside</em> an <code>except</code> (or an exception handler) and it automatically attaches the current traceback. Your 8.1 JSON formatter already folds that into an <code>"exception"</code> field, so the full stack lands in your structured logs, tagged with the request id. Second, the <em>user</em> gets only <code>{"detail": "Internal server error"}</code> — calm and leak-free.</p>
+    <div class="callout warning">
+      <div class="label">⚠️ Don't swallow <code>HTTPException</code></div>
+      A catch-all <code>Exception</code> handler should not hijack your intentional <code>404</code>/<code>401</code> responses. FastAPI handles <code>HTTPException</code> separately and before this, so your purposeful errors keep their status codes. Only truly unhandled exceptions hit the catch-all.
+    </div>
+    <div class="callout note">
+      <div class="label">📝 <code>logger.error</code> vs <code>logger.exception</code></div>
+      <code>logger.exception("msg")</code> is exactly <code>logger.error("msg", exc_info=True)</code> — it logs at ERROR level AND captures the traceback. Use it whenever you're handling a caught exception; use plain <code>logger.error</code> when there's no exception object to attach.
+    </div>
+  </section>
+
+  <section>
+    <h2>3. Log aggregation &amp; error tracking (the big picture)</h2>
+    <p>You're emitting structured logs to stdout. In production, where do they go and how do you actually <em>use</em> them? That's the job of two related kinds of tooling:</p>
+    <div class="flow">your app (stdout, JSON)
+        │
+        ▼
+  ┌─────────────────┐     ┌──────────────────────────────┐
+  │ log collector   │ ──&gt; │ log aggregation / search       │
+  │ (Docker, agent) │     │ Loki · ELK · CloudWatch · etc. │
+  └─────────────────┘     └──────────────────────────────┘
+        │
+        ▼
+  ┌──────────────────────────────┐
+  │ error tracking (Sentry, etc.)│  alerts + grouped stack traces
+  └──────────────────────────────┘</div>
+    <table>
+      <tr><th>Tool type</th><th>What it does</th><th>Examples</th></tr>
+      <tr><td><strong>Log aggregation</strong></td><td>Collects logs from every instance into one searchable place; dashboards, filters, retention.</td><td>Grafana Loki, ELK/OpenSearch, CloudWatch Logs, Datadog</td></tr>
+      <tr><td><strong>Error tracking</strong></td><td>Captures exceptions, <em>groups</em> duplicates, shows stack traces + context, and <strong>alerts</strong> you.</td><td>Sentry, Rollbar, Bugsnag</td></tr>
+    </table>
+    <p>You're not wiring these up in this course — but notice that you've <em>earned the right to</em>. Because your logs are <strong>structured JSON on stdout with request ids</strong>, pointing them at any of these tools is configuration, not a rewrite. That's the payoff of doing 8.1 properly.</p>
+    <div class="callout tip">
+      <div class="label">💡 The 12-Factor habit</div>
+      "Treat logs as event streams" — your app writes to stdout and is done. It never opens log files or talks to Sentry directly in code (well, sometimes a tiny SDK), and definitely never manages rotation. The environment handles delivery. This keeps the app portable across laptop, Docker, and cloud.
+    </div>
+  </section>
+
+  <section>
+    <h2>4. Health-check endpoints</h2>
+    <p>How does a load balancer or orchestrator know your instance is alive and ready for traffic? It periodically calls a <strong>health-check endpoint</strong> and watches the status code. This becomes essential in Module 9, where Nginx and Docker need to route around dead replicas.</p>
+    <p>There are two distinct questions, and good systems separate them:</p>
+    <table>
+      <tr><th>Check</th><th>Question</th><th>If it fails…</th></tr>
+      <tr><td><strong>Liveness</strong> <code>/health</code></td><td>"Is the process up and responding at all?"</td><td>Restart the instance.</td></tr>
+      <tr><td><strong>Readiness</strong> <code>/health/ready</code></td><td>"Can it serve real traffic right now?" (e.g. is the DB reachable?)</td><td>Stop sending it traffic until it recovers.</td></tr>
+    </table>
+    <p>Liveness must be <strong>cheap and dependency-free</strong> — it just proves the web server answers:</p>
+    <pre><code>@app.get("/health")
+def health():
+    return {"status": "ok"}</code></pre>
+    <p>Readiness checks the things a request actually needs. For the Tasks API that's the database — run a trivial query and report:</p>
+    <pre><code>from sqlalchemy import text
+
+@app.get("/health/ready")
+def readiness(db: Session = Depends(get_db)):
+    try:
+        db.execute(text("SELECT 1"))
+        return {"status": "ready", "database": "ok"}
+    except Exception:
+        logger.exception("readiness check failed")
+        return JSONResponse(status_code=503,
+                            content={"status": "not ready", "database": "down"})</code></pre>
+    <div class="callout warning">
+      <div class="label">⚠️ Keep liveness dumb</div>
+      Don't check the database in <code>/health</code>. If liveness touches the DB and the DB blips, the orchestrator will <em>restart</em> healthy app instances — making an outage worse. Liveness = "am I running"; readiness = "can I serve". Status <code>503</code> on readiness tells the balancer "skip me for now," which is exactly right.
+    </div>
+  </section>
+
+  <section>
+    <h2>5. The frontend problem: React unmounts on a crash</h2>
+    <p>If any component throws during render, React 18's default is to unmount the entire component tree — the user is left staring at a blank page, and you have no idea it happened. The fix is a <strong>React error boundary</strong>: a component that "catches" render errors in its children, shows a fallback UI, and lets you report the error.</p>
+    <p>Error boundaries must (still) be <strong>class components</strong>, because they rely on two lifecycle methods that have no hook equivalent:</p>
+    <ul>
+      <li><code>static getDerivedStateFromError(error)</code> — runs during render after a child throws; returns new state so you can show a fallback.</li>
+      <li><code>componentDidCatch(error, info)</code> — runs after; the place to <strong>log/report</strong> the error (it also gives you a component stack).</li>
+    </ul>
+    <pre><code>import { Component } from "react";
+import { reportClientError } from "./api";
+
+export class ErrorBoundary extends Component {
+  state = { hasError: false };
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true };          // flip to the fallback UI
+  }
+
+  componentDidCatch(error, info) {
+    // Send it somewhere we can actually see it.
+    reportClientError(error, info.componentStack);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        &lt;div role="alert"&gt;
+          &lt;h1&gt;Something went wrong.&lt;/h1&gt;
+          &lt;button onClick={() =&gt; location.reload()}&gt;Reload&lt;/button&gt;
+        &lt;/div&gt;
+      );
+    }
+    return this.props.children;
+  }
+}</code></pre>
+    <p>You wrap your app with it once, at the top:</p>
+    <pre><code>&lt;ErrorBoundary&gt;
+  &lt;App /&gt;
+&lt;/ErrorBoundary&gt;</code></pre>
+    <div class="callout note">
+      <div class="label">📝 What boundaries do and don't catch</div>
+      They catch errors thrown <em>during rendering</em> of their child tree. They do <strong>not</strong> catch errors in event handlers, async code (<code>fetch</code>/<code>setTimeout</code>), or the boundary itself. For those, use ordinary <code>try/catch</code> and the <code>window.onerror</code> / <code>unhandledrejection</code> handlers (a stretch goal in the lab).
+    </div>
+  </section>
+
+  <section>
+    <h2>6. Reporting frontend errors to the backend</h2>
+    <p>A crash that only appears in the user's browser console is invisible to you. So the error boundary should <strong>report</strong> the error to your server, where it joins your structured logs. A minimal pattern: a frontend helper POSTs the message + stack to a small endpoint; the backend logs it.</p>
+    <pre><code>// frontend: src/api.js
+export async function reportClientError(error, componentStack) {
+  try {
+    await fetch(`${BASE}/client-logs`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: String(error?.message || error),
+        stack: componentStack || error?.stack || "",
+        url: window.location.href,
+      }),
+    });
+  } catch {
+    // Never let the reporter itself crash the app.
+  }
+}</code></pre>
+    <pre><code># backend: a public router
+@router.post("/client-logs", status_code=202)
+def client_logs(report: ClientErrorReport):
+    logger.error("client error", extra={
+        "client_message": report.message,
+        "client_url": report.url,
+        "client_stack": report.stack[:2000],   # cap it
+    })
+    return {"received": True}</code></pre>
+    <p>Now a React crash on a user's machine shows up in <em>your</em> JSON logs (with a request id), right next to your backend errors. That's true full-stack observability.</p>
+    <div class="callout warning">
+      <div class="label">⚠️ Treat client input as hostile</div>
+      Anyone can POST to <code>/client-logs</code>. Cap the stack length, don't log it at a level that pages you, and never <code>eval</code> or trust it. In a real app you'd also rate-limit this endpoint. Logging it at <code>ERROR</code> is fine; just know it's user-supplied.
+    </div>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li>A catch-all <strong>exception handler</strong> + <code>logger.exception</code> logs full tracebacks (tagged with the request id) while returning a clean, leak-free 500 to users.</li>
+      <li>Your structured stdout logs are ready for <strong>log aggregation</strong> (Loki/ELK/CloudWatch) and <strong>error tracking</strong> (Sentry) — wiring them up is config, not a rewrite.</li>
+      <li><strong>Liveness</strong> (<code>/health</code>) proves the process is up; <strong>readiness</strong> (<code>/health/ready</code>) proves it can serve (DB reachable). Keep liveness dependency-free.</li>
+      <li>A React <strong>error boundary</strong> (a class component) catches render crashes, shows a fallback, and <strong>reports</strong> the error to your backend so it lands in your logs.</li>
+      <li>Boundaries don't catch event-handler/async errors — use <code>try/catch</code> and global handlers for those.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and make the Tasks app observable end to end.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

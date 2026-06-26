@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment · Chunk B.3 — GCP Load Balancing, Managed Data &amp; CI/CD</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #ede9fe;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:#ede9fe;border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#5b21b6;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--task);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .deliverable{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .deliverable h2{border-color:#a7f3d0;color:#065f46;}
+  .check{list-style:none;padding-left:0;} .check li{padding-left:30px;position:relative;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:18px;color:var(--task);}
+  .finish{background:#fffbeb;border:1px solid #fde68a;}
+  .finish h2{border-color:#fde68a;color:#92400e;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · ⭐ Bonus Track — Git Strategy &amp; GCP</div>
+    <h1>Chunk B.3 — Lab: Durable, Load-Balanced, Auto-Deploying TaskFlow</h1>
+    <span class="badge">🧪 ASSIGNMENT</span>
+    <span class="badge">⏱️ 90–120 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 Your mission</h2>
+    <p>Take the B.2 deployment to production grade. You'll provision a <strong>Cloud SQL Postgres</strong> instance and point TaskFlow at it (so data survives), run migrations in the cloud, put a <strong>global HTTPS load balancer</strong> in front, and add a <strong>CI/CD pipeline</strong> that auto-deploys on every merge to <code>main</code> — tied to the Git strategy you set up in B.1. This finishes the Bonus Track.</p>
+  </section>
+
+  <section>
+    <h2>Prerequisites</h2>
+    <ul>
+      <li><strong>B.2 complete:</strong> TaskFlow backend + frontend live on Cloud Run; <code>gcloud</code> configured with your project + region.</li>
+      <li><strong>B.1 complete:</strong> TaskFlow repo on GitHub using GitHub Flow with a protected <code>main</code>.</li>
+      <li><strong>Alembic migrations</strong> exist for your schema (from Module 6 / Module 10).</li>
+      <li>(Optional) a domain you control, for the custom-domain + managed-TLS step.</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ Cost watch — Cloud SQL bills while it exists</div>
+      Unlike Cloud Run, a Cloud SQL instance and a load-balancer forwarding rule cost money <em>continuously</em>, even idle. Use the smallest tier, and run the <strong>full teardown</strong> in the solution the moment you've demoed it. Set a budget alert first.
+    </div>
+  </section>
+
+  <section>
+    <h2>Tasks</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Provision Cloud SQL (Postgres)</h3>
+      <p>Enable the Cloud SQL Admin API. Create the smallest Postgres instance in your region, create a <code>taskflow</code> database and a <code>taskflow</code> user with a strong password, and store that password in <strong>Secret Manager</strong>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Point the backend at Postgres + add pooling</h3>
+      <p>Update the backend to read a Postgres <code>DATABASE_URL</code> (driver <code>postgresql+psycopg</code>) and configure a small SQLAlchemy <strong>connection pool</strong> (<code>pool_size</code>, <code>max_overflow</code>, <code>pool_pre_ping</code>). Commit on a feature branch via your B.1 workflow.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Run migrations against the cloud DB</h3>
+      <p>Use the <strong>Cloud SQL Auth Proxy</strong> to tunnel to the instance from your machine and run <code>alembic upgrade head</code> so the tables exist in Postgres.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Redeploy the backend connected to Cloud SQL</h3>
+      <p>Redeploy <code>taskflow-backend</code> with <code>--add-cloudsql-instances</code>, the Postgres <code>DATABASE_URL</code> env var, and the DB password mounted from Secret Manager. Verify data now <strong>persists</strong> across a redeploy / scale-to-zero (the thing that failed in B.2).</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Put an HTTP(S) Load Balancer in front</h3>
+      <p>Reserve a global static IP, create a <strong>serverless NEG</strong> targeting your Cloud Run service, then a backend service → URL map → target proxy → forwarding rule. Confirm traffic reaches TaskFlow through the load balancer's IP.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Add HTTPS + a custom domain (optional if you have one)</h3>
+      <p>Point a DNS <code>A</code> record at the static IP, create a <strong>Google-managed SSL certificate</strong> for that hostname, attach it to an HTTPS target proxy, and add an HTTP→HTTPS redirect. Wait for the cert to go <code>ACTIVE</code>, then load <code>https://your-domain</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Wire up CI/CD (auto-deploy on merge to <code>main</code>)</h3>
+      <p>Add either a <code>cloudbuild.yaml</code> + Cloud Build trigger <strong>or</strong> a <code>.github/workflows/deploy.yml</code> GitHub Actions workflow that builds, tests, and deploys to Cloud Run on every push to <code>main</code>. Use keyless auth (Workload Identity Federation) if using GitHub Actions.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">8</span> Prove the loop: PR → merge → auto-deploy</h3>
+      <p>Make a small visible change (e.g. a footer version string) on a <strong>feature branch</strong>, open a PR, get it through your B.1 review/branch-protection, squash-merge to <code>main</code>, and watch the pipeline deploy it automatically. Confirm the change is live.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">9</span> Tear down (after you've demoed)</h3>
+      <p>Run the full cleanup in the solution: delete the load-balancer pieces, the Cloud SQL instance, the Cloud Run services, and secrets — or delete the whole project. Confirm in Billing that nothing is still running.</p>
+    </div>
+  </section>
+
+  <section class="deliverable">
+    <h2>✅ Deliverable — acceptance checklist</h2>
+    <ul class="check">
+      <li>A Cloud SQL Postgres instance + <code>taskflow</code> DB and user exist; the password is in Secret Manager.</li>
+      <li>The backend connects via <code>postgresql+psycopg</code> with a configured connection pool.</li>
+      <li>Alembic migrations ran against Cloud SQL; tables exist.</li>
+      <li>The redeployed backend uses Cloud SQL and data <strong>persists</strong> across redeploys / scale-to-zero.</li>
+      <li>A global HTTP(S) Load Balancer routes public traffic to the Cloud Run service.</li>
+      <li>(If domain) A managed TLS cert is <code>ACTIVE</code> and the app loads over <code>https://your-domain</code> with HTTP→HTTPS redirect.</li>
+      <li>A CI/CD pipeline (Cloud Build or GitHub Actions) builds, tests, and deploys on merge to <code>main</code>.</li>
+      <li>A PR merged to <code>main</code> auto-deployed and the change is visibly live.</li>
+      <li>Resources were cleaned up (or the project deleted) to stop charges.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🚀 Stretch goals (optional)</h2>
+    <ul>
+      <li>Add a <strong>migration step</strong> to the pipeline so <code>alembic upgrade head</code> runs automatically before each deploy (via a Cloud Run Job).</li>
+      <li>Enable <strong>Cloud SQL automated backups</strong> + point-in-time recovery and note the retention window.</li>
+      <li>Put the <strong>frontend behind the same load balancer</strong> with path routing: <code>/api/*</code> → backend, <code>/*</code> → frontend, one domain.</li>
+      <li>Add <strong>Cloud Armor</strong> (a basic WAF rule) or Cloud CDN to the backend service.</li>
+      <li>Add a deploy <strong>rollback</strong> note: how to shift traffic back to the previous Cloud Run revision.</li>
+    </ul>
+  </section>
+
+  <section class="finish">
+    <h2>🏁 Bonus Track Complete</h2>
+    <p>When the checklist is green you've built a <strong>cloud-native deployment story you can demo and defend in interviews</strong>: an auto-deploying, load-balanced TaskFlow on GCP with a managed Postgres database and HTTPS. You took it from "runs on my machine" (Module 9) to "ships like a real team does":</p>
+    <ul>
+      <li><strong>B.1</strong> — a professional Git strategy: branches, PRs, review, protected <code>main</code>, SemVer releases.</li>
+      <li><strong>B.2</strong> — containers on Cloud Run with Artifact Registry + Secret Manager.</li>
+      <li><strong>B.3</strong> — managed data (Cloud SQL), global HTTPS load balancing, and CI/CD where <em>every reviewed merge to <code>main</code> auto-ships</em>.</li>
+    </ul>
+    <p>The solution page has the exact commands, config files, and the all-important teardown. Go finish it. 🚀</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a class="current">🧪 Assignment</a>
+    <a href="solution.html">✅ Solution →</a>
+  </div>
+</footer>
+</body>
+</html>

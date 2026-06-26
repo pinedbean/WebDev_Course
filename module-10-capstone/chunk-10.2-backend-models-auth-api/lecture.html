@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 10.2 — Backend: Models, Auth &amp; Core API</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  .checkpoint{background:#fffbeb;border:2px solid #f59e0b;}
+  .checkpoint h2{border-color:#fde68a;color:#92400e;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 10 — Capstone: TaskFlow</div>
+    <h1>Chunk 10.2 — Backend: Models, Auth &amp; Core API</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 90–120 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>How to translate the ERD into <strong>SQLAlchemy 2.x models</strong> with relationships and a many-to-many join.</li>
+      <li>How to manage schema changes with an <strong>Alembic migration</strong> (vs. quick <code>create_all</code>).</li>
+      <li>How to wire <strong>JWT auth</strong> — register, login, <code>get_current_user</code> — reusing Module 7.</li>
+      <li>The key new idea: an <strong>ownership/authorization dependency</strong> so users only touch projects they own or belong to.</li>
+      <li>How to structure the API into routers (<code>auth</code>, <code>projects</code>, <code>members</code>, <code>tasks</code>) that scale.</li>
+    </ul>
+    <p>This is the data + auth foundation. The lab delivers a secured API with persistent data.</p>
+  </section>
+
+  <section>
+    <h2>1. From ERD to SQLAlchemy models</h2>
+    <p>Each entity from 10.1 becomes a class that inherits from a shared <code>Base</code>. SQLAlchemy 2.x uses typed <code>Mapped[...]</code> columns. Here's <code>User</code> and <code>Project</code> with their relationship:</p>
+    <pre><code>from datetime import datetime
+from sqlalchemy import String, ForeignKey, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from app.database import Base
+
+class User(Base):
+    __tablename__ = "users"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    email: Mapped[str] = mapped_column(String, unique=True, index=True)
+    hashed_password: Mapped[str] = mapped_column(String)
+    name: Mapped[str] = mapped_column(String)
+    role: Mapped[str] = mapped_column(String, default="user")
+    created_at: Mapped[datetime] = mapped_column(default=func.now())
+
+    projects: Mapped[list["Project"]] = relationship(back_populates="owner")
+
+class Project(Base):
+    __tablename__ = "projects"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String)
+    description: Mapped[str] = mapped_column(String, default="")
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(default=func.now())
+
+    owner: Mapped["User"] = relationship(back_populates="projects")
+    tasks: Mapped[list["Task"]] = relationship(
+        back_populates="project", cascade="all, delete-orphan")</code></pre>
+    <p>The <code>relationship()</code> calls give you Python-side navigation: <code>project.owner</code>, <code>user.projects</code>, <code>project.tasks</code>. The <code>ForeignKey</code> is the actual DB column; the relationship is the convenient accessor.</p>
+    <div class="callout note">
+      <div class="label">📝 cascade="all, delete-orphan"</div>
+      Deleting a project should delete its tasks too (an orphan task with no project is meaningless). This cascade does that automatically so you don't leave dangling rows.
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Modeling the many-to-many: Membership</h2>
+    <p>Users and Projects are many-to-many. Because our join row carries extra data (<code>role</code>), we model it as a <strong>full entity</strong> (an "association object"), not a bare table:</p>
+    <pre><code>class Membership(Base):
+    __tablename__ = "memberships"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"))
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    role: Mapped[str] = mapped_column(String, default="member")  # owner|member</code></pre>
+    <p>When a user creates a project, we create <em>both</em> the <code>Project</code> (with <code>owner_id</code>) and a <code>Membership</code> row with <code>role="owner"</code>. Now every access check can ask one simple question: <em>"is there a membership row for this user + project?"</em></p>
+    <div class="callout tip">
+      <div class="label">💡 Why both owner_id AND a membership?</div>
+      <code>owner_id</code> answers "who can delete/rename the project?" fast. The membership answers "who can see it and its tasks?" Keeping both is a small redundancy that makes authorization checks clean and uniform.
+    </div>
+  </section>
+
+  <section>
+    <h2>3. The Task model &amp; nullable columns</h2>
+    <pre><code>from datetime import date
+
+class Task(Base):
+    __tablename__ = "tasks"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"))
+    title: Mapped[str] = mapped_column(String)
+    description: Mapped[str] = mapped_column(String, default="")
+    status: Mapped[str] = mapped_column(String, default="todo")  # todo|in_progress|done
+    assignee_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id"), nullable=True)
+    due_date: Mapped[date | None] = mapped_column(nullable=True)
+    created_at: Mapped[datetime] = mapped_column(default=func.now())
+
+    project: Mapped["Project"] = relationship(back_populates="tasks")</code></pre>
+    <p>Note <code>Mapped[int | None]</code> and <code>nullable=True</code> for the optional assignee and due date — an unassigned task or one without a deadline is valid. We <em>validate</em> the status string in Pydantic (next), not in the DB.</p>
+  </section>
+
+  <section>
+    <h2>4. Migrations: Alembic vs. create_all</h2>
+    <p>You have two ways to create the tables. Know both:</p>
+    <table>
+      <tr><th>Approach</th><th>When</th></tr>
+      <tr><td><code>Base.metadata.create_all(engine)</code></td><td>Fast for first-time setup / demos. Creates tables that don't exist — but never <em>alters</em> existing ones.</td></tr>
+      <tr><td><strong>Alembic migration</strong></td><td>The professional choice. Each schema change is a versioned, reviewable, reversible script — exactly what you need once data is real (and in the Bonus Track's cloud DB).</td></tr>
+    </table>
+    <p>We initialize Alembic, point it at our models' <code>Base.metadata</code>, autogenerate the first migration, and run it:</p>
+    <pre><code>alembic init alembic
+# edit alembic/env.py: target_metadata = Base.metadata
+alembic revision --autogenerate -m "create users, projects, memberships, tasks"
+alembic upgrade head</code></pre>
+    <div class="callout warning">
+      <div class="label">⚠️ Autogenerate needs to "see" your models</div>
+      In <code>alembic/env.py</code> you must import the models module so all four classes are registered on <code>Base.metadata</code> before autogenerate runs — otherwise it produces an empty migration.
+    </div>
+  </section>
+
+  <section>
+    <h2>5. Auth, reused from Module 7</h2>
+    <p>The auth layer is exactly the pattern you built in Module 7, just applied to TaskFlow's <code>User</code>. Three pieces:</p>
+    <ul>
+      <li><strong><code>security.py</code></strong> — <code>hash_password</code>/<code>verify_password</code> (passlib bcrypt) and <code>create_access_token</code>/<code>decode_access_token</code> (python-jose).</li>
+      <li><strong><code>routers/auth.py</code></strong> — <code>/register</code> (hash, insert, return token), <code>/login</code> (verify, return token), <code>/me</code> (return current user).</li>
+      <li><strong><code>deps.py</code></strong> — <code>get_current_user</code> reads the <code>Authorization: Bearer</code> token, decodes it, loads the user.</li>
+    </ul>
+    <pre><code># the heart of register
+@router.post("/register", status_code=201, response_model=schemas.Token)
+def register(body: schemas.RegisterIn, db: Session = Depends(get_db)):
+    if db.scalar(select(User).where(User.email == body.email)):
+        raise HTTPException(409, "Email already registered")
+    user = User(email=body.email, name=body.name,
+                hashed_password=hash_password(body.password))
+    db.add(user); db.commit(); db.refresh(user)
+    token = create_access_token(str(user.id))
+    return {"access_token": token, "token_type": "bearer"}</code></pre>
+    <div class="callout note">
+      <div class="label">📝 Token subject = user id</div>
+      We put the user's <code>id</code> in the JWT <code>sub</code> claim. <code>get_current_user</code> decodes it and loads that user from the DB on every protected request — stateless auth that scales across the load-balanced replicas in 10.6.
+    </div>
+  </section>
+
+  <section>
+    <h2>6. The big new idea: ownership &amp; access dependencies</h2>
+    <p>Module 7 taught "only see your own data" for a single owner. TaskFlow adds <em>collaboration</em>: a project is visible to its owner <strong>and</strong> its members. We express that as small dependencies that each route reuses.</p>
+    <pre><code># app/deps.py
+def get_project_for_member(
+    project_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -&gt; Project:
+    project = db.get(Project, project_id)
+    if not project:
+        raise HTTPException(404, "Project not found")
+    membership = db.scalar(
+        select(Membership).where(
+            Membership.project_id == project_id,
+            Membership.user_id == user.id))
+    if not membership:
+        raise HTTPException(403, "You do not have access to this project")
+    return project
+
+def get_project_for_owner(
+    project: Project = Depends(get_project_for_member),
+    user: User = Depends(get_current_user),
+) -&gt; Project:
+    if project.owner_id != user.id:
+        raise HTTPException(403, "Only the project owner can do this")
+    return project</code></pre>
+    <p>Now a route just declares what it needs and the rules are enforced automatically:</p>
+    <pre><code>@router.get("/{project_id}/tasks")
+def list_tasks(project: Project = Depends(get_project_for_member), ...):
+    # if we got here, the caller is a member — safe to return tasks
+    ...
+
+@router.delete("/{project_id}")
+def delete_project(project: Project = Depends(get_project_for_owner), ...):
+    # only the owner reaches this line
+    ...</code></pre>
+    <div class="callout tip">
+      <div class="label">💡 Authorization as composition</div>
+      <code>get_project_for_owner</code> depends on <code>get_project_for_member</code>, which depends on <code>get_current_user</code>. Each layer adds one check. This is dependency injection (Module 5.4) doing real security work — no copy-pasted <code>if</code> blocks scattered across routes.
+    </div>
+  </section>
+
+  <section>
+    <h2>7. Project structure</h2>
+    <p>We split the API into routers, mirroring the contract. Everything mounts under <code>/api/v1</code> in <code>main.py</code>:</p>
+    <div class="filetree">backend/app/
+├── main.py            (create app, CORS, include routers under /api/v1)
+├── database.py        (engine, SessionLocal, Base, get_db)
+├── models.py          (User, Project, Membership, Task)
+├── schemas.py         (Pydantic: RegisterIn, ProjectOut, TaskCreate, ...)
+├── security.py        (hashing + JWT)
+├── deps.py            (get_db, get_current_user, get_project_for_member/owner)
+└── routers/
+    ├── auth.py        (/auth/register, /login, /me)
+    ├── projects.py    (/projects CRUD)
+    ├── members.py     (/projects/{id}/members)
+    └── tasks.py       (/projects/{id}/tasks CRUD + filters)</div>
+    <pre><code># main.py — mounting routers with the version prefix
+app.include_router(auth.router,     prefix="/api/v1/auth",     tags=["auth"])
+app.include_router(projects.router, prefix="/api/v1/projects", tags=["projects"])
+app.include_router(members.router,  prefix="/api/v1/projects", tags=["members"])
+app.include_router(tasks.router,    prefix="/api/v1/projects", tags=["tasks"])</code></pre>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li>ERD entities become typed SQLAlchemy 2.x models; relationships give Python-side navigation, foreign keys store the link.</li>
+      <li>Many-to-many with extra data → an association entity (<code>Membership</code> with a <code>role</code>).</li>
+      <li><strong>Alembic</strong> versions every schema change; <code>create_all</code> is a quick demo shortcut.</li>
+      <li>Auth reuses Module 7: bcrypt hashing, JWT with the user id as subject, <code>get_current_user</code>.</li>
+      <li>The headline pattern: <strong>ownership dependencies</strong> (<code>get_project_for_member</code> / <code>get_project_for_owner</code>) enforce access uniformly via composition.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and build the secured TaskFlow API with persistent data.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment · Chunk 9.1 — Production Builds &amp; Environments</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #ede9fe;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .objective{background:#ede9fe;border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#5b21b6;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--task);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .deliverable{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .deliverable h2{border-color:#a7f3d0;color:#065f46;}
+  .check{list-style:none;padding-left:0;} .check li{padding-left:30px;position:relative;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:18px;color:var(--task);}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 9 — Production &amp; Load Balancing</div>
+    <h1>Chunk 9.1 — Lab: Build for Production</h1>
+    <span class="badge">🧪 ASSIGNMENT</span>
+    <span class="badge">⏱️ 45–75 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 Your mission</h2>
+    <p>Turn the dev-mode Tasks app into <strong>production-ready artifacts</strong>. You'll create a real Vite production build of the frontend (a static <code>dist/</code>), configure it with a build-time <code>VITE_API_URL</code>, prove it runs with <code>preview</code>, and configure the backend for production: an <code>environment</code> setting, a prod run command with workers (no reload), and clean secrets hygiene. No Docker yet — that's 9.2.</p>
+  </section>
+
+  <section>
+    <h2>Before you start</h2>
+    <ul>
+      <li>You finished <strong>Module 8</strong>: the Tasks API has structured logging, health checks, and error handling.</li>
+      <li>Frontend (<code>tasks-web/</code>) and backend (<code>tasks-api/</code>) both run in dev.</li>
+      <li>Node LTS + npm and your Python venv are available.</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ Try it yourself first</div>
+      Build from the lecture and these tasks. Only open <code>solution.html</code> when stuck or to compare at the end.
+    </div>
+  </section>
+
+  <section>
+    <h2>Part A — Frontend production build</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Create environment files</h3>
+      <p>In <code>tasks-web/</code>, create <code>.env.production</code> with the API URL the built app should call, and a committed <code>.env.example</code> documenting the variable. Make sure <code>.env</code> (local) is in <code>.gitignore</code>.</p>
+      <pre><code># .env.production
+VITE_API_URL=http://localhost:8000</code></pre>
+      <p>(Use <code>localhost:8000</code> for now; in 9.3 it becomes the URL Nginx proxies. The point is that it's read at build time.)</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Build it</h3>
+      <p>Run the production build and watch what it produces.</p>
+      <pre><code>npm run build</code></pre>
+      <p>Confirm a <code>dist/</code> folder appears with an <code>index.html</code> and an <code>assets/</code> folder containing hashed, minified <code>.js</code>/<code>.css</code> files.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Inspect the artifacts</h3>
+      <p>List the <code>dist/</code> tree and open one of the hashed JS files. Confirm it's minified (one long line, short variable names) and that your <code>VITE_API_URL</code> value appears baked into the bundle. Reflect: anything in a <code>VITE_</code> var is visible here — so it must never be a secret.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Preview the build</h3>
+      <p>Serve the built files and click through the app (with your backend running):</p>
+      <pre><code>npm run preview      # http://localhost:4173</code></pre>
+      <p>Log in, view tasks, create one. It should behave like dev — but it's now static files, not the dev server.</p>
+      <div class="callout tip">
+        <div class="label">💡 If API calls fail in preview</div>
+        The built app calls whatever <code>VITE_API_URL</code> you baked in. If requests 404 or hit the wrong port, fix <code>.env.production</code> and <strong>rebuild</strong> — preview serves the last build, it doesn't re-read env.
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Part B — Backend production config</h2>
+
+    <div class="step">
+      <h3><span class="num">5</span> Add an <code>environment</code> setting</h3>
+      <p>Extend <code>app/config.py</code>'s <code>Settings</code> with <code>environment: str = "development"</code> (and <code>log_level</code> if you didn't already in 8.1). Set <code>ENVIRONMENT=production</code> in your backend env when running for prod.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Make prod behave differently where it matters</h3>
+      <p>Use the setting to (a) disable the interactive docs in production (pass <code>docs_url=None</code> when <code>environment == "production"</code>), and (b) confirm your 8.1 logging uses JSON in production. Keep dev exactly as it was.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Write the production run command</h3>
+      <p>Pin a production server. Add <code>gunicorn</code> (or rely on uvicorn workers) to <code>requirements.txt</code>, then run the backend the production way — no reload, bind all interfaces, multiple workers — and confirm it serves:</p>
+      <pre><code>uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4</code></pre>
+      <p>Hit <code>/health</code> and a real endpoint to confirm it works without <code>--reload</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">8</span> Write a short PRODUCTION.md note</h3>
+      <p>Create a brief <code>PRODUCTION.md</code> (or a section in your README) listing: the frontend build command and where artifacts land, the required backend env vars, and the production run command. You'll expand this into the deployment runbook in 9.4.</p>
+    </div>
+  </section>
+
+  <section class="deliverable">
+    <h2>✅ Deliverable — acceptance checklist</h2>
+    <ul class="check">
+      <li><code>tasks-web/dist/</code> exists with <code>index.html</code> + hashed, minified assets in <code>assets/</code>.</li>
+      <li><code>.env.production</code> sets <code>VITE_API_URL</code>; <code>.env.example</code> is committed; real <code>.env</code> files are git-ignored.</li>
+      <li><code>npm run preview</code> serves the built app and it works against the running backend.</li>
+      <li>Backend <code>Settings</code> has an <code>environment</code> field; docs are disabled when <code>environment == "production"</code>.</li>
+      <li>The backend runs in production mode (<code>--host 0.0.0.0</code>, no <code>--reload</code>, multiple workers) and answers <code>/health</code>.</li>
+      <li>No secrets appear in any <code>VITE_</code> variable or in the <code>dist/</code> bundle; a <code>PRODUCTION.md</code> documents build + run steps.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🚀 Stretch goals (optional)</h2>
+    <ul>
+      <li>Compare bundle sizes: run <code>du -sh dist</code> and note how small the minified app is. Add <code>build.sourcemap</code> in <code>vite.config.js</code> and rebuild to see source maps generated separately.</li>
+      <li>Add a <code>start.sh</code> script with the production gunicorn command so you don't retype it.</li>
+      <li>Verify docs are gone in prod: run with <code>ENVIRONMENT=production</code> and confirm <code>/docs</code> returns 404.</li>
+      <li>Set a non-secret <code>VITE_APP_VERSION</code> from a git tag and display it in the footer (a tiny taste of build metadata).</li>
+      <li>Confirm a missing <code>SECRET_KEY</code> still makes the backend refuse to start (your Module 7 settings validation) — fail-fast is a production feature.</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a class="current">🧪 Assignment</a>
+    <a href="solution.html">✅ Solution →</a>
+  </div>
+</footer>
+</body>
+</html>

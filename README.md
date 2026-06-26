@@ -144,18 +144,9 @@ By the end of this course you will be able to:
 
 ## 📈 Progress
 
-**Modules 0–7 complete** · **37 / 52 chunks built**
+🎉 **All modules complete** · **52 / 52 chunks built** (156 lesson files)
 
-| ✅ Built | 🚧 Remaining |
-|---------|-------------|
-| Module 0 — Setup & Tooling | Module 8 — Logging & Observability |
-| Module 1 — HTML Foundations | Module 9 — Production & Load Balancing |
-| Module 2 — CSS & Layout | Module 10 — Capstone: TaskFlow |
-| Module 3 — JavaScript Core | ⭐ Bonus Track — Git & GCP |
-| Module 4 — React + Vite | |
-| Module 5 — Backend with FastAPI | |
-| Module 6 — Database with SQLite | |
-| Module 7 — Authentication & Security | |
+Every module — Setup, HTML, CSS, JavaScript, React + Vite, FastAPI, SQLite, Auth, Logging, Production & Load Balancing, the **TaskFlow capstone**, and the **Git + GCP bonus track** — is fully written, each chunk with its lecture, assignment, and step-by-step solution.
 
 See [`course_progress_tracking.md`](./course_progress_tracking.md) for the per-chunk status.
 
@@ -192,11 +183,11 @@ WebDev_Course/
 ├── module-05-fastapi/
 ├── module-06-sqlite/
 ├── module-07-auth/
-├── module-08-logging/           # (coming soon)
-├── module-09-production/        # (coming soon)
-├── capstone-taskflow/           # (coming soon)
-└── bonus-track/                 # (coming soon)
-    └── module-XX-name/chunk-X.Y-slug/{lecture,assignment,solution}.html
+├── module-08-logging/
+├── module-09-production/
+├── module-10-capstone/
+└── bonus-track/
+    └── <module>/chunk-X.Y-slug/{lecture,assignment,solution}.html
 ```
 
 ---

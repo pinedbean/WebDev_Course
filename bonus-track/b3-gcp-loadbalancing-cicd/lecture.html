@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk B.3 — GCP Load Balancing, Managed Data &amp; CI/CD</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .flow{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · ⭐ Bonus Track — Git Strategy &amp; GCP</div>
+    <h1>Chunk B.3 — GCP Load Balancing, Managed Data &amp; CI/CD</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 90–120 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>The GCP <strong>HTTP(S) Load Balancer</strong> in front of Cloud Run — global anycast, health checks, autoscaling — and how it relates to the manual Nginx of Chunk 9.3.</li>
+      <li><strong>HTTPS / managed TLS</strong> certificates and mapping a <strong>custom domain</strong>.</li>
+      <li>Migrating <strong>SQLite → Cloud SQL (Postgres)</strong> with <strong>connection pooling</strong>.</li>
+      <li>Running database <strong>migrations in the cloud</strong>.</li>
+      <li><strong>CI/CD</strong> with Cloud Build (or GitHub Actions): build → test → deploy on every merge to <code>main</code> — tied to the Git strategy from B.1.</li>
+    </ul>
+    <p>In the lab you'll make the B.2 deployment durable (Cloud SQL), put a managed-HTTPS load balancer in front, and add an auto-deploy pipeline — finishing the whole Bonus Track.</p>
+  </section>
+
+  <section>
+    <h2>1. Prerequisites</h2>
+    <ul>
+      <li><strong>B.2 complete:</strong> TaskFlow's backend and frontend already deployed to Cloud Run in a billing-enabled project, with the <code>gcloud</code> CLI configured.</li>
+      <li><strong>B.1 complete:</strong> your TaskFlow repo follows GitHub Flow with a protected <code>main</code> — the CI/CD pipeline depends on it.</li>
+      <li>(Optional) a <strong>domain name</strong> you control, if you want a custom HTTPS domain. You can finish the whole lab on the load balancer's IP without one.</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ This chunk has the most cost risk — clean up</div>
+      Cloud Run scales to zero, but a <strong>Cloud SQL instance bills continuously while it exists</strong> (even idle), and a global load-balancer forwarding rule has a small hourly cost. Use the smallest Cloud SQL tier, and <strong>delete everything</strong> at the end (the solution has a full teardown). Set a budget alert. The free tier covers most usage, but Cloud SQL is the one to watch.
+    </div>
+  </section>
+
+  <section>
+    <h2>2. The HTTP(S) Load Balancer in front of Cloud Run</h2>
+    <p>In Chunk 9.3 you built load balancing <em>by hand</em>: an Nginx container with an <code>upstream</code> block round-robining across two FastAPI replicas you started yourself. You owned the Nginx config, the replica count, and the health checks. It taught you exactly what a load balancer <em>does</em>.</p>
+    <p>GCP's <strong>HTTP(S) Load Balancer</strong> is the managed, planet-scale version of that idea. You don't run Nginx or manage replicas — you declare the routing and Google operates the rest:</p>
+    <div class="flow">Chunk 9.3 (manual)              GCP HTTP(S) Load Balancer (managed)
+ you run nginx           ──▶     Google runs the LB (global anycast IP)
+ you list upstreams      ──▶     a "backend service" → Cloud Run (serverless NEG)
+ you set round-robin     ──▶     Google balances + autoscales for you
+ you write health checks ──▶     managed health checks
+ you'd add TLS by hand   ──▶     Google-managed TLS certificate</div>
+    <table>
+      <tr><th>Concept</th><th>Chunk 9.3 Nginx</th><th>GCP HTTP(S) LB</th></tr>
+      <tr><td>Where it runs</td><td>One container you operate</td><td>Google's global edge (anycast)</td></tr>
+      <tr><td>Reach</td><td>One host/region</td><td><strong>Global</strong> — one IP, served from the nearest edge worldwide</td></tr>
+      <tr><td>Backends</td><td><code>upstream</code> list you maintain</td><td>A <em>backend service</em> pointing at a Cloud Run <em>serverless NEG</em></td></tr>
+      <tr><td>Scaling</td><td>You start more replicas</td><td>Cloud Run autoscales; LB just routes</td></tr>
+      <tr><td>TLS</td><td>You install certs</td><td>Google-managed certificate, auto-renewed</td></tr>
+    </table>
+    <div class="callout note">
+      <div class="label">📝 Do I even need a load balancer with Cloud Run?</div>
+      Cloud Run already gives you an HTTPS URL and autoscaling, so for many apps you don't strictly need a separate LB. You add one when you want a <strong>custom domain with managed TLS</strong>, a <strong>single stable global IP</strong>, path-based routing (e.g. <code>/api</code> → backend, <code>/</code> → frontend on one domain), a CDN, or Cloud Armor (WAF). That's the production setup we build here.</div>
+    <p>The LB is assembled from a few pieces: a <strong>serverless NEG</strong> (Network Endpoint Group that targets a Cloud Run service) → a <strong>backend service</strong> → a <strong>URL map</strong> (routing rules) → a <strong>target HTTPS proxy</strong> (holds the certificate) → a <strong>global forwarding rule</strong> (the public IP + port 443). It's verbose to wire up, but each piece maps to something you already understand from Nginx.</p>
+  </section>
+
+  <section>
+    <h2>3. HTTPS, managed TLS &amp; a custom domain</h2>
+    <p>A production app should be served over <strong>HTTPS</strong> on a real domain, not a <code>*.run.app</code> URL. The load balancer makes this almost free of effort with a <strong>Google-managed certificate</strong>:</p>
+    <ol>
+      <li>Reserve a <strong>global static IP</strong> for the load balancer.</li>
+      <li>In your domain registrar / DNS, point an <code>A</code> record (e.g. <code>app.yourdomain.com</code>) at that IP.</li>
+      <li>Create a <strong>managed SSL certificate</strong> for that hostname. Google validates domain ownership (via the DNS record) and issues + auto-renews the cert — no manual renewal, no Let's Encrypt cron jobs.</li>
+    </ol>
+    <p>Add an HTTP→HTTPS redirect so visitors on <code>http://</code> are bumped to <code>https://</code>. Provisioning the certificate can take 10–60 minutes the first time (it waits for DNS to propagate and validate) — that's normal.</p>
+    <div class="callout tip">
+      <div class="label">💡 No domain? You can still finish</div>
+      A managed cert <em>requires</em> a domain you control. If you don't have one, the lab's core deliverable (LB → Cloud Run, Cloud SQL, CI/CD) is fully reachable over the LB's IP on HTTP, and you keep the per-service Cloud Run HTTPS URLs. The custom-domain + managed-TLS part is then an optional stretch.
+    </div>
+  </section>
+
+  <section>
+    <h2>4. Migrating SQLite → Cloud SQL (Postgres)</h2>
+    <p>This is the fix for the problem you watched happen in B.2: SQLite's file died with the ephemeral instance. <strong>Cloud SQL</strong> is GCP's managed relational database — you get a real Postgres server with durable disks, automated backups, and the ability for <em>all</em> your Cloud Run instances to share <em>one</em> database.</p>
+    <div class="flow">B.2:  Cloud Run instances ── each its own SQLite file (ephemeral, lost)
+B.3:  Cloud Run instances ──┐
+                            ├──▶ one Cloud SQL Postgres (durable, shared, backed up)
+                            ┘</div>
+    <h3>Why SQLAlchemy 2.x makes this easy</h3>
+    <p>Because TaskFlow uses SQLAlchemy as its ORM, the application code barely changes — you swap the <strong>connection URL</strong> and the right driver:</p>
+    <pre><code># before (local SQLite)
+DATABASE_URL = "sqlite:///./taskflow.db"
+
+# after (Cloud SQL Postgres)
+DATABASE_URL = "postgresql+psycopg://taskflow:PASSWORD@/taskflow?host=/cloudsql/PROJECT:REGION:INSTANCE"</code></pre>
+    <p>Cloud Run connects to Cloud SQL over a secure <strong>Unix socket</strong> at <code>/cloudsql/INSTANCE_CONNECTION_NAME</code> (mounted when you deploy with <code>--add-cloudsql-instances</code>). No public IP, no firewall rules — the connection stays inside Google's network.</p>
+    <h3>Connection pooling — important for serverless</h3>
+    <p>Postgres has a hard cap on simultaneous connections (often ~100 on small tiers). Cloud Run autoscaling can spin up many instances, and each one opening many DB connections will exhaust that cap fast. The fix is a <strong>connection pool</strong> with sane limits, configured in SQLAlchemy's engine:</p>
+    <pre><code>from sqlalchemy import create_engine
+
+engine = create_engine(
+    DATABASE_URL,
+    pool_size=5,         # connections kept open per instance
+    max_overflow=2,      # extra burst connections
+    pool_pre_ping=True,  # check a connection is alive before using it
+    pool_recycle=1800,   # recycle conns every 30 min (avoid stale ones)
+)</code></pre>
+    <p>Keep <code>pool_size</code> small <em>per instance</em>: many small pools across many instances add up. <code>pool_pre_ping</code> avoids the classic "server closed the connection unexpectedly" error when an idle connection was dropped.</p>
+  </section>
+
+  <section>
+    <h2>5. Running migrations in the cloud</h2>
+    <p>A fresh Cloud SQL database is empty — it has no tables. Your schema lives in <strong>Alembic migrations</strong> (from Module 6). You must run them against the cloud database <em>before</em> the app serves traffic. The safe options:</p>
+    <table>
+      <tr><th>Approach</th><th>How</th><th>When</th></tr>
+      <tr><td><strong>Cloud SQL Auth Proxy</strong> from your laptop</td><td>Run the proxy locally, point <code>alembic upgrade head</code> at <code>127.0.0.1</code>.</td><td>One-off / manual migrations. Simplest to start.</td></tr>
+      <tr><td><strong>A migration step in CI/CD</strong></td><td>A Cloud Build step (or a one-shot Cloud Run Job) runs <code>alembic upgrade head</code> on each deploy, before routing traffic.</td><td>Automated, repeatable. The production pattern.</td></tr>
+    </table>
+    <div class="callout warning">
+      <div class="label">⚠️ Don't auto-create tables in app startup for prod</div>
+      It's tempting to call <code>Base.metadata.create_all()</code> on startup. That works once but can't evolve a schema safely and races across multiple instances. Use <strong>Alembic migrations</strong> run as a deliberate, single step — never let N autoscaled instances all try to migrate at once.
+    </div>
+    <p>The <strong>Cloud SQL Auth Proxy</strong> is a small binary that opens an authenticated local tunnel to your instance, so tools that expect a normal <code>host:port</code> (like Alembic) just work:</p>
+    <pre><code># terminal 1: start the proxy (uses your gcloud credentials)
+cloud-sql-proxy PROJECT:REGION:INSTANCE --port 5432
+
+# terminal 2: run migrations against the tunnel
+export DATABASE_URL="postgresql+psycopg://taskflow:PASSWORD@127.0.0.1:5432/taskflow"
+alembic upgrade head</code></pre>
+  </section>
+
+  <section>
+    <h2>6. CI/CD: build → test → deploy on every merge</h2>
+    <p>Right now you deploy by typing <code>gcloud run deploy</code> by hand. <strong>CI/CD</strong> automates that: when code is merged to <code>main</code>, a pipeline automatically builds the image, runs tests, and (if green) deploys it. This is where B.1 pays off — <strong>only reviewed, protected <code>main</code> ever deploys</strong>.</p>
+    <div class="flow">B.1 workflow                         B.3 pipeline
+ feature branch → PR → review ──▶ merge to main ──▶ CI/CD triggers:
+                                                     build → test → deploy
+ (branch protection keeps main green)               (only green main ships)</div>
+    <p>Two common ways to do this on GCP:</p>
+
+    <h3>Option A — Cloud Build (GCP-native)</h3>
+    <p>A <code>cloudbuild.yaml</code> in your repo defines steps; a Cloud Build <strong>trigger</strong> watches your GitHub repo and runs it on every push to <code>main</code>. Everything stays inside GCP.</p>
+    <pre><code># cloudbuild.yaml
+steps:
+  # 1. build the backend image
+  - name: gcr.io/cloud-builders/docker
+    args: ['build', '-t',
+           '$_REGION-docker.pkg.dev/$PROJECT_ID/taskflow/backend:$SHORT_SHA',
+           './backend']
+
+  # 2. run tests inside the image
+  - name: '$_REGION-docker.pkg.dev/$PROJECT_ID/taskflow/backend:$SHORT_SHA'
+    entrypoint: pytest
+    args: ['-q']
+
+  # 3. push the image
+  - name: gcr.io/cloud-builders/docker
+    args: ['push',
+           '$_REGION-docker.pkg.dev/$PROJECT_ID/taskflow/backend:$SHORT_SHA']
+
+  # 4. run DB migrations, then deploy
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args: ['run', 'deploy', 'taskflow-backend',
+           '--image', '$_REGION-docker.pkg.dev/$PROJECT_ID/taskflow/backend:$SHORT_SHA',
+           '--region', '$_REGION', '--quiet']
+
+substitutions:
+  _REGION: asia-southeast1
+images:
+  - '$_REGION-docker.pkg.dev/$PROJECT_ID/taskflow/backend:$SHORT_SHA'</code></pre>
+    <p><code>$SHORT_SHA</code> and <code>$PROJECT_ID</code> are built-in substitutions Cloud Build fills in; tagging images by commit SHA gives you an exact, rollback-able record of what's deployed.</p>
+
+    <h3>Option B — GitHub Actions (deploys to GCP)</h3>
+    <p>If your team lives in GitHub, a workflow file does the same job and keeps CI next to your PRs. It authenticates to GCP (ideally via <strong>Workload Identity Federation</strong> — keyless — rather than a downloaded service-account JSON), then builds and deploys.</p>
+    <pre><code># .github/workflows/deploy.yml
+name: Deploy to Cloud Run
+on:
+  push:
+    branches: [main]          # only main — protected by B.1 rules
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write          # for keyless auth to GCP
+    steps:
+      - uses: actions/checkout@v4
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.DEPLOY_SA }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - run: |
+          gcloud builds submit --tag \
+            "$REGION-docker.pkg.dev/$PROJECT/taskflow/backend:$GITHUB_SHA" ./backend
+          gcloud run deploy taskflow-backend \
+            --image "$REGION-docker.pkg.dev/$PROJECT/taskflow/backend:$GITHUB_SHA" \
+            --region "$REGION" --quiet
+        env:
+          PROJECT: ${{ secrets.GCP_PROJECT }}
+          REGION: asia-southeast1</code></pre>
+    <div class="callout warning">
+      <div class="label">⚠️ Don't commit a service-account key</div>
+      The old way — downloading a JSON key and storing it as a secret — is a liability (it's a long-lived credential that can leak, exactly the B.1 "secrets in history" risk). Prefer <strong>Workload Identity Federation</strong>, which lets GitHub mint short-lived tokens with no stored key. If you must use a key, store it in GitHub Encrypted Secrets, never in the repo.
+    </div>
+    <p>Either option, the principle is the same and it closes the loop with B.1: a developer opens a PR, it's reviewed and CI-checked, it squash-merges into a protected <code>main</code>, and <em>that merge</em> is the only thing that ships to production. No more manual deploys, no "works on my machine".</p>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li>The GCP <strong>HTTP(S) Load Balancer</strong> is the managed, global version of Chunk 9.3's Nginx: serverless NEG → backend service → URL map → HTTPS proxy → forwarding rule.</li>
+      <li>A <strong>Google-managed TLS certificate</strong> + a DNS <code>A</code> record gives you HTTPS on a custom domain, auto-renewed.</li>
+      <li><strong>Cloud SQL Postgres</strong> replaces SQLite for durable, shared data; SQLAlchemy just needs a new URL + a small <strong>connection pool</strong>.</li>
+      <li>Run <strong>Alembic migrations</strong> deliberately (via the Cloud SQL Auth Proxy or a pipeline step) — never auto-create on startup in prod.</li>
+      <li><strong>CI/CD</strong> (Cloud Build or GitHub Actions) builds, tests, and deploys on every merge to <code>main</code> — and B.1's branch protection ensures only reviewed, green <code>main</code> ships.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and assemble the full cloud-native deployment — then finish the Bonus Track. 🏁</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

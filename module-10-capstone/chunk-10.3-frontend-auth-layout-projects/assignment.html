@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment · Chunk 10.3 — Frontend: Auth, Layout &amp; Project Views</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #ede9fe;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:#ede9fe;border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#5b21b6;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--task);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  .deliverable{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .deliverable h2{border-color:#a7f3d0;color:#065f46;}
+  .check{list-style:none;padding-left:0;} .check li{padding-left:30px;position:relative;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:18px;color:var(--task);}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 10 — Capstone: TaskFlow</div>
+    <h1>Chunk 10.3 — Lab: Auth Frontend, Layout &amp; Projects</h1>
+    <span class="badge">🧪 ASSIGNMENT</span>
+    <span class="badge">⏱️ 90–120 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 Your mission</h2>
+    <p>Build the authenticated frontend shell for TaskFlow: an API client, an auth context with login/register/logout, protected routing, an app layout with nav, and a projects page (list + create) wired to your 10.2 backend. By the end you can register, log in, see your projects, create one, refresh without losing your session, and log out.</p>
+  </section>
+
+  <section>
+    <h2>Before you start</h2>
+    <ul>
+      <li>Your 10.2 backend runs at <code>http://localhost:8000</code> (start <code>uvicorn</code> in the <code>backend/</code> venv).</li>
+      <li>Your 10.1 frontend scaffold exists with <code>react-router-dom</code> installed and <code>VITE_API_URL</code> in <code>frontend/.env</code>.</li>
+      <li>Run the dev server: <code>cd frontend &amp;&amp; npm run dev</code>.</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ Build it yourself first</div>
+      Recall Module 4.5–4.7 (router, context, custom hooks) and 7.3 (auth flow). Try each piece before peeking at the solution.
+    </div>
+  </section>
+
+  <section>
+    <h2>Tasks</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Build the API client</h3>
+      <p>Create <code>src/api/client.js</code> with an <code>api(path, options)</code> helper that prefixes <code>VITE_API_URL</code>, attaches the bearer token from <code>localStorage</code>, sends JSON (or form-encoded for login), parses the response, and throws an <code>Error</code> with the backend's <code>detail</code> on failure. Handle 204 (no content).</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Create the Auth Context</h3>
+      <p>Create <code>src/context/AuthContext.jsx</code> with <code>user</code>, <code>loading</code>, and <code>login()</code>, <code>register()</code>, <code>logout()</code>. On mount, if a token exists, call <code>/auth/me</code> to restore the session. Export a <code>useAuth()</code> hook. Wrap the app in the provider in <code>main.jsx</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Login &amp; Register pages</h3>
+      <p>Build <code>src/pages/Login.jsx</code> and <code>Register.jsx</code> with controlled inputs. On submit, call the context method, then navigate to <code>/</code>. Show the error message on failure (e.g. wrong password, email taken). Each page links to the other.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Protected route + Layout</h3>
+      <p>Create <code>src/components/ProtectedRoute.jsx</code> (redirect to <code>/login</code> if no user; show "Loading…" while <code>loading</code>) and <code>src/components/Layout.jsx</code> (top nav with the brand, the user's name, and a logout button; an <code>&lt;Outlet/&gt;</code> for pages).</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Route table in <code>App.jsx</code></h3>
+      <p>Set up routes: public <code>/login</code> and <code>/register</code>; everything else nested under <code>ProtectedRoute</code> → <code>Layout</code>, with <code>/</code> rendering the Projects page. Add a placeholder <code>/projects/:id</code> route (you fill it in 10.4).</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Projects page</h3>
+      <p>Build <code>src/pages/Projects.jsx</code>: fetch <code>/projects</code> on mount with loading + error states; render a grid/list of project cards linking to <code>/projects/:id</code>; include a create form that POSTs <code>/projects</code> and prepends/appends the new project without a full reload.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Style the shell</h3>
+      <p>Add enough CSS (in <code>index.css</code> or per-component) to make it look like an app: a styled top bar, a clean auth form card, and a responsive project grid. It doesn't need to be fancy — just tidy and readable.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">8</span> Verify the full flow</h3>
+      <p>Register a new user → land on Projects. Create a project. Refresh the page — you're still logged in and the project is there. Log out — you're redirected to <code>/login</code> and can't reach <code>/</code> by typing the URL.</p>
+    </div>
+  </section>
+
+  <section class="deliverable">
+    <h2>✅ Deliverable — acceptance checklist</h2>
+    <ul class="check">
+      <li>An API client attaches the JWT and surfaces backend error messages.</li>
+      <li>Auth context provides <code>user</code>/<code>login</code>/<code>register</code>/<code>logout</code>; session restores via <code>/auth/me</code> on refresh.</li>
+      <li>Register and Login pages work and show errors (duplicate email, wrong password).</li>
+      <li>Visiting <code>/</code> while logged out redirects to <code>/login</code>.</li>
+      <li>The layout shows the app name, the logged-in user's name, and a working logout button.</li>
+      <li>Projects page lists the user's projects and creates new ones without a full reload.</li>
+      <li>The UI is styled enough to look like a real app and is responsive.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🚀 Stretch goals (optional)</h2>
+    <ul>
+      <li>Extract a <code>useApi</code> / <code>useFetch</code> hook (Module 4.7) so pages don't repeat loading/error boilerplate.</li>
+      <li>Add a global 401 handler in the client that logs the user out and redirects on an expired token.</li>
+      <li>Show a friendly empty state ("No projects yet — create your first!") when the list is empty.</li>
+      <li>Disable the create button and show a spinner while the POST is in flight.</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a class="current">🧪 Assignment</a>
+    <a href="solution.html">✅ Solution →</a>
+  </div>
+</footer>
+</body>
+</html>

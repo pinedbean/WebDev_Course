@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment · Chunk 10.4 — Task Board &amp; Collaboration</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #ede9fe;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:#ede9fe;border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#5b21b6;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--task);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  .deliverable{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .deliverable h2{border-color:#a7f3d0;color:#065f46;}
+  .check{list-style:none;padding-left:0;} .check li{padding-left:30px;position:relative;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:18px;color:var(--task);}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 10 — Capstone: TaskFlow</div>
+    <h1>Chunk 10.4 — Lab: Build the Collaborative Task Board</h1>
+    <span class="badge">🧪 ASSIGNMENT</span>
+    <span class="badge">⏱️ 90–120 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 Your mission</h2>
+    <p>Build TaskFlow's headline feature: a kanban board at <code>/projects/:id</code> with To Do / In Progress / Done columns. Create, edit, assign, and set due dates on tasks; move tasks between columns; filter by status and assignee; and invite teammates to collaborate. Wire everything to the API you built in 10.2.</p>
+  </section>
+
+  <section>
+    <h2>Before you start</h2>
+    <ul>
+      <li>Backend (10.2) running at <code>:8000</code>; frontend (10.3) running at <code>:5173</code> with the API client + auth context in place.</li>
+      <li>You have at least two registered users (so you can test assigning &amp; inviting).</li>
+      <li>Open the lecture's worked examples for the board grouping and form-normalization patterns.</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ Build it yourself first</div>
+      This is the big one — give it a real attempt before opening the solution. The pieces are all things you've done: fetch on mount, controlled forms, list rendering, PATCH on change.
+    </div>
+  </section>
+
+  <section>
+    <h2>Tasks</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Add the Board route</h3>
+      <p>Create <code>src/pages/Board.jsx</code> and add it to <code>App.jsx</code> at <code>/projects/:id</code> (inside the protected Layout routes). Read the id with <code>useParams</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Load project + members + tasks</h3>
+      <p>On mount (and when the id changes), fetch the project, its members, and its tasks. Show loading and error states. Display the project name as the page title.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Render the three columns</h3>
+      <p>Group tasks by status and render To Do / In Progress / Done columns, each listing its task cards. Show a count per column.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Task card with move &amp; delete</h3>
+      <p>Build <code>TaskCard.jsx</code> showing title, assignee name (looked up from members), and due date. Add a status control that PATCHes the task and updates state (the card jumps to the new column). Add a delete button (DELETE + remove from state).</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Create &amp; edit form</h3>
+      <p>Build a single <code>TaskForm.jsx</code> used for both creating (a "+ New Task" button) and editing (the card's Edit button). Fields: title, description, status, assignee (select of members + Unassigned), due date. Normalize empty assignee/due to <code>null</code> before sending.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Filtering</h3>
+      <p>Add filter controls for status and assignee. When a filter changes, re-fetch tasks using the backend's <code>?status=</code> / <code>?assignee_id=</code> query params. Include a "Clear filters" action.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Members bar &amp; invite</h3>
+      <p>Build <code>MembersBar.jsx</code> showing member chips. If the current user is the owner, show an invite-by-email form that POSTs to <code>/projects/:id/members</code> and appends the new member. Handle "no such user" (404) and "already a member" (409) errors gracefully.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">8</span> End-to-end collaboration test</h3>
+      <p>As user A: open a project, invite user B, create tasks, assign some to B, set due dates, move tasks across columns, and filter. Then log in as user B (in a private window) and confirm B sees the project, the board, and can move/create tasks.</p>
+    </div>
+  </section>
+
+  <section class="deliverable">
+    <h2>✅ Deliverable — acceptance checklist</h2>
+    <ul class="check">
+      <li>Board at <code>/projects/:id</code> shows three status columns with the project's tasks.</li>
+      <li>Creating a task adds it to the correct column; it persists across reloads.</li>
+      <li>Editing a task (title/desc/assignee/due) saves and reflects immediately.</li>
+      <li>Changing a task's status moves its card to the right column (persisted via PATCH).</li>
+      <li>Deleting a task removes it from the board and the backend.</li>
+      <li>Filtering by status and by assignee works (server-side query params) and can be cleared.</li>
+      <li>Members are listed; the owner can invite by email; errors (404/409) are shown clearly.</li>
+      <li>An invited second user can open the shared board and manage tasks.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🚀 Stretch goals (optional)</h2>
+    <ul>
+      <li>Add drag-and-drop between columns (HTML5 DnD or a small library) that PATCHes status on drop.</li>
+      <li>Highlight overdue tasks (due_date before today) in red.</li>
+      <li>Show the form in a modal overlay instead of inline.</li>
+      <li>Add an "assigned to me" quick filter using the current user's id.</li>
+      <li>Optimistic UI: move the card instantly, then roll back if the PATCH fails.</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a class="current">🧪 Assignment</a>
+    <a href="solution.html">✅ Solution →</a>
+  </div>
+</footer>
+</body>
+</html>

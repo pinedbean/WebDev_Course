@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 10.6 — Containerize, Load-Balance &amp; Deploy</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  .checkpoint{background:#fffbeb;border:2px solid #f59e0b;}
+  .checkpoint h2{border-color:#fde68a;color:#92400e;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 10 — Capstone: TaskFlow · 🎓 FINALE</div>
+    <h1>Chunk 10.6 — Containerize, Load-Balance &amp; Deploy</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 90–120 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>How to write a <strong>backend Dockerfile</strong> for FastAPI and a <strong>multi-stage frontend Dockerfile</strong> (build with Node, serve with Nginx).</li>
+      <li>How <strong>docker-compose</strong> runs the whole stack and scales the backend to <strong>multiple replicas</strong>.</li>
+      <li>How <strong>Nginx load-balances</strong> across those replicas and reverse-proxies the API + serves the SPA.</li>
+      <li>Why <strong>stateless JWT</strong> makes scaling out easy — and where SQLite hits its limit.</li>
+      <li>How to add a <strong>CI workflow</strong> and a <strong>polished README</strong> with screenshots for your portfolio.</li>
+    </ul>
+    <p>This is the 🎓 course finale. The lab delivers a deployed, load-balanced TaskFlow you can put on your résumé.</p>
+  </section>
+
+  <section>
+    <h2>1. The target architecture</h2>
+    <p>Everything you containerized in Module 9 now wraps your real app. One Nginx in front; it serves the built frontend and proxies <code>/api</code> to a pool of identical backend replicas; all backends share one SQLite volume.</p>
+    <div class="filetree">                         ┌─────────────────────────┐
+   browser ──────────►   │   nginx  (port 80)       │
+                         │  - serves built SPA      │
+                         │  - /api -&gt; upstream pool │
+                         └───────────┬──────────────┘
+                       round-robin   │
+              ┌────────────────┬─────┴───────┬────────────────┐
+              ▼                ▼              ▼
+       ┌────────────┐  ┌────────────┐  ┌────────────┐
+       │ backend #1 │  │ backend #2 │  │ backend #3 │   (FastAPI + uvicorn)
+       └─────┬──────┘  └─────┬──────┘  └─────┬──────┘
+             └───────────────┴───────────────┘
+                             ▼
+                    ┌──────────────────┐
+                    │  SQLite volume   │   (shared file)
+                    └──────────────────┘</div>
+    <p>This is exactly the Module 9.3 pattern, now hosting TaskFlow. Because your auth is stateless (the JWT carries the user id), any replica can serve any request — no sticky sessions needed.</p>
+  </section>
+
+  <section>
+    <h2>2. The backend Dockerfile</h2>
+    <p>A small Python base, install deps, copy code, run uvicorn. We add a <code>HEALTHCHECK</code> that hits the liveness route from 10.5.</p>
+    <pre><code># backend/Dockerfile
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# install deps first so this layer is cached when only code changes
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+EXPOSE 8000
+HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
+  CMD python -c "import urllib.request as u; u.urlopen('http://localhost:8000/api/v1/health')"
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]</code></pre>
+    <div class="callout note">
+      <div class="label">📝 Order layers by change frequency</div>
+      Copy <code>requirements.txt</code> and install <em>before</em> copying your source. Docker caches layers; since deps change rarely, rebuilds after a code edit skip the slow <code>pip install</code>.
+    </div>
+  </section>
+
+  <section>
+    <h2>3. The frontend Dockerfile (multi-stage)</h2>
+    <p>The frontend has two phases: <strong>build</strong> the static bundle with Node, then <strong>serve</strong> it with a tiny Nginx image. A multi-stage build throws away Node and <code>node_modules</code> from the final image — it ships only the built <code>dist/</code>.</p>
+    <pre><code># frontend/Dockerfile
+# ---- stage 1: build ----
+FROM node:20-alpine AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+# bake the API path the SPA will call (relative -&gt; same origin via nginx)
+ARG VITE_API_URL=/api/v1
+ENV VITE_API_URL=$VITE_API_URL
+RUN npm run build
+
+# ---- stage 2: serve ----
+FROM nginx:1.27-alpine
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/dist /usr/share/nginx/html
+EXPOSE 80</code></pre>
+    <div class="callout tip">
+      <div class="label">💡 Same-origin in production</div>
+      In dev, the SPA called <code>http://localhost:8000/api/v1</code>. In production it calls <code>/api/v1</code> (no host) — the same Nginx that served the page proxies it to the backend. That removes CORS entirely in prod and is the standard SPA deployment shape.
+    </div>
+  </section>
+
+  <section>
+    <h2>4. Nginx: serve the SPA + load-balance the API</h2>
+    <p>One Nginx config does both jobs. An <code>upstream</code> block names the backend pool; <code>location /api/</code> proxies to it (round-robin by default); everything else serves the SPA with a fallback to <code>index.html</code> (so client-side routes like <code>/projects/3</code> work on refresh).</p>
+    <pre><code># frontend/nginx.conf
+upstream taskflow_api {
+    server backend:8000;     # docker-compose load-balances replicas of "backend"
+}
+
+server {
+    listen 80;
+
+    # API -&gt; backend pool
+    location /api/ {
+        proxy_pass http://taskflow_api;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Request-ID $request_id;   # trace id flows through
+    }
+
+    # SPA: serve files, fall back to index.html for client routes
+    location / {
+        root /usr/share/nginx/html;
+        try_files $uri /index.html;
+    }
+
+    # basic hardening header (from the 10.5 pass)
+    add_header X-Content-Type-Options nosniff;
+}</code></pre>
+    <p>The magic is <code>server backend:8000</code>: in Compose, <code>backend</code> is a service name. When you run multiple replicas, Docker's internal DNS round-robins the name across them — Nginx load-balances for free. (For explicit control you can list each replica, as you did in Module 9.3.)</p>
+  </section>
+
+  <section>
+    <h2>5. docker-compose: the whole stack</h2>
+    <p>Compose defines the services, the shared DB volume, env, and how many backend replicas to run.</p>
+    <pre><code># docker-compose.yml
+services:
+  backend:
+    build: ./backend
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - CORS_ORIGINS=http://localhost
+      - DATABASE_URL=sqlite:////data/taskflow.db
+      - ENV=production
+    volumes:
+      - taskflow_data:/data
+    deploy:
+      replicas: 3            # three identical backends
+    expose:
+      - "8000"              # internal only; not published to the host
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "80:80"             # the only public entrypoint
+    depends_on:
+      - backend
+
+volumes:
+  taskflow_data:</code></pre>
+    <p>Bring it up and scale:</p>
+    <pre><code>echo "SECRET_KEY=$(python -c 'import secrets;print(secrets.token_hex(32))')" &gt; .env
+docker compose up --build
+# the app is at http://localhost</code></pre>
+    <div class="callout warning">
+      <div class="label">⚠️ SQLite + replicas: the honest caveat</div>
+      Multiple replicas writing one SQLite file works for a demo (they share a volume), but SQLite serializes writes and isn't built for concurrent multi-process writers at scale. It's perfect for showing the architecture; the README should note "swap SQLite for Postgres to scale writes" — which is exactly what Bonus Track B.3 does.
+    </div>
+  </section>
+
+  <section>
+    <h2>6. Running migrations in containers</h2>
+    <p>Tables must exist before the app serves traffic. The clean pattern is a one-shot command that runs <code>alembic upgrade head</code> on startup. A simple approach for the capstone is an entrypoint that migrates then launches uvicorn:</p>
+    <pre><code># backend/entrypoint.sh
+#!/bin/sh
+set -e
+alembic upgrade head
+exec uvicorn app.main:app --host 0.0.0.0 --port 8000</code></pre>
+    <p>With three replicas all running this, Alembic is safe to run repeatedly — it no-ops if already at head. (In bigger systems you run migrations as a separate job; for the capstone, on-start is fine and documented.)</p>
+  </section>
+
+  <section>
+    <h2>7. A CI workflow</h2>
+    <p>Continuous Integration runs checks on every push. A minimal GitHub Actions workflow installs deps, runs backend tests, and builds the frontend — proving the project still builds before you merge (ties into Bonus Track B.1's GitHub Flow).</p>
+    <pre><code># .github/workflows/ci.yml
+name: CI
+on: [push, pull_request]
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -r backend/requirements.txt
+      - run: cd backend &amp;&amp; pytest -q || echo "no tests yet"
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - run: cd frontend &amp;&amp; npm ci &amp;&amp; npm run build</code></pre>
+    <div class="callout tip">
+      <div class="label">💡 CI is your safety net</div>
+      Even this small workflow catches "it builds on my machine but not clean" — a missing dependency, a syntax error, a broken import. Green checks on a PR are what reviewers (and you, in six months) trust.
+    </div>
+  </section>
+
+  <section>
+    <h2>8. The README — your portfolio front door</h2>
+    <p>A recruiter spends 30 seconds on your repo. The README is the demo. Make it sell the work:</p>
+    <ul>
+      <li>One-line pitch + a <strong>screenshot or GIF</strong> of the board near the top.</li>
+      <li>Tech stack badges/list; the architecture diagram (section 1).</li>
+      <li><strong>Run it</strong>: <code>docker compose up</code> in three commands.</li>
+      <li>Feature list mapped to the user stories from 10.1.</li>
+      <li>The <strong>Security notes</strong> from 10.5 and the "known limits / next steps" (SQLite, refresh tokens).</li>
+      <li>A link to the live deployment (or the Bonus Track GCP one).</li>
+    </ul>
+    <div class="callout note">
+      <div class="label">📝 Screenshots</div>
+      Take 2–3 clean screenshots (login, projects, board) and drop them in <code>docs/</code>; reference them with <code>![Board](docs/board.png)</code>. A picture of the working board is worth more than a paragraph.
+    </div>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li>A <strong>backend Dockerfile</strong> (cache deps first, healthcheck) and a <strong>multi-stage frontend Dockerfile</strong> (Node builds, Nginx serves).</li>
+      <li><strong>Nginx</strong> serves the SPA (with <code>try_files</code> fallback) and reverse-proxies <code>/api</code> to a backend <strong>upstream pool</strong>, load-balancing across replicas.</li>
+      <li><strong>docker-compose</strong> runs the stack, scales the backend, and shares one DB volume; <strong>stateless JWT</strong> makes scaling out trivial.</li>
+      <li>Migrations run on container start; a small <strong>CI workflow</strong> builds/tests on every push.</li>
+      <li>A <strong>polished README</strong> with screenshots turns the project into a portfolio piece.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and ship the deployed, load-balanced TaskFlow.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

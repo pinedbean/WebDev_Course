@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment · Chunk 10.1 — Capstone Planning &amp; Data Modeling</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #ede9fe;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:#ede9fe;border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#5b21b6;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--task);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  .deliverable{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .deliverable h2{border-color:#a7f3d0;color:#065f46;}
+  .check{list-style:none;padding-left:0;} .check li{padding-left:30px;position:relative;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:18px;color:var(--task);}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 10 — Capstone: TaskFlow</div>
+    <h1>Chunk 10.1 — Lab: Spec, ERD &amp; Scaffolded Repos</h1>
+    <span class="badge">🧪 ASSIGNMENT</span>
+    <span class="badge">⏱️ 90–120 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 Your mission</h2>
+    <p>Produce the planning artifacts and skeletons for TaskFlow: a written <code>SPEC.md</code> (scope, user stories, ERD, API contract), and two scaffolded projects — a FastAPI <code>backend/</code> that answers <code>/health</code>, and a React + Vite <code>frontend/</code> that runs. No feature code yet; you're laying the foundation you build on for the rest of the module.</p>
+  </section>
+
+  <section>
+    <h2>Before you start</h2>
+    <ul>
+      <li>You've completed Modules 0–9 (or are following along with the stack). You need <strong>Node.js LTS</strong>, <strong>Python 3.11+</strong>, and <strong>Git</strong> installed (check with <code>node -v</code>, <code>python3 --version</code>, <code>git --version</code>).</li>
+      <li>Pick a home for the project, e.g. <code>~/Desktop/webdev-course/capstone-taskflow/</code>.</li>
+      <li>Have the lecture's ERD and API contract open for reference.</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ Try it yourself first</div>
+      Write the spec in your own words and scaffold from memory of Modules 4 and 5. Only open <code>solution.html</code> to compare or when truly stuck.
+    </div>
+  </section>
+
+  <section>
+    <h2>Tasks</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Create the monorepo &amp; initialize Git</h3>
+      <p>Make the top-level <code>capstone-taskflow/</code> folder with <code>backend/</code> and <code>frontend/</code> subfolders. Run <code>git init</code> at the top level and add a sensible <code>.gitignore</code> (ignore <code>venv/</code>, <code>__pycache__/</code>, <code>node_modules/</code>, <code>*.db</code>, <code>.env</code>, <code>dist/</code>).</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Write <code>SPEC.md</code> — scope &amp; user stories</h3>
+      <p>At the repo root, create <code>SPEC.md</code>. Include: a one-paragraph product summary; an <strong>In scope / Out of scope</strong> table; and at least <strong>six user stories</strong> ("As a… I want… so that…") each with 1–2 acceptance criteria. Cover register/login, projects, invites, and tasks.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Add the ERD to the spec</h3>
+      <p>In <code>SPEC.md</code>, document the four entities (User, Project, Membership, Task) with their fields and types, and describe each relationship in words (e.g. "User 1—* Project via <code>owner_id</code>"). Include a text/ASCII ERD diagram, or link an image you drew.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Add the API contract to the spec</h3>
+      <p>Add an endpoint table (method, path, purpose, auth) for all routes under <code>/api/v1</code>. Then write the exact JSON request/response for at least <strong>two</strong> endpoints (pick <code>POST /auth/register</code> and <code>POST /projects/{id}/tasks</code>). List the status codes you'll use.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Scaffold the backend</h3>
+      <p>In <code>backend/</code>: create a virtual environment, install <code>fastapi</code> + <code>uvicorn</code>, freeze <code>requirements.txt</code>, and create <code>app/main.py</code> with a FastAPI app that exposes <code>GET /api/v1/health</code> returning <code>{"status":"ok"}</code>. Run it and confirm the route works and <code>/docs</code> loads.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Scaffold the frontend</h3>
+      <p>In the repo root, create the Vite React app into <code>frontend/</code>, install dependencies plus <code>react-router-dom</code>, and run the dev server. Confirm the default app renders at the printed localhost URL. Add an <code>.env</code> with <code>VITE_API_URL=http://localhost:8000/api/v1</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Write the README &amp; commit</h3>
+      <p>Add a short root <code>README.md</code> (what TaskFlow is, how to run backend + frontend). Make your first commit, e.g. <code>git commit -m "chore: scaffold TaskFlow monorepo + spec"</code>.</p>
+    </div>
+  </section>
+
+  <section class="deliverable">
+    <h2>✅ Deliverable — acceptance checklist</h2>
+    <ul class="check">
+      <li><code>capstone-taskflow/</code> exists with <code>backend/</code> and <code>frontend/</code> and a Git repo (with <code>.gitignore</code>).</li>
+      <li><code>SPEC.md</code> contains product summary, in/out scope table, and 6+ user stories with acceptance criteria.</li>
+      <li><code>SPEC.md</code> documents the 4 entities + fields and describes every relationship.</li>
+      <li><code>SPEC.md</code> has the full endpoint table plus exact JSON for 2 endpoints and the status-code list.</li>
+      <li>Backend runs: <code>GET http://localhost:8000/api/v1/health</code> returns <code>{"status":"ok"}</code> and <code>/docs</code> loads.</li>
+      <li>Frontend runs: the Vite dev server renders the default React app; <code>.env</code> defines <code>VITE_API_URL</code>.</li>
+      <li>A root <code>README.md</code> exists and you've made at least one commit.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🚀 Stretch goals (optional)</h2>
+    <ul>
+      <li>Draw the ERD in a visual tool (dbdiagram.io, Excalidraw, or Mermaid) and export a PNG into the repo.</li>
+      <li>Add a Mermaid <code>erDiagram</code> code block to <code>SPEC.md</code> so GitHub renders it automatically.</li>
+      <li>Write a tiny <code>Makefile</code> or <code>npm</code> scripts so <code>make dev</code> starts both servers.</li>
+      <li>Create the empty router files (<code>app/routers/auth.py</code>, <code>projects.py</code>, <code>tasks.py</code>) so 10.2 has a head start.</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a class="current">🧪 Assignment</a>
+    <a href="solution.html">✅ Solution →</a>
+  </div>
+</footer>
+</body>
+</html>

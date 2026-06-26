@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk B.1 — Git Strategy &amp; Collaborative Workflows</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .full{border:2px solid #16a34a;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · ⭐ Bonus Track — Git Strategy &amp; GCP</div>
+    <h1>Chunk B.1 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>Each step gives the exact commands, the files to create, expected output, and troubleshooting. Run everything from the root of your TaskFlow repo. Replace <code>YOUR-USER</code> and <code>taskflow</code> with your GitHub username and repo name.</p>
+    <div class="callout note">
+      <div class="label">📝 Interactive logins happen in your terminal</div>
+      Anything that opens a browser (GitHub auth via <code>gh auth login</code>, approving a device code) happens in <em>your own</em> terminal/browser. Commands below assume you're already authenticated to push to GitHub.
+    </div>
+  </section>
+
+  <section>
+    <div class="step">
+      <h3><span class="num">1</span> Document the strategy in <code>CONTRIBUTING.md</code></h3>
+      <p>Make sure <code>main</code> is current, then create the file:</p>
+      <pre><code>cd capstone-taskflow        # your repo root
+git switch main
+git pull origin main</code></pre>
+      <p>Create <code>CONTRIBUTING.md</code>:</p>
+      <pre><code># Contributing to TaskFlow
+
+## Branching strategy: GitHub Flow
+- `main` is always deployable. Never push directly to it.
+- Do all work on short-lived branches off `main`:
+  - `feature/&lt;name&gt;` — new functionality
+  - `fix/&lt;name&gt;`     — bug fixes
+  - `chore/&lt;name&gt;`   — tooling, deps, config
+- Open a Pull Request into `main`. Keep PRs small and focused.
+- A PR merges only when: CI is green, the branch is up to date
+  with `main`, and it has at least one approving review.
+- We **squash-merge** so `main` has one clean commit per change.
+
+## Commit messages: Conventional Commits
+`&lt;type&gt;(scope): summary` — e.g. `feat(tasks): add due dates`.
+Types: feat, fix, docs, refactor, test, chore.
+
+## Releases: Semantic Versioning
+Tags are `vMAJOR.MINOR.PATCH` (e.g. `v1.0.0`).
+- feat → MINOR, fix → PATCH, breaking change → MAJOR.
+
+## Secrets
+Never commit `.env` or key files. Use `.env.example` for names only.</code></pre>
+      <pre><code>git add CONTRIBUTING.md
+git commit -m "docs(repo): document GitHub Flow branching strategy"</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> <code>.gitignore</code> + PR template</h3>
+      <p>Ensure <code>.gitignore</code> at the repo root covers secrets and junk (append if it already exists):</p>
+      <pre><code># secrets &amp; env
+.env
+.env.*
+!.env.example
+*-key.json
+service-account*.json
+
+# python
+__pycache__/
+.venv/
+*.db
+
+# node / vite
+node_modules/
+dist/
+
+# os
+.DS_Store</code></pre>
+      <p>Create the PR template at <code>.github/pull_request_template.md</code>:</p>
+      <pre><code>mkdir -p .github</code></pre>
+      <pre><code>## What &amp; why
+&lt;!-- What does this PR change, and why? --&gt;
+
+## How to test
+1.
+
+## Checklist
+- [ ] Tests pass locally
+- [ ] No secrets or .env files committed
+- [ ] Updated docs if needed</code></pre>
+      <pre><code>git add .gitignore .github/pull_request_template.md
+git commit -m "chore(repo): add gitignore rules and PR template"
+git push origin main</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2.5</span> Plant the conflict seed</h3>
+      <p>Add a <code>## Status</code> line to <code>README.md</code> on <code>main</code> — this is the line we'll change differently on the branch:</p>
+      <pre><code># append to README.md, then:
+git add README.md
+git commit -m "docs(readme): add status section"
+git push origin main</code></pre>
+      <p>For example the new lines in <code>README.md</code>:</p>
+      <pre><code>## Status
+TaskFlow is in active development.</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Feature branch &amp; a real change</h3>
+      <pre><code>git switch -c feature/readme-badges</code></pre>
+      <p>Make a real improvement (e.g. add a tech-stack section to the README) <strong>and</strong> change that same Status line to something different, so it conflicts with <code>main</code>:</p>
+      <pre><code>## Status
+TaskFlow v1 is ready for its first release. 🚀</code></pre>
+      <p>Commit in small steps with conventional messages, then push and set upstream:</p>
+      <pre><code>git add README.md
+git commit -m "docs(readme): add tech stack section"
+git commit -am "docs(readme): mark v1 ready in status"   # second small commit
+git push -u origin feature/readme-badges</code></pre>
+      <div class="callout tip">
+        <div class="label">💡 <code>-am</code></div>
+        <code>git commit -am "..."</code> stages all <em>tracked</em> file changes and commits in one go. Use it once files already exist; new files still need <code>git add</code> first.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Open the PR, self-review, resolve the conflict</h3>
+      <p><strong>Open the PR.</strong> Either click the "Compare &amp; pull request" banner GitHub shows after a push, or use the CLI:</p>
+      <pre><code>gh pr create --base main --head feature/readme-badges \
+  --title "docs: README tech stack + v1 status" \
+  --body "Adds a tech-stack section and marks v1 ready."</code></pre>
+      <p><strong>Self-review:</strong> open the PR's "Files changed" tab and leave at least one comment on a line of your own diff (e.g. "Consider linking each tool to its docs"). This builds the review habit.</p>
+      <p><strong>Now resolve the conflict.</strong> Bring your branch up to date with <code>main</code>. Using rebase (recommended for your own branch):</p>
+      <pre><code>git fetch origin
+git rebase origin/main</code></pre>
+      <p>Git stops on the README conflict. Open <code>README.md</code> — you'll see:</p>
+      <pre><code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+TaskFlow is in active development.
+=======
+TaskFlow v1 is ready for its first release. 🚀
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; (your commit)</code></pre>
+      <p>Edit it to the final version you want (keep the v1 line), delete all three marker lines, then continue:</p>
+      <pre><code>git add README.md
+git rebase --continue
+git push --force-with-lease     # update the PR with the rebased branch</code></pre>
+      <div class="callout warning">
+        <div class="label">⚠️ During a rebase</div>
+        Rebase replays each commit, so a conflict can appear more than once. Resolve, <code>git add</code>, <code>git rebase --continue</code> each time. To bail out entirely: <code>git rebase --abort</code>. Prefer rebase only because this is <em>your own</em> un-shared branch.
+      </div>
+      <p>Prefer merge instead of rebase? This also works and avoids force-push:</p>
+      <pre><code>git merge origin/main      # resolve the same conflict, then:
+git add README.md
+git commit                 # completes the merge
+git push</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Branch protection, then squash-merge</h3>
+      <p><strong>Branch protection</strong> (GitHub UI): repo → <em>Settings → Branches → Add branch ruleset</em> (or "Add rule") targeting <code>main</code>. Enable:</p>
+      <ul>
+        <li>✅ Require a pull request before merging</li>
+        <li>✅ Require branches to be up to date before merging</li>
+        <li>✅ Require status checks to pass <em>(once you add CI — stretch goal)</em></li>
+        <li>✅ Require approvals: 1 <em>(see note below for solo repos)</em></li>
+      </ul>
+      <div class="callout note">
+        <div class="label">📝 Solo personal repo</div>
+        GitHub won't let you approve your own PR. Either: leave "Require approvals" <strong>off</strong> (keep "Require a PR" on — you still can't push directly to <code>main</code>), or set the repo to an Organization where a second account can approve. The point of the exercise is that <code>main</code> is no longer directly pushable.
+      </div>
+      <p><strong>Squash-merge</strong> the PR. In the UI, click the merge dropdown → "Squash and merge" → confirm → "Delete branch". Or via CLI:</p>
+      <pre><code>gh pr merge --squash --delete-branch</code></pre>
+      <p>Expected: the PR shows "Merged", your branch is gone, and <code>main</code> has <em>one</em> new commit containing the whole feature.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Cut the <code>v1.0.0</code> release tag</h3>
+      <p>Sync local <code>main</code>, then create and push an annotated tag:</p>
+      <pre><code>git switch main
+git pull origin main
+git tag -a v1.0.0 -m "TaskFlow 1.0.0 — first public release"
+git push origin v1.0.0</code></pre>
+      <p>Verify:</p>
+      <pre><code>git tag                    # lists v1.0.0
+git show v1.0.0 --stat     # shows the tag message + the commit it points to</code></pre>
+      <p>Optionally publish a GitHub Release from the tag:</p>
+      <pre><code>gh release create v1.0.0 --title "TaskFlow v1.0.0" \
+  --notes "First public release: auth, projects, tasks, load-balanced Docker stack."</code></pre>
+    </div>
+  </section>
+
+  <section class="full">
+    <h2>📄 Quick reference — the whole flow</h2>
+    <pre><code># once, on main
+git switch main &amp;&amp; git pull origin main
+
+# per change
+git switch -c feature/my-change
+# ...edit, commit with conventional messages...
+git push -u origin feature/my-change
+gh pr create --base main --fill          # open PR
+
+# keep current with main (resolve conflicts if any)
+git fetch origin &amp;&amp; git rebase origin/main
+git push --force-with-lease
+
+# merge + clean up
+gh pr merge --squash --delete-branch
+
+# release
+git switch main &amp;&amp; git pull origin main
+git tag -a v1.0.0 -m "..." &amp;&amp; git push origin v1.0.0</code></pre>
+  </section>
+
+  <section>
+    <h2>🛠️ Troubleshooting</h2>
+    <table>
+      <tr><th>Symptom</th><th>Fix</th></tr>
+      <tr><td><code>! [rejected] ... (fetch first)</code> on push</td><td>Remote moved on. <code>git fetch origin</code> then rebase/merge before pushing.</td></tr>
+      <tr><td><code>--force-with-lease</code> rejected</td><td>Someone (or you, elsewhere) pushed to the branch. Re-fetch, re-rebase, then push again. Never use plain <code>--force</code>.</td></tr>
+      <tr><td>Accidentally committed <code>.env</code></td><td>Rotate the secret immediately. Then remove it from history with <code>git filter-repo</code> / BFG and add it to <code>.gitignore</code>.</td></tr>
+      <tr><td>Can't merge — "branch out of date"</td><td>That's branch protection working. Update the branch (rebase/merge <code>main</code>), push, then merge.</td></tr>
+      <tr><td>Tag pushed to wrong commit</td><td><code>git tag -d v1.0.0</code>, <code>git push origin :refs/tags/v1.0.0</code> to delete remotely, re-tag the right commit, push again.</td></tr>
+      <tr><td><code>gh: command not found</code></td><td>Install GitHub CLI (<code>brew install gh</code>) and run <code>gh auth login</code> in your terminal — or just use the GitHub web UI.</td></tr>
+    </table>
+  </section>
+
+  <section class="done">
+    <h2>🎉 You're done</h2>
+    <p>Your TaskFlow repo now works like a real team's: a documented strategy in <code>CONTRIBUTING.md</code>, a PR template, protected <code>main</code>, a clean squash-merged history, and a tagged <code>v1.0.0</code> release.</p>
+    <p>This is the backbone B.3 will build on: when you add CI/CD, <em>every merge to a protected, green <code>main</code> auto-deploys to GCP</em>. The discipline you set up here is what makes that safe.</p>
+    <p><strong>Up next → Chunk B.2: Deploy the Capstone to GCP (Cloud Run).</strong></p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

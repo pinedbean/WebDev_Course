@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment · Chunk 8.2 — Error Tracking &amp; Frontend Logging</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #ede9fe;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .objective{background:#ede9fe;border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#5b21b6;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--task);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .deliverable{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .deliverable h2{border-color:#a7f3d0;color:#065f46;}
+  .check{list-style:none;padding-left:0;} .check li{padding-left:30px;position:relative;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:18px;color:var(--task);}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 8 — Logging &amp; Observability</div>
+    <h1>Chunk 8.2 — Lab: Health Checks &amp; Error Capture</h1>
+    <span class="badge">🧪 ASSIGNMENT</span>
+    <span class="badge">⏱️ 45–75 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 Your mission</h2>
+    <p>Make the Tasks app <strong>observable when things go wrong</strong>. On the backend you'll add a catch-all <strong>exception handler</strong> that logs full tracebacks and returns a clean 500, plus <strong>liveness</strong> (<code>/health</code>) and <strong>readiness</strong> (<code>/health/ready</code>) endpoints, and a <code>/client-logs</code> endpoint. On the frontend you'll add a React <strong>error boundary</strong> that shows a fallback UI instead of a white screen and <strong>reports</strong> the crash to your backend — so a browser-side error ends up in your server logs.</p>
+  </section>
+
+  <section>
+    <h2>Before you start</h2>
+    <ul>
+      <li>You finished <strong>Chunk 8.1</strong>: the Tasks API has <code>app/logging_config.py</code> (JSON logs + request ids) and a request-logging middleware.</li>
+      <li>Your React frontend (<code>tasks-web/</code> from Module 7) runs with <code>npm run dev</code> and has <code>src/api.js</code>, <code>src/main.jsx</code>, and pages.</li>
+      <li>Activate the backend venv and have both servers runnable (<code>uvicorn app.main:app --reload</code> and <code>npm run dev</code>).</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ Try it yourself first</div>
+      Build from the lecture and these tasks. Only open <code>solution.html</code> when stuck or to compare at the end.
+    </div>
+  </section>
+
+  <section>
+    <h2>Part A — Backend</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Add a catch-all exception handler</h3>
+      <p>Register an <code>@app.exception_handler(Exception)</code> in <code>app/main.py</code> (or a small <code>app/errors.py</code>). It must log with <code>logger.exception("unhandled exception", extra={...})</code> (include <code>method</code> and <code>path</code>) and return a <code>JSONResponse</code> with status <code>500</code> and body <code>{"detail": "Internal server error"}</code>. Confirm your intentional <code>HTTPException</code>s (401/404) are unaffected.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Add a temporary "boom" route to test it</h3>
+      <p>So you can trigger an unhandled error on demand, add a throwaway route that raises (you'll delete it after testing):</p>
+      <pre><code>@app.get("/boom")
+def boom():
+    raise ValueError("kaboom for testing")</code></pre>
+      <p>Hitting <code>/boom</code> should return a clean <code>500 {"detail":"Internal server error"}</code> while your terminal shows a JSON log line with the full traceback in an <code>exception</code> field and the request id.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Liveness: <code>GET /health</code></h3>
+      <p>Add a dependency-free liveness check that returns <code>{"status": "ok"}</code> with a <code>200</code>. It must <strong>not</strong> touch the database. (If you already have <code>/health</code> from earlier modules, keep it — just confirm it's dependency-free.)</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Readiness: <code>GET /health/ready</code></h3>
+      <p>Add a readiness check that runs a trivial query (<code>SELECT 1</code>) through the <code>get_db</code> dependency. Return <code>{"status":"ready","database":"ok"}</code> on success; on failure, log it and return status <code>503</code> with <code>{"status":"not ready","database":"down"}</code>.</p>
+      <div class="callout tip">
+        <div class="label">💡 Running raw SQL via SQLAlchemy</div>
+        Wrap the string: <code>db.execute(text("SELECT 1"))</code>, importing <code>from sqlalchemy import text</code>.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Client-error endpoint: <code>POST /client-logs</code></h3>
+      <p>Add a Pydantic schema <code>ClientErrorReport</code> (<code>message: str</code>, <code>stack: str = ""</code>, <code>url: str = ""</code>) and a public endpoint (status <code>202</code>) that logs the report at <code>ERROR</code> with <code>extra</code> fields. Cap the stack length (e.g. <code>report.stack[:2000]</code>) before logging.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Part B — Frontend</h2>
+
+    <div class="step">
+      <h3><span class="num">6</span> Add a <code>reportClientError</code> helper</h3>
+      <p>In <code>src/api.js</code>, add a function that POSTs <code>{ message, stack, url }</code> to <code>/client-logs</code>. Wrap the whole thing in <code>try/catch</code> so the reporter can never itself throw and worsen the crash.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Build the error boundary</h3>
+      <p>Create <code>src/components/ErrorBoundary.jsx</code> as a <strong>class component</strong> with <code>getDerivedStateFromError</code> (flip to a fallback) and <code>componentDidCatch</code> (call <code>reportClientError(error, info.componentStack)</code>). The fallback UI should be a friendly message and a "Reload" button — not a blank screen.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">8</span> Wrap your app</h3>
+      <p>In <code>src/main.jsx</code>, wrap <code>&lt;App /&gt;</code> (inside your providers/router) with <code>&lt;ErrorBoundary&gt;…&lt;/ErrorBoundary&gt;</code> so a crash anywhere in the tree is caught.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">9</span> Add a way to trigger a crash, then verify</h3>
+      <p>Temporarily add a component/button that throws during render (e.g. a "Crash" button that sets state causing a child to throw, or a component that does <code>throw new Error("boom")</code>). Trigger it and confirm: (a) you see your fallback UI, not a white page; (b) a <code>POST /client-logs</code> fires (Network tab); (c) your backend terminal shows a JSON <code>"client error"</code> log line. Remove the crash trigger and <code>/boom</code> afterwards.</p>
+    </div>
+  </section>
+
+  <section class="deliverable">
+    <h2>✅ Deliverable — acceptance checklist</h2>
+    <ul class="check">
+      <li>An unhandled backend exception returns <code>500 {"detail":"Internal server error"}</code> and is logged with a full traceback + request id.</li>
+      <li>Intentional <code>HTTPException</code>s (401/404) still return their own status codes (the catch-all didn't swallow them).</li>
+      <li><code>GET /health</code> returns <code>200 {"status":"ok"}</code> and does not touch the DB.</li>
+      <li><code>GET /health/ready</code> returns <code>200</code> when the DB query succeeds, and <code>503</code> when it can't reach the DB.</li>
+      <li><code>POST /client-logs</code> accepts a report and logs it (stack capped), returning <code>202</code>.</li>
+      <li>A React render crash shows a graceful fallback (no white screen) and POSTs to <code>/client-logs</code>, which appears in the backend logs.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🚀 Stretch goals (optional)</h2>
+    <ul>
+      <li>Catch <em>async/global</em> errors too: add <code>window.addEventListener("error", …)</code> and <code>"unhandledrejection"</code> handlers in <code>main.jsx</code> that call <code>reportClientError</code>.</li>
+      <li>Include the current <code>request_id</code> idea on the client: read the <code>X-Request-ID</code> header from failed API responses and include it in the report.</li>
+      <li>Add a custom handler for <code>RequestValidationError</code> that logs which fields failed (without logging the values).</li>
+      <li>Have <code>/health/ready</code> also report app version and uptime.</li>
+      <li>Rate-limit <code>/client-logs</code> (even a tiny in-memory counter) so a crash loop can't flood your logs.</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a class="current">🧪 Assignment</a>
+    <a href="solution.html">✅ Solution →</a>
+  </div>
+</footer>
+</body>
+</html>

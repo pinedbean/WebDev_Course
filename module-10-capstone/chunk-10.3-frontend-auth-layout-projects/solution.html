@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk 10.3 — Frontend: Auth, Layout &amp; Project Views</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  .checkpoint{background:#fffbeb;border:2px solid #f59e0b;}
+  .checkpoint h2{border-color:#fde68a;color:#92400e;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .full{border:2px solid #16a34a;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 10 — Capstone: TaskFlow</div>
+    <h1>Chunk 10.3 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>Build the frontend file by file. All JSX is complete and copy-pasteable. Files we create/edit:</p>
+    <div class="filetree">frontend/src/
+├── main.jsx              (wrap app in AuthProvider + BrowserRouter)
+├── App.jsx               (routes)
+├── index.css             (app styling)
+├── api/client.js
+├── context/AuthContext.jsx
+├── components/
+│   ├── ProtectedRoute.jsx
+│   └── Layout.jsx
+└── pages/
+    ├── Login.jsx
+    ├── Register.jsx
+    └── Projects.jsx</div>
+  </section>
+
+  <section>
+    <div class="step">
+      <h3><span class="num">1</span> API client</h3>
+      <pre><code>// src/api/client.js
+const BASE = import.meta.env.VITE_API_URL;
+
+export function getToken() {
+  return localStorage.getItem("taskflow_token");
+}
+export function setToken(t) {
+  localStorage.setItem("taskflow_token", t);
+}
+export function clearToken() {
+  localStorage.removeItem("taskflow_token");
+}
+
+export async function api(path, { method = "GET", body, form } = {}) {
+  const headers = {};
+  const token = getToken();
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  let payload;
+  if (form) {
+    headers["Content-Type"] = "application/x-www-form-urlencoded";
+    payload = new URLSearchParams(form).toString();
+  } else if (body !== undefined) {
+    headers["Content-Type"] = "application/json";
+    payload = JSON.stringify(body);
+  }
+
+  const res = await fetch(`${BASE}${path}`, { method, headers, body: payload });
+  if (res.status === 204) return null;
+  const data = await res.json().catch(() =&gt; ({}));
+  if (!res.ok) throw new Error(data.detail || `Request failed (${res.status})`);
+  return data;
+}</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Auth context</h3>
+      <pre><code>// src/context/AuthContext.jsx
+import { createContext, useContext, useEffect, useState } from "react";
+import { api, getToken, setToken, clearToken } from "../api/client";
+
+const AuthContext = createContext(null);
+
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() =&gt; {
+    if (!getToken()) { setLoading(false); return; }
+    api("/auth/me")
+      .then(setUser)
+      .catch(() =&gt; clearToken())
+      .finally(() =&gt; setLoading(false));
+  }, []);
+
+  async function login(email, password) {
+    const { access_token } = await api("/auth/login", {
+      method: "POST", form: { username: email, password },
+    });
+    setToken(access_token);
+    setUser(await api("/auth/me"));
+  }
+
+  async function register(name, email, password) {
+    const { access_token } = await api("/auth/register", {
+      method: "POST", body: { name, email, password },
+    });
+    setToken(access_token);
+    setUser(await api("/auth/me"));
+  }
+
+  function logout() {
+    clearToken();
+    setUser(null);
+  }
+
+  return (
+    &lt;AuthContext.Provider value={{ user, loading, login, register, logout }}&gt;
+      {children}
+    &lt;/AuthContext.Provider&gt;
+  );
+}
+
+export const useAuth = () =&gt; useContext(AuthContext);</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Login &amp; Register pages</h3>
+      <pre><code>// src/pages/Login.jsx
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+
+export default function Login() {
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  async function onSubmit(e) {
+    e.preventDefault();
+    setError("");
+    try {
+      await login(email, password);
+      navigate("/");
+    } catch (err) { setError(err.message); }
+  }
+
+  return (
+    &lt;div className="auth-wrap"&gt;
+      &lt;form className="auth-card" onSubmit={onSubmit}&gt;
+        &lt;h1&gt;Log in to TaskFlow&lt;/h1&gt;
+        {error &amp;&amp; &lt;p className="error"&gt;{error}&lt;/p&gt;}
+        &lt;label&gt;Email
+          &lt;input type="email" value={email} required
+                 onChange={(e) =&gt; setEmail(e.target.value)} /&gt;
+        &lt;/label&gt;
+        &lt;label&gt;Password
+          &lt;input type="password" value={password} required
+                 onChange={(e) =&gt; setPassword(e.target.value)} /&gt;
+        &lt;/label&gt;
+        &lt;button type="submit"&gt;Log in&lt;/button&gt;
+        &lt;p&gt;No account? &lt;Link to="/register"&gt;Register&lt;/Link&gt;&lt;/p&gt;
+      &lt;/form&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+      <pre><code>// src/pages/Register.jsx
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+
+export default function Register() {
+  const { register } = useAuth();
+  const navigate = useNavigate();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  async function onSubmit(e) {
+    e.preventDefault();
+    setError("");
+    try {
+      await register(name, email, password);
+      navigate("/");
+    } catch (err) { setError(err.message); }
+  }
+
+  return (
+    &lt;div className="auth-wrap"&gt;
+      &lt;form className="auth-card" onSubmit={onSubmit}&gt;
+        &lt;h1&gt;Create your account&lt;/h1&gt;
+        {error &amp;&amp; &lt;p className="error"&gt;{error}&lt;/p&gt;}
+        &lt;label&gt;Name
+          &lt;input value={name} required
+                 onChange={(e) =&gt; setName(e.target.value)} /&gt;
+        &lt;/label&gt;
+        &lt;label&gt;Email
+          &lt;input type="email" value={email} required
+                 onChange={(e) =&gt; setEmail(e.target.value)} /&gt;
+        &lt;/label&gt;
+        &lt;label&gt;Password
+          &lt;input type="password" value={password} required minLength={8}
+                 onChange={(e) =&gt; setPassword(e.target.value)} /&gt;
+        &lt;/label&gt;
+        &lt;button type="submit"&gt;Register&lt;/button&gt;
+        &lt;p&gt;Already have an account? &lt;Link to="/login"&gt;Log in&lt;/Link&gt;&lt;/p&gt;
+      &lt;/form&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> ProtectedRoute &amp; Layout</h3>
+      <pre><code>// src/components/ProtectedRoute.jsx
+import { Navigate, Outlet } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+
+export default function ProtectedRoute() {
+  const { user, loading } = useAuth();
+  if (loading) return &lt;p style={{ padding: 24 }}&gt;Loading…&lt;/p&gt;;
+  return user ? &lt;Outlet /&gt; : &lt;Navigate to="/login" replace /&gt;;
+}</code></pre>
+      <pre><code>// src/components/Layout.jsx
+import { Link, Outlet, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+
+export default function Layout() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  function onLogout() { logout(); navigate("/login"); }
+
+  return (
+    &lt;div&gt;
+      &lt;header className="topbar"&gt;
+        &lt;Link to="/" className="brand"&gt;TaskFlow&lt;/Link&gt;
+        &lt;div className="spacer" /&gt;
+        &lt;span className="who"&gt;{user?.name}&lt;/span&gt;
+        &lt;button className="ghost" onClick={onLogout}&gt;Logout&lt;/button&gt;
+      &lt;/header&gt;
+      &lt;main className="content"&gt;&lt;Outlet /&gt;&lt;/main&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Routes &amp; app bootstrap</h3>
+      <pre><code>// src/App.jsx
+import { Routes, Route } from "react-router-dom";
+import ProtectedRoute from "./components/ProtectedRoute";
+import Layout from "./components/Layout";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Projects from "./pages/Projects";
+
+export default function App() {
+  return (
+    &lt;Routes&gt;
+      &lt;Route path="/login" element={&lt;Login /&gt;} /&gt;
+      &lt;Route path="/register" element={&lt;Register /&gt;} /&gt;
+      &lt;Route element={&lt;ProtectedRoute /&gt;}&gt;
+        &lt;Route element={&lt;Layout /&gt;}&gt;
+          &lt;Route path="/" element={&lt;Projects /&gt;} /&gt;
+          {/* /projects/:id Board route is added in Chunk 10.4 */}
+        &lt;/Route&gt;
+      &lt;/Route&gt;
+    &lt;/Routes&gt;
+  );
+}</code></pre>
+      <pre><code>// src/main.jsx
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import App from "./App";
+import "./index.css";
+
+ReactDOM.createRoot(document.getElementById("root")).render(
+  &lt;React.StrictMode&gt;
+    &lt;BrowserRouter&gt;
+      &lt;AuthProvider&gt;
+        &lt;App /&gt;
+      &lt;/AuthProvider&gt;
+    &lt;/BrowserRouter&gt;
+  &lt;/React.StrictMode&gt;
+);</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Projects page</h3>
+      <pre><code>// src/pages/Projects.jsx
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { api } from "../api/client";
+
+export default function Projects() {
+  const [projects, setProjects] = useState([]);
+  const [name, setName] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() =&gt; {
+    api("/projects")
+      .then(setProjects)
+      .catch((e) =&gt; setError(e.message))
+      .finally(() =&gt; setLoading(false));
+  }, []);
+
+  async function create(e) {
+    e.preventDefault();
+    setSaving(true);
+    setError("");
+    try {
+      const project = await api("/projects", {
+        method: "POST", body: { name, description: "" },
+      });
+      setProjects((prev) =&gt; [...prev, project]);
+      setName("");
+    } catch (err) { setError(err.message); }
+    finally { setSaving(false); }
+  }
+
+  if (loading) return &lt;p&gt;Loading projects…&lt;/p&gt;;
+
+  return (
+    &lt;section&gt;
+      &lt;div className="page-head"&gt;
+        &lt;h1&gt;My Projects&lt;/h1&gt;
+      &lt;/div&gt;
+      {error &amp;&amp; &lt;p className="error"&gt;{error}&lt;/p&gt;}
+
+      &lt;form className="inline-form" onSubmit={create}&gt;
+        &lt;input value={name} placeholder="New project name" required
+               onChange={(e) =&gt; setName(e.target.value)} /&gt;
+        &lt;button disabled={saving}&gt;{saving ? "Creating…" : "+ Create"}&lt;/button&gt;
+      &lt;/form&gt;
+
+      {projects.length === 0 ? (
+        &lt;p className="muted"&gt;No projects yet — create your first one above.&lt;/p&gt;
+      ) : (
+        &lt;ul className="project-grid"&gt;
+          {projects.map((p) =&gt; (
+            &lt;li key={p.id} className="project-card"&gt;
+              &lt;Link to={`/projects/${p.id}`}&gt;
+                &lt;h3&gt;{p.name}&lt;/h3&gt;
+                &lt;p className="muted"&gt;{p.description || "No description"}&lt;/p&gt;
+              &lt;/Link&gt;
+            &lt;/li&gt;
+          ))}
+        &lt;/ul&gt;
+      )}
+    &lt;/section&gt;
+  );
+}</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Styling (<code>index.css</code>)</h3>
+      <pre><code>/* src/index.css — replace Vite's defaults */
+:root { color-scheme: light; }
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: #f1f5f9; color: #1e293b;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+a { color: #2563eb; text-decoration: none; }
+
+.topbar {
+  display: flex; align-items: center; gap: 12px;
+  background: #1e3a8a; color: #fff; padding: 14px 22px;
+}
+.topbar .brand { color: #fff; font-weight: 700; font-size: 20px; }
+.topbar .spacer { flex: 1; }
+.topbar .who { opacity: .9; }
+.ghost {
+  background: rgba(255,255,255,.15); color: #fff; border: 0;
+  padding: 8px 14px; border-radius: 8px; cursor: pointer;
+}
+.content { max-width: 960px; margin: 0 auto; padding: 28px 22px; }
+
+.auth-wrap { display: grid; place-items: center; min-height: 100vh; }
+.auth-card {
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 14px;
+  padding: 28px; width: 360px; display: grid; gap: 12px;
+}
+.auth-card label { display: grid; gap: 4px; font-size: 14px; }
+.auth-card input, .inline-form input {
+  padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px;
+}
+button {
+  background: #2563eb; color: #fff; border: 0; padding: 10px 16px;
+  border-radius: 8px; font-weight: 600; cursor: pointer;
+}
+button:disabled { opacity: .6; cursor: default; }
+.error { color: #b91c1c; background: #fee2e2; padding: 8px 12px; border-radius: 8px; }
+.muted { color: #64748b; }
+
+.inline-form { display: flex; gap: 10px; margin: 16px 0 24px; }
+.inline-form input { flex: 1; }
+
+.project-grid {
+  list-style: none; padding: 0; display: grid; gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+.project-card {
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px;
+}
+.project-card h3 { margin: 0 0 6px; }</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">8</span> Run &amp; verify</h3>
+      <p>With the backend up, run the frontend:</p>
+      <pre><code>cd frontend &amp;&amp; npm run dev</code></pre>
+      <ol>
+        <li>Open <code>http://localhost:5173</code> → redirected to <code>/login</code>.</li>
+        <li>Click Register, create an account → you land on Projects.</li>
+        <li>Create a project — it appears immediately.</li>
+        <li>Refresh — still logged in, project still listed (token + <code>/auth/me</code>).</li>
+        <li>Logout → back to <code>/login</code>; typing <code>/</code> redirects you back to login.</li>
+      </ol>
+    </div>
+  </section>
+
+  <section>
+    <h2>Troubleshooting</h2>
+    <table>
+      <tr><th>Symptom</th><th>Fix</th></tr>
+      <tr><td>CORS error in console</td><td>Backend must allow <code>http://localhost:5173</code> (10.2 <code>main.py</code>). Restart uvicorn after changing it.</td></tr>
+      <tr><td><code>VITE_API_URL is undefined</code></td><td>Vite only reads <code>VITE_</code>-prefixed vars and only at startup. Restart <code>npm run dev</code> after editing <code>.env</code>.</td></tr>
+      <tr><td>Login 422</td><td>The client must send <code>form</code> (URL-encoded <code>username</code>/<code>password</code>) for <code>/auth/login</code>, not JSON.</td></tr>
+      <tr><td>Logged out after refresh</td><td>Confirm the token is saved under <code>taskflow_token</code> and <code>/auth/me</code> is called on mount.</td></tr>
+      <tr><td>Blank page, console error about Router</td><td><code>useNavigate</code>/<code>Link</code> must be inside <code>&lt;BrowserRouter&gt;</code> — check <code>main.jsx</code>.</td></tr>
+    </table>
+  </section>
+
+  <section class="done">
+    <h2>🎉 Done — what's next</h2>
+    <p>TaskFlow now has a real authenticated frontend: you can register, log in, stay logged in across refreshes, see your projects, create them, and log out — all wired to your secured API.</p>
+    <ul>
+      <li>✅ API client with token + error handling.</li>
+      <li>✅ Auth context, protected routes, app layout.</li>
+      <li>✅ Projects list + create against the live backend.</li>
+    </ul>
+    <p><strong>Up next → Chunk 10.4: Task Board &amp; Collaboration.</strong> You'll build the headline feature — a board with status columns, create/edit/assign/due-date, filtering, and member invitations.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

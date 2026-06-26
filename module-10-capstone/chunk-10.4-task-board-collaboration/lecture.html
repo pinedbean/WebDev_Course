@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 10.4 — Task Board &amp; Collaboration</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  .checkpoint{background:#fffbeb;border:2px solid #f59e0b;}
+  .checkpoint h2{border-color:#fde68a;color:#92400e;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 10 — Capstone: TaskFlow</div>
+    <h1>Chunk 10.4 — Task Board &amp; Collaboration</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 90–120 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>How to render a <strong>kanban board</strong>: group tasks by status into To Do / In Progress / Done columns.</li>
+      <li>How to <strong>create, edit, assign, and set due dates</strong> on tasks with a reusable form/modal.</li>
+      <li>How to <strong>move a task</strong> between columns by PATCHing its status, and keep the UI in sync.</li>
+      <li>How to <strong>filter</strong> the board by status and assignee using the backend query params.</li>
+      <li>How to build <strong>collaboration</strong>: list members and invite teammates by email.</li>
+    </ul>
+    <p>This is the headline feature. The lab delivers a working, collaborative task board.</p>
+  </section>
+
+  <section>
+    <h2>1. The board as a derived view</h2>
+    <p>The backend stores a flat list of tasks, each with a <code>status</code>. The board is just a <em>view</em> of that list, grouped into columns. We don't store columns — we <strong>derive</strong> them from the data on every render. This is the key mental model: one source of truth (the task array), three presentations (the columns).</p>
+    <pre><code>const COLUMNS = [
+  { key: "todo",        title: "To Do" },
+  { key: "in_progress", title: "In Progress" },
+  { key: "done",        title: "Done" },
+];
+
+// group once per render
+function groupByStatus(tasks) {
+  return {
+    todo:        tasks.filter((t) =&gt; t.status === "todo"),
+    in_progress: tasks.filter((t) =&gt; t.status === "in_progress"),
+    done:        tasks.filter((t) =&gt; t.status === "done"),
+  };
+}</code></pre>
+    <p>Because columns are derived, "moving" a task is simply changing its <code>status</code> field — the grouping re-runs and the card appears in the new column. No special move logic needed.</p>
+  </section>
+
+  <section>
+    <h2>2. Board page structure</h2>
+    <p>The Board page (route <code>/projects/:id</code>) loads three things on mount: the project (for the title), its members (for assignee dropdowns and the members bar), and its tasks. Then it renders the columns.</p>
+    <div class="filetree">src/pages/Board.jsx        the page: loads project + members + tasks, renders columns
+src/components/
+├── TaskCard.jsx          one task (title, assignee, due date, status buttons)
+├── TaskForm.jsx          create/edit form (title, desc, status, assignee, due)
+├── MembersBar.jsx        member chips + "Invite" form
+└── BoardFilters.jsx      status + assignee filter controls</div>
+    <pre><code>// useParams gives us the project id from the URL (Module 4.5)
+const { id } = useParams();
+
+useEffect(() =&gt; {
+  Promise.all([
+    api(`/projects/${id}`),
+    api(`/projects/${id}/members`),
+    api(`/projects/${id}/tasks`),
+  ]).then(([project, members, tasks]) =&gt; {
+    setProject(project); setMembers(members); setTasks(tasks);
+  }).catch((e) =&gt; setError(e.message));
+}, [id]);</code></pre>
+  </section>
+
+  <section>
+    <h2>3. The task card &amp; moving status</h2>
+    <p>A card shows the title, the assignee's name (looked up from members), and the due date. It also offers a way to move the task. The simplest, accessible approach (no drag-and-drop library needed for the MVP) is a small status <code>&lt;select&gt;</code> or move buttons:</p>
+    <pre><code>function TaskCard({ task, members, onMove, onEdit, onDelete }) {
+  const assignee = members.find((m) =&gt; m.user_id === task.assignee_id);
+  return (
+    &lt;article className="task-card"&gt;
+      &lt;h4&gt;{task.title}&lt;/h4&gt;
+      &lt;div className="meta"&gt;
+        &lt;span&gt;{assignee ? assignee.name : "Unassigned"}&lt;/span&gt;
+        {task.due_date &amp;&amp; &lt;span className="due"&gt;📅 {task.due_date}&lt;/span&gt;}
+      &lt;/div&gt;
+      &lt;select value={task.status}
+              onChange={(e) =&gt; onMove(task, e.target.value)}&gt;
+        &lt;option value="todo"&gt;To Do&lt;/option&gt;
+        &lt;option value="in_progress"&gt;In Progress&lt;/option&gt;
+        &lt;option value="done"&gt;Done&lt;/option&gt;
+      &lt;/select&gt;
+      &lt;button onClick={() =&gt; onEdit(task)}&gt;Edit&lt;/button&gt;
+      &lt;button onClick={() =&gt; onDelete(task)}&gt;Delete&lt;/button&gt;
+    &lt;/article&gt;
+  );
+}</code></pre>
+    <p>And <code>onMove</code> in the Board patches the backend and updates local state:</p>
+    <pre><code>async function moveTask(task, status) {
+  const updated = await api(`/projects/${id}/tasks/${task.id}`,
+    { method: "PATCH", body: { status } });
+  setTasks((prev) =&gt; prev.map((t) =&gt; (t.id === updated.id ? updated : t)));
+}</code></pre>
+    <div class="callout note">
+      <div class="label">📝 Update by replacing, not mutating</div>
+      We rebuild the array with <code>map</code>, swapping the changed task for the server's response. Never mutate state in place — React compares references to decide what to re-render.
+    </div>
+  </section>
+
+  <section>
+    <h2>4. Create &amp; edit with one form</h2>
+    <p>One <code>TaskForm</code> handles both create and edit — if you pass an existing task, it pre-fills; otherwise it's blank. The fields map exactly to the API: title, description, status, <code>assignee_id</code> (a select of members, plus "Unassigned"), and <code>due_date</code> (a native date input).</p>
+    <pre><code>function TaskForm({ task, members, onSave, onCancel }) {
+  const [form, setForm] = useState({
+    title: task?.title ?? "",
+    description: task?.description ?? "",
+    status: task?.status ?? "todo",
+    assignee_id: task?.assignee_id ?? "",
+    due_date: task?.due_date ?? "",
+  });
+
+  function update(field, value) {
+    setForm((f) =&gt; ({ ...f, [field]: value }));
+  }
+
+  function submit(e) {
+    e.preventDefault();
+    onSave({
+      ...form,
+      // normalize empty selections to null for the API
+      assignee_id: form.assignee_id === "" ? null : Number(form.assignee_id),
+      due_date: form.due_date === "" ? null : form.due_date,
+    });
+  }
+
+  return (
+    &lt;form className="task-form" onSubmit={submit}&gt;
+      &lt;input value={form.title} required placeholder="Title"
+             onChange={(e) =&gt; update("title", e.target.value)} /&gt;
+      &lt;textarea value={form.description} placeholder="Description"
+                onChange={(e) =&gt; update("description", e.target.value)} /&gt;
+      &lt;select value={form.assignee_id}
+              onChange={(e) =&gt; update("assignee_id", e.target.value)}&gt;
+        &lt;option value=""&gt;Unassigned&lt;/option&gt;
+        {members.map((m) =&gt; (
+          &lt;option key={m.user_id} value={m.user_id}&gt;{m.name}&lt;/option&gt;
+        ))}
+      &lt;/select&gt;
+      &lt;input type="date" value={form.due_date}
+             onChange={(e) =&gt; update("due_date", e.target.value)} /&gt;
+      &lt;button&gt;Save&lt;/button&gt;
+      &lt;button type="button" onClick={onCancel}&gt;Cancel&lt;/button&gt;
+    &lt;/form&gt;
+  );
+}</code></pre>
+    <div class="callout warning">
+      <div class="label">⚠️ Empty string vs null</div>
+      HTML form values are always strings — an unselected assignee is <code>""</code>, not <code>null</code>. The backend expects <code>null</code> or a number. Normalize at the boundary (in <code>submit</code>) so the API always gets clean types.
+    </div>
+  </section>
+
+  <section>
+    <h2>5. Filtering — let the backend do the work</h2>
+    <p>Your 10.2 tasks endpoint already accepts <code>?status=</code> and <code>?assignee_id=</code>. So filtering is just changing the URL you fetch. When a filter changes, re-fetch:</p>
+    <pre><code>const [filters, setFilters] = useState({ status: "", assignee_id: "" });
+
+useEffect(() =&gt; {
+  const params = new URLSearchParams();
+  if (filters.status) params.set("status", filters.status);
+  if (filters.assignee_id) params.set("assignee_id", filters.assignee_id);
+  const qs = params.toString() ? `?${params.toString()}` : "";
+  api(`/projects/${id}/tasks${qs}`).then(setTasks).catch(...);
+}, [id, filters]);</code></pre>
+    <div class="callout tip">
+      <div class="label">💡 Server-side vs client-side filtering</div>
+      For a small board you could filter the array in the browser. Filtering on the server (the query params) is the pattern that scales — it sends less data and reuses the validated backend logic. We use it here to practice the real-world approach.
+    </div>
+  </section>
+
+  <section>
+    <h2>6. Collaboration: members &amp; invitations</h2>
+    <p>The members bar shows who's on the project and lets the owner invite by email. It posts to <code>/projects/{id}/members</code>; the backend (10.2) looks up the email, adds a membership, or returns 404/409. On success, we append the new member so dropdowns immediately include them.</p>
+    <pre><code>async function invite(email) {
+  try {
+    const member = await api(`/projects/${id}/members`,
+      { method: "POST", body: { email } });
+    setMembers((prev) =&gt; [...prev, member]);
+  } catch (err) {
+    // 404 = no such user, 409 = already a member, 403 = not owner
+    setInviteError(err.message);
+  }
+}</code></pre>
+    <p>This is the collaboration loop closing: a second user you invited (10.2 testing) logs in, sees the shared project on their Projects page, opens the board, and can create/move tasks — because the membership row grants them access through the same dependencies you wrote in 10.2.</p>
+  </section>
+
+  <section>
+    <h2>7. Keeping it honest about access</h2>
+    <p>The UI should reflect permissions, but the <strong>backend is the real gate</strong>. Non-owners shouldn't see the Invite form (hide it when <code>project.owner_id !== user.id</code>), but even if someone forged the request, the <code>get_project_for_owner</code> dependency rejects it. UI checks are for usability; server checks are for security.</p>
+    <pre><code>const { user } = useAuth();
+const isOwner = project &amp;&amp; project.owner_id === user.id;
+// ...
+{isOwner &amp;&amp; &lt;InviteForm onInvite={invite} /&gt;}</code></pre>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li>The board is a <strong>derived view</strong> — group the flat task list by <code>status</code> into three columns.</li>
+      <li>"Moving" a task = <strong>PATCH its status</strong>; the grouping re-runs automatically.</li>
+      <li>One <strong>TaskForm</strong> serves create and edit; normalize empty strings to <code>null</code> at the API boundary.</li>
+      <li><strong>Filtering</strong> reuses the backend query params (<code>?status=</code>, <code>?assignee_id=</code>) and re-fetches on change.</li>
+      <li><strong>Collaboration</strong> = list members + invite by email; UI hides owner-only actions, but the backend dependencies enforce real access.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and build the full collaborative task board.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

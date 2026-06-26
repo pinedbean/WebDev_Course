@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk 10.1 — Capstone Planning &amp; Data Modeling</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  .checkpoint{background:#fffbeb;border:2px solid #f59e0b;}
+  .checkpoint h2{border-color:#fde68a;color:#92400e;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .full{border:2px solid #16a34a;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 10 — Capstone: TaskFlow</div>
+    <h1>Chunk 10.1 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>We'll create the monorepo, write a complete <code>SPEC.md</code>, and scaffold a runnable FastAPI backend and React frontend. Target layout:</p>
+    <div class="filetree">capstone-taskflow/
+├── .gitignore
+├── README.md
+├── SPEC.md
+├── backend/
+│   ├── venv/                 (not committed)
+│   ├── requirements.txt
+│   ├── .env.example
+│   └── app/
+│       └── main.py           (GET /api/v1/health)
+└── frontend/                 (Vite React app)
+    ├── .env                  (VITE_API_URL=...)
+    └── src/ ...</div>
+  </section>
+
+  <section>
+    <div class="step">
+      <h3><span class="num">1</span> Create the monorepo &amp; Git</h3>
+      <pre><code># macOS / zsh
+cd ~/Desktop/webdev-course
+mkdir -p capstone-taskflow/backend capstone-taskflow/frontend
+cd capstone-taskflow
+git init</code></pre>
+      <p>Create <code>.gitignore</code> at the repo root:</p>
+      <pre><code># .gitignore
+# Python
+venv/
+__pycache__/
+*.pyc
+*.db
+.env
+
+# Node / Vite
+node_modules/
+dist/
+.DS_Store</code></pre>
+      <div class="callout warning">
+        <div class="label">⚠️ Keep secrets out of Git</div>
+        <code>.env</code> is in <code>.gitignore</code> on purpose. We commit a <code>.env.example</code> (no real secrets) so teammates know which variables exist. This habit pays off in the Bonus Track.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Write <code>SPEC.md</code></h3>
+      <p>Create <code>SPEC.md</code> at the repo root. Here's a complete reference version — adjust the wording, but keep all the sections.</p>
+      <pre><code># TaskFlow — Specification
+
+TaskFlow is a team task &amp; project tracker. A user registers, creates
+projects, invites teammates, and manages tasks on a board (To Do /
+In Progress / Done) with assignees and due dates.
+
+## MVP Scope
+
+| In scope                                   | Out of scope (v2)             |
+|--------------------------------------------|-------------------------------|
+| Register / login / logout (JWT)            | Password reset, OAuth         |
+| Create &amp; list projects (owned + member)    | Archiving, templates          |
+| Invite a member by email                   | Notifications, comments       |
+| Create / edit / delete tasks               | Subtasks, attachments, labels |
+| Task status, assignee, due date            | Drag-and-drop reordering      |
+| Filter board by status / assignee          | Full-text search              |
+
+## User Stories
+
+1. As a visitor, I want to register with email + password, so that I have an account.
+   - Unique email -&gt; account created and I'm logged in.
+   - Duplicate email -&gt; clear "email already registered" error.
+2. As a user, I want to log in, so that I can access my projects.
+   - Correct credentials -&gt; receive a JWT and land on /projects.
+3. As a user, I want to create a project, so that I can organize work.
+   - New project appears immediately; I am its "owner".
+4. As an owner, I want to invite a teammate by email, so that we collaborate.
+   - Existing user becomes a "member"; unknown email -&gt; 404.
+5. As a member, I want to create tasks with status/assignee/due date.
+   - Task appears in the correct column and persists across reloads.
+6. As a member, I want to move a task between columns, so the board is accurate.
+   - Status change persists (PATCH) and survives a reload.
+7. As a member, I want to filter the board by status and assignee.
+
+## Data Model (Entities)
+
+User(id, email UNIQUE, hashed_password, name, role[user|admin], created_at)
+Project(id, name, description, owner_id -&gt; User, created_at)
+Membership(id, project_id -&gt; Project, user_id -&gt; User, role[owner|member])
+Task(id, project_id -&gt; Project, title, description,
+     status[todo|in_progress|done], assignee_id -&gt; User NULLABLE,
+     due_date NULLABLE, created_at)
+
+Relationships:
+- User 1 --- * Project          (Project.owner_id)
+- Project 1 --- * Task           (Task.project_id)
+- User 1 --- * Task (assignee)   (Task.assignee_id, nullable)
+- User * --- * Project           (via Membership join table)
+
+## API Contract (prefix /api/v1)
+
+| Method | Path                              | Purpose                  | Auth        |
+|--------|-----------------------------------|--------------------------|-------------|
+| POST   | /auth/register                    | Create account + token   | no          |
+| POST   | /auth/login                       | Log in + token           | no          |
+| GET    | /auth/me                          | Current user             | yes         |
+| GET    | /projects                         | List my projects         | yes         |
+| POST   | /projects                         | Create project           | yes         |
+| GET    | /projects/{id}                    | Get one project          | member      |
+| PATCH  | /projects/{id}                    | Update project           | owner       |
+| DELETE | /projects/{id}                    | Delete project           | owner       |
+| GET    | /projects/{id}/members            | List members             | member      |
+| POST   | /projects/{id}/members            | Invite member by email   | owner       |
+| GET    | /projects/{id}/tasks              | List tasks (+filters)    | member      |
+| POST   | /projects/{id}/tasks              | Create task              | member      |
+| PATCH  | /projects/{id}/tasks/{taskId}     | Edit / move / assign     | member      |
+| DELETE | /projects/{id}/tasks/{taskId}     | Delete task              | member      |
+| GET    | /health                           | Liveness check           | no          |
+
+### Sample payloads
+
+POST /auth/register
+  req:  { "email": "ana@x.com", "password": "secret123", "name": "Ana" }
+  201:  { "access_token": "eyJ...", "token_type": "bearer" }
+
+POST /projects/{id}/tasks
+  req:  { "title": "Hero copy", "description": "", "status": "todo",
+          "assignee_id": 4, "due_date": "2026-07-10" }
+  201:  { "id": 17, "project_id": 3, "title": "Hero copy", "status": "todo",
+          "assignee_id": 4, "due_date": "2026-07-10",
+          "created_at": "2026-06-26T09:14:00Z" }
+
+### Status codes
+200 OK · 201 Created · 204 No Content · 401 Unauthorized ·
+403 Forbidden · 404 Not Found · 422 Unprocessable Entity</code></pre>
+      <div class="callout tip">
+        <div class="label">💡 Mermaid bonus</div>
+        Add a fenced <code>```mermaid</code> block with an <code>erDiagram</code> and GitHub renders the ERD automatically. The text ERD above is fine for grading.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Scaffold the backend</h3>
+      <pre><code>cd backend
+python3 -m venv venv
+source venv/bin/activate            # Windows: venv\Scripts\activate
+pip install fastapi "uvicorn[standard]"
+pip freeze &gt; requirements.txt
+mkdir -p app
+touch app/__init__.py</code></pre>
+      <p>Create <code>backend/app/main.py</code>:</p>
+      <pre><code># backend/app/main.py
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI(title="TaskFlow API", version="0.1.0")
+
+# Allow the Vite dev server to call us during development (Module 5.5).
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.get("/api/v1/health")
+def health():
+    return {"status": "ok"}</code></pre>
+      <p>Run it:</p>
+      <pre><code>uvicorn app.main:app --reload</code></pre>
+      <pre><code>INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Application startup complete.</code></pre>
+      <p>Visit <code>http://localhost:8000/api/v1/health</code> → you should see <code>{"status":"ok"}</code>, and <code>http://localhost:8000/docs</code> shows the interactive Swagger UI.</p>
+      <p>Also add <code>backend/.env.example</code> so future chunks know which variables exist:</p>
+      <pre><code># backend/.env.example
+SECRET_KEY=change-me-to-a-64-char-hex-string
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+DATABASE_URL=sqlite:///./taskflow.db</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Scaffold the frontend</h3>
+      <p>From the repo root, create the Vite app <em>into</em> the existing <code>frontend/</code> folder, then install Router:</p>
+      <pre><code>cd ~/Desktop/webdev-course/capstone-taskflow
+npm create vite@latest frontend -- --template react
+cd frontend
+npm install
+npm install react-router-dom
+npm run dev</code></pre>
+      <pre><code>  VITE v5.x  ready in 312 ms
+  ➜  Local:   http://localhost:5173/</code></pre>
+      <p>Open that URL — the default Vite + React page renders. Now add <code>frontend/.env</code> (Vite reads <code>VITE_</code>-prefixed vars, per Module 4.7):</p>
+      <pre><code># frontend/.env
+VITE_API_URL=http://localhost:8000/api/v1</code></pre>
+      <div class="callout note">
+        <div class="label">📝 Two terminals</div>
+        Keep <code>uvicorn</code> running in one terminal and <code>npm run dev</code> in another. You'll work with both servers up for the rest of the module.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> README &amp; first commit</h3>
+      <p>Create <code>README.md</code> at the repo root:</p>
+      <pre><code># TaskFlow
+
+A team task &amp; project tracker (capstone for the Full-Stack Web Dev course).
+Stack: React + Vite frontend, FastAPI + SQLite backend, JWT auth.
+
+## Run locally
+### Backend
+    cd backend
+    python3 -m venv venv &amp;&amp; source venv/bin/activate
+    pip install -r requirements.txt
+    uvicorn app.main:app --reload     # http://localhost:8000
+
+### Frontend
+    cd frontend
+    npm install
+    npm run dev                        # http://localhost:5173
+
+See SPEC.md for scope, data model, and the API contract.</code></pre>
+      <pre><code>cd ~/Desktop/webdev-course/capstone-taskflow
+git add .
+git commit -m "chore: scaffold TaskFlow monorepo + spec"</code></pre>
+    </div>
+  </section>
+
+  <section>
+    <h2>Troubleshooting</h2>
+    <table>
+      <tr><th>Symptom</th><th>Fix</th></tr>
+      <tr><td><code>uvicorn: command not found</code></td><td>Your venv isn't active. Re-run <code>source venv/bin/activate</code> (prompt shows <code>(venv)</code>).</td></tr>
+      <tr><td><code>npm create vite</code> refuses — folder not empty</td><td>The <code>frontend/</code> folder must be empty. Remove stray files, or scaffold into a temp name and move the contents in.</td></tr>
+      <tr><td>Health route 404</td><td>You ran <code>uvicorn</code> from the wrong directory. Run it from <code>backend/</code> so <code>app.main:app</code> resolves.</td></tr>
+      <tr><td>Frontend can't reach API later</td><td>That's CORS — handled by the middleware in <code>main.py</code>. Confirm the origin matches your Vite port (5173).</td></tr>
+      <tr><td><code>node_modules</code> got committed</td><td>It's huge. Confirm <code>node_modules/</code> is in <code>.gitignore</code>, then <code>git rm -r --cached node_modules</code>.</td></tr>
+    </table>
+  </section>
+
+  <section class="done">
+    <h2>🎉 Done — what's next</h2>
+    <p>You've turned an idea into a plan and stood up both halves of TaskFlow. You now have a spec you can defend, an ERD that maps to real tables, an API contract both sides agree on, and two running servers.</p>
+    <ul>
+      <li>✅ <code>SPEC.md</code> with scope, stories, ERD, API contract.</li>
+      <li>✅ Backend answering <code>/api/v1/health</code>; <code>/docs</code> live.</li>
+      <li>✅ Frontend dev server running with <code>VITE_API_URL</code> set.</li>
+    </ul>
+    <p><strong>Up next → Chunk 10.2: Backend — Models, Auth &amp; Core API.</strong> You'll turn the ERD into SQLAlchemy models with a migration, add JWT register/login, and build Projects/Tasks CRUD with ownership rules.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

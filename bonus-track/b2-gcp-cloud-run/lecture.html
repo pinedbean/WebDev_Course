@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk B.2 — Deploy the Capstone to GCP (Cloud Run)</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .flow{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · ⭐ Bonus Track — Git Strategy &amp; GCP</div>
+    <h1>Chunk B.2 — Deploy the Capstone to GCP (Cloud Run)</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 90–120 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>GCP fundamentals: <strong>projects</strong>, <strong>billing</strong>, <strong>IAM</strong>, and <strong>regions</strong>.</li>
+      <li>The <strong><code>gcloud</code> CLI</strong> — how you drive GCP from the terminal.</li>
+      <li><strong>Artifact Registry</strong> — where your container images live in the cloud.</li>
+      <li><strong>Cloud Run</strong> — serverless containers with autoscaling, scale-to-zero, and request-based billing.</li>
+      <li>How to map TaskFlow's <strong>backend</strong> and <strong>frontend</strong> to Cloud Run services.</li>
+      <li><strong>Environment variables</strong> &amp; <strong>Secret Manager</strong> for config and secrets.</li>
+      <li>Why <strong>SQLite breaks in the cloud</strong> (ephemeral filesystems) and the path to <strong>Cloud SQL (Postgres)</strong>.</li>
+    </ul>
+    <p>In the lab you'll push TaskFlow's images to Artifact Registry and deploy both services to Cloud Run, ending with a live public URL.</p>
+  </section>
+
+  <section>
+    <h2>1. Prerequisites &amp; honest expectations</h2>
+    <p>This chunk picks up exactly where Module 9 left off: a <strong>containerized TaskFlow</strong> (Dockerfiles for backend + frontend, load-balanced locally behind Nginx). We're going to take those same images and run them on Google Cloud.</p>
+    <p><strong>You need:</strong></p>
+    <ul>
+      <li>The containerized capstone from <strong>Module 9</strong> (working <code>docker build</code> for both services).</li>
+      <li>A <strong>Google Cloud account with billing enabled</strong> (a credit card is required to verify, even for the free tier).</li>
+      <li>The <strong><code>gcloud</code> CLI</strong> installed locally and <strong>Docker</strong> running.</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ Costs &amp; the free tier — read this</div>
+      Cloud Run has a generous <strong>free tier</strong> (millions of requests/month) and <strong>scales to zero</strong>, so an idle service costs ~nothing. But Artifact Registry storage, Cloud Build minutes, and (in B.3) Cloud SQL can incur <strong>small charges</strong>. Most of this lab stays within the free tier, but you should treat your billing account as real money. <strong>Always clean up at the end</strong> (the solution has a teardown section) and set a budget alert. New accounts also get a sign-up credit that covers experimentation comfortably.
+    </div>
+  </section>
+
+  <section>
+    <h2>2. GCP fundamentals</h2>
+    <p>Four concepts unlock everything else:</p>
+    <table>
+      <tr><th>Concept</th><th>What it is</th><th>TaskFlow mapping</th></tr>
+      <tr><td><strong>Project</strong></td><td>The top-level container for all your resources, billing, and permissions. Everything lives inside a project, identified by a globally-unique <em>Project ID</em>.</td><td>One project, e.g. <code>taskflow-prod</code>.</td></tr>
+      <tr><td><strong>Billing account</strong></td><td>The payment method linked to projects. A project must be linked to an active billing account to use most services.</td><td>Your personal billing account.</td></tr>
+      <tr><td><strong>IAM</strong></td><td>Identity &amp; Access Management — <em>who</em> (users, service accounts) can do <em>what</em> (roles) on <em>which</em> resource. Cloud Run uses a <em>service account</em> identity to access other services.</td><td>Your user is Owner; services run as a service account.</td></tr>
+      <tr><td><strong>Region</strong></td><td>A geographic location (e.g. <code>asia-southeast1</code> = Singapore, <code>us-central1</code> = Iowa) where your service runs. Pick one near your users; keep all services + DB in the <em>same</em> region.</td><td>One region for everything.</td></tr>
+    </table>
+    <div class="callout tip">
+      <div class="label">💡 Project ID vs project name</div>
+      The <strong>Project ID</strong> (e.g. <code>taskflow-prod-471203</code>) is permanent and globally unique — it appears in URLs and commands. The <em>name</em> is just a label you can change. GCP often appends random digits to make the ID unique; that's normal.
+    </div>
+  </section>
+
+  <section>
+    <h2>3. The <code>gcloud</code> CLI</h2>
+    <p><code>gcloud</code> is Google Cloud's command-line tool — the terminal equivalent of clicking around the web console. You authenticate once, set a default project and region, then drive everything from the shell. The interactive login opens a browser <em>in your own terminal</em>:</p>
+    <pre><code>gcloud auth login                       # opens a browser to sign in
+gcloud config set project taskflow-prod  # default project for later commands
+gcloud config set run/region asia-southeast1
+gcloud auth configure-docker asia-southeast1-docker.pkg.dev   # let Docker push to Artifact Registry</code></pre>
+    <p>Each GCP service must be <strong>enabled</strong> on the project before use (this is a one-time toggle per API):</p>
+    <pre><code>gcloud services enable run.googleapis.com \
+  artifactregistry.googleapis.com \
+  secretmanager.googleapis.com \
+  cloudbuild.googleapis.com</code></pre>
+    <div class="callout note">
+      <div class="label">📝 Two ways to do everything</div>
+      Almost anything you do with <code>gcloud</code> can also be done in the web Console (console.cloud.google.com). We teach the CLI because it's <em>reproducible</em> — you can script it, paste it into a PR, and (in B.3) run it from CI. The Console is great for browsing and debugging.
+    </div>
+  </section>
+
+  <section>
+    <h2>4. Artifact Registry — where images live</h2>
+    <p>Your Docker images currently live on your laptop. The cloud can't run them from there — they need to be in a <strong>container registry</strong> the cloud can pull from. On GCP that's <strong>Artifact Registry</strong>: a private, regional store for your images (the successor to the older Container Registry).</p>
+    <div class="flow">your laptop                Artifact Registry            Cloud Run
+ docker build  ─push─▶  asia-...pkg.dev/PROJECT/   ─pull─▶  running service
+                          taskflow/backend:1.0.0</div>
+    <p>You create a <strong>repository</strong> once, then tag your local image with its full registry path and push:</p>
+    <pre><code># create the repo (once)
+gcloud artifacts repositories create taskflow \
+  --repository-format=docker --location=asia-southeast1
+
+# the full image path pattern:
+# REGION-docker.pkg.dev/PROJECT_ID/REPO/IMAGE:TAG
+docker tag taskflow-backend \
+  asia-southeast1-docker.pkg.dev/taskflow-prod/taskflow/backend:1.0.0
+docker push \
+  asia-southeast1-docker.pkg.dev/taskflow-prod/taskflow/backend:1.0.0</code></pre>
+    <div class="callout warning">
+      <div class="label">⚠️ Build for the right CPU architecture</div>
+      If you're on an Apple Silicon Mac (M-series), your local <code>docker build</code> produces <strong>arm64</strong> images, but Cloud Run runs <strong>amd64 (x86-64)</strong>. Either build with <code>docker build --platform linux/amd64 ...</code>, or skip local building entirely and let Cloud Build build in the cloud (shown in the lab) — it always targets the correct architecture.
+    </div>
+  </section>
+
+  <section>
+    <h2>5. Cloud Run — serverless containers</h2>
+    <p><strong>Cloud Run</strong> takes a container image and runs it as a fully-managed web service. You don't manage servers, VMs, or clusters — you hand Google an image and a port, and you get back an HTTPS URL. It's the simplest way to put a Dockerized app on the internet.</p>
+    <p>The key behaviors that make it ideal for TaskFlow:</p>
+    <table>
+      <tr><th>Feature</th><th>What it means</th></tr>
+      <tr><td><strong>Autoscaling</strong></td><td>Cloud Run spins up more container instances as traffic rises and removes them as it falls — automatically. This is the managed equivalent of the manual Nginx replicas you ran in Chunk 9.3.</td></tr>
+      <tr><td><strong>Scale to zero</strong></td><td>With no traffic, it scales down to <em>zero</em> instances — you pay nothing while idle. The first request after idle incurs a "cold start" (a second or two to boot a container).</td></tr>
+      <tr><td><strong>Request-based billing</strong></td><td>You're billed for CPU/memory only <em>while a request is being handled</em>, rounded to the nearest 100&nbsp;ms — not for idle time.</td></tr>
+      <tr><td><strong>Stateless &amp; HTTPS by default</strong></td><td>Each instance is ephemeral and gets no guaranteed disk; every service gets a free HTTPS <code>*.run.app</code> URL.</td></tr>
+    </table>
+    <p>Because TaskFlow uses <strong>stateless JWT auth</strong> (no server-side sessions), it scales horizontally cleanly — any instance can serve any request, exactly the property that made Nginx round-robin work in Module 9. Cloud Run just automates the scaling.</p>
+    <pre><code>gcloud run deploy taskflow-backend \
+  --image asia-southeast1-docker.pkg.dev/taskflow-prod/taskflow/backend:1.0.0 \
+  --region asia-southeast1 \
+  --port 8000 \
+  --allow-unauthenticated      # public web service (vs internal-only)</code></pre>
+    <p>That command returns a URL like <code>https://taskflow-backend-abc123-as.a.run.app</code>. Done — your API is on the internet, behind Google's HTTPS, autoscaling.</p>
+  </section>
+
+  <section>
+    <h2>6. Mapping TaskFlow to Cloud Run</h2>
+    <p>TaskFlow is two containers, so it becomes <strong>two Cloud Run services</strong>:</p>
+    <div class="flow">Browser
+   │  https
+   ▼
+[ taskflow-frontend ]  (Nginx serving the built Vite app)
+   │  calls VITE_API_URL
+   ▼
+[ taskflow-backend ]   (FastAPI + Uvicorn on :8000)
+   │
+   ▼
+[ database ]  (SQLite now — Cloud SQL in B.3)</div>
+    <ul>
+      <li><strong>Backend</strong> — the FastAPI image listening on <code>:8000</code>, exposing <code>/api/v1/*</code> and <code>/health</code>. Deploy first so you know its URL.</li>
+      <li><strong>Frontend</strong> — the Vite build served by Nginx. It needs to know the backend's URL. Vite bakes <code>VITE_*</code> variables in <em>at build time</em>, so the backend URL must be passed as a build arg/env when the frontend image is built — not at deploy time.</li>
+    </ul>
+    <div class="callout tip">
+      <div class="label">💡 The build-time gotcha</div>
+      Frontend env vars (<code>VITE_API_URL</code>) are compiled into the static JS during <code>npm run build</code>. Backend env vars are read at <em>runtime</em>. So: build the backend → deploy it → grab its URL → build the frontend with that URL → deploy the frontend.
+    </div>
+  </section>
+
+  <section>
+    <h2>7. Environment variables &amp; Secret Manager</h2>
+    <p>Your backend needs config: the JWT signing secret, the database URL, allowed CORS origins. Two kinds:</p>
+    <ul>
+      <li><strong>Non-secret config</strong> (e.g. <code>ENV=production</code>, <code>CORS_ORIGINS=https://...</code>) → plain Cloud Run env vars via <code>--set-env-vars</code>.</li>
+      <li><strong>Secrets</strong> (JWT secret, DB password) → <strong>Secret Manager</strong>, a dedicated, access-controlled vault. You store the value once, then mount it into Cloud Run by reference — the secret value never appears in your deploy command, your shell history, or your repo.</li>
+    </ul>
+    <pre><code># store a secret (value piped in, not typed as an argument)
+printf '%s' "$(openssl rand -hex 32)" | \
+  gcloud secrets create jwt-secret --data-file=-
+
+# reference it from Cloud Run as an env var
+gcloud run deploy taskflow-backend \
+  --image ... \
+  --set-env-vars ENV=production \
+  --set-secrets JWT_SECRET=jwt-secret:latest</code></pre>
+    <p>The service account that Cloud Run runs as needs the <em>Secret Manager Secret Accessor</em> role to read it — an IAM grant you do once. This is the production-grade way to handle the secrets you've been keeping in a local <code>.env</code> file.</p>
+    <div class="callout warning">
+      <div class="label">⚠️ Never put secrets in the image or in Git</div>
+      Don't bake secrets into a Dockerfile or commit them. Anyone who pulls the image or clones the repo would get them. Secret Manager keeps the value out of both — exactly the "keep secrets out of history" rule from B.1, applied in the cloud.
+    </div>
+  </section>
+
+  <section>
+    <h2>8. The SQLite-in-the-cloud problem</h2>
+    <p>TaskFlow uses SQLite — a single file on disk. That's perfect locally, but it collides with two facts about Cloud Run:</p>
+    <ol>
+      <li><strong>The filesystem is ephemeral.</strong> Each instance gets a fresh, in-memory scratch disk that <em>vanishes</em> when the instance scales down. Any data SQLite wrote disappears — your users' tasks would evaporate the moment the service idles.</li>
+      <li><strong>Instances don't share a disk.</strong> Autoscaling runs multiple instances; each would have its own separate SQLite file, so two users could hit two different "databases". SQLite's single-writer model also fights concurrent instances.</li>
+    </ol>
+    <div class="flow">SQLite on Cloud Run:           Managed Postgres (Cloud SQL):
+ instance A ── file A  (lost!)   instance A ─┐
+ instance B ── file B  (lost!)   instance B ─┼─▶ one shared, durable DB
+ instance C ── file C  (lost!)   instance C ─┘</div>
+    <p>The fix is a <strong>managed database</strong> that lives <em>outside</em> the containers and is shared by all instances. On GCP that's <strong>Cloud SQL (Postgres)</strong>: durable storage, real concurrent writes, automated backups. The application code barely changes — SQLAlchemy 2.x just needs a Postgres connection URL instead of a SQLite one.</p>
+    <div class="callout note">
+      <div class="label">📝 For this chunk: ship it, then fix it properly</div>
+      To get a <em>live URL today</em>, B.2 deploys with SQLite so you see the full pipeline end-to-end (and you'll observe the data-loss limitation first-hand). <strong>Chunk B.3 migrates to Cloud SQL Postgres</strong> for durable, shared data. This mirrors how real projects evolve: ship the thin slice, then harden it.
+    </div>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li>GCP organizes everything under a <strong>project</strong> with a <strong>billing account</strong>, governed by <strong>IAM</strong>, running in a <strong>region</strong>.</li>
+      <li><code>gcloud</code> drives GCP from the terminal; you enable each API once and set a default project + region.</li>
+      <li><strong>Artifact Registry</strong> stores your images; build for <strong>amd64</strong> so Cloud Run can run them.</li>
+      <li><strong>Cloud Run</strong> runs a container as an autoscaling, scale-to-zero, HTTPS web service billed per request.</li>
+      <li>TaskFlow = two services; the frontend bakes <code>VITE_API_URL</code> at <em>build</em> time, the backend reads env vars at <em>runtime</em>.</li>
+      <li><strong>Secret Manager</strong> holds secrets; non-secret config goes in env vars.</li>
+      <li><strong>SQLite breaks</strong> on Cloud Run's ephemeral, unshared disks → B.3 moves to <strong>Cloud SQL Postgres</strong>.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and deploy TaskFlow to Cloud Run.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

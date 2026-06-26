@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk B.2 — Deploy the Capstone to GCP (Cloud Run)</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .full{border:2px solid #16a34a;}
+  .cleanup{background:#fff7ed;border:1px solid #fed7aa;}
+  .cleanup h2{border-color:#fed7aa;color:#9a3412;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · ⭐ Bonus Track — Git Strategy &amp; GCP</div>
+    <h1>Chunk B.2 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>Run these from the root of your TaskFlow repo. To keep commands short we set shell variables first — paste this block and reuse <code>$REGION</code>, <code>$PROJECT</code>, etc. throughout. Replace the values with your own.</p>
+    <pre><code>export PROJECT=taskflow-prod-$RANDOM       # must be globally unique
+export REGION=asia-southeast1              # pick one near you
+export REPO=taskflow
+export REG=$REGION-docker.pkg.dev/$PROJECT/$REPO</code></pre>
+    <div class="callout note">
+      <div class="label">📝 Interactive logins are in YOUR terminal</div>
+      <code>gcloud auth login</code> and billing linking open a browser on your own machine. The commands here assume you ran them in your terminal and are authenticated.
+    </div>
+  </section>
+
+  <section>
+    <div class="step">
+      <h3><span class="num">1</span> Authenticate &amp; create the project</h3>
+      <pre><code>gcloud auth login                          # browser sign-in (your terminal)
+gcloud projects create $PROJECT --name="TaskFlow"
+gcloud config set project $PROJECT
+gcloud config set run/region $REGION
+
+# link billing (find your account id with: gcloud billing accounts list)
+gcloud billing projects link $PROJECT \
+  --billing-account=XXXXXX-XXXXXX-XXXXXX</code></pre>
+      <p>Confirm:</p>
+      <pre><code>gcloud config list
+# [core] project = taskflow-prod-12345
+# [run]  region  = asia-southeast1</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Enable the APIs</h3>
+      <pre><code>gcloud services enable \
+  run.googleapis.com \
+  artifactregistry.googleapis.com \
+  secretmanager.googleapis.com \
+  cloudbuild.googleapis.com</code></pre>
+      <p>Expected: <code>Operation ... finished successfully.</code> (takes ~30s the first time).</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Create the Artifact Registry repo</h3>
+      <pre><code>gcloud artifacts repositories create $REPO \
+  --repository-format=docker \
+  --location=$REGION \
+  --description="TaskFlow container images"
+
+# let local Docker authenticate to push (only needed for the local-build route)
+gcloud auth configure-docker $REGION-docker.pkg.dev</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Build &amp; push the backend image</h3>
+      <p><strong>Recommended — build in the cloud</strong> (no architecture issues, no local Docker push):</p>
+      <pre><code>cd backend
+gcloud builds submit --tag $REG/backend:1.0.0 .
+cd ..</code></pre>
+      <p><strong>Alternative — build locally</strong> (must target amd64, especially on Apple Silicon):</p>
+      <pre><code>docker build --platform linux/amd64 -t $REG/backend:1.0.0 ./backend
+docker push $REG/backend:1.0.0</code></pre>
+      <p>Verify the image landed:</p>
+      <pre><code>gcloud artifacts docker images list $REG
+# ... /taskflow/backend  1.0.0</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Store the JWT secret &amp; grant access</h3>
+      <pre><code># create the secret from a generated value (piped via stdin)
+printf '%s' "$(openssl rand -hex 32)" | \
+  gcloud secrets create jwt-secret --data-file=-
+
+# find the project number, used in the default Cloud Run service account
+export PROJNUM=$(gcloud projects describe $PROJECT --format='value(projectNumber)')
+
+# allow Cloud Run's runtime service account to read the secret
+gcloud secrets add-iam-policy-binding jwt-secret \
+  --member="serviceAccount:$PROJNUM-compute@developer.gserviceaccount.com" \
+  --role="roles/secretmanager.secretAccessor"</code></pre>
+      <div class="callout note">
+        <div class="label">📝 Why the compute service account?</div>
+        Unless you specify <code>--service-account</code>, Cloud Run runs as the default compute service account <code>PROJECTNUMBER-compute@developer.gserviceaccount.com</code>. That's the identity that must be allowed to read the secret.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Deploy the backend</h3>
+      <pre><code>gcloud run deploy taskflow-backend \
+  --image $REG/backend:1.0.0 \
+  --region $REGION \
+  --port 8000 \
+  --allow-unauthenticated \
+  --set-env-vars ENV=production \
+  --set-secrets JWT_SECRET=jwt-secret:latest</code></pre>
+      <p>Expected tail of the output:</p>
+      <pre><code>Service [taskflow-backend] revision [taskflow-backend-00001-abc] has been deployed
+and is serving 100 percent of traffic.
+Service URL: https://taskflow-backend-xxxxxxxx-as.a.run.app</code></pre>
+      <p>Capture the URL and smoke-test <code>/health</code>:</p>
+      <pre><code>export BACKEND_URL=$(gcloud run services describe taskflow-backend \
+  --region $REGION --format='value(status.url)')
+curl $BACKEND_URL/health
+# {"status":"ok"}</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Build &amp; deploy the frontend (with the backend URL baked in)</h3>
+      <p>Vite reads <code>VITE_API_URL</code> at <em>build</em> time. If your frontend Dockerfile accepts it as a build arg (typical pattern), pass it through. A minimal example of that Dockerfile shape:</p>
+      <pre><code># frontend/Dockerfile (multi-stage) — relevant lines
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
+RUN npm run build
+# ... then copy dist/ into an nginx stage serving on :80</code></pre>
+      <p>Build with the arg and deploy. With Cloud Build you pass build args via <code>--substitutions</code>, or just build locally to inject the arg cleanly:</p>
+      <pre><code>docker build --platform linux/amd64 \
+  --build-arg VITE_API_URL=$BACKEND_URL/api/v1 \
+  -t $REG/frontend:1.0.0 ./frontend
+docker push $REG/frontend:1.0.0
+
+gcloud run deploy taskflow-frontend \
+  --image $REG/frontend:1.0.0 \
+  --region $REGION \
+  --port 80 \
+  --allow-unauthenticated</code></pre>
+      <pre><code>export FRONTEND_URL=$(gcloud run services describe taskflow-frontend \
+  --region $REGION --format='value(status.url)')
+echo $FRONTEND_URL</code></pre>
+      <div class="callout warning">
+        <div class="label">⚠️ Wrong API URL = blank app / network errors</div>
+        If the frontend calls <code>localhost:8000</code> in production, you forgot to set <code>VITE_API_URL</code> at build time. Rebuild the frontend image with the correct <code>$BACKEND_URL</code> and redeploy — you can't fix it with a runtime env var.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">8</span> Fix CORS &amp; open the live app</h3>
+      <p>The backend must allow the frontend's origin. Update the env var and redeploy (this creates a new revision, no rebuild needed):</p>
+      <pre><code>gcloud run services update taskflow-backend \
+  --region $REGION \
+  --update-env-vars CORS_ORIGINS=$FRONTEND_URL</code></pre>
+      <p>Open <code>$FRONTEND_URL</code> in your browser. Register, log in, create a project and a task. TaskFlow is live on the public internet, behind Google's HTTPS, autoscaling, scale-to-zero. 🎉</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">9</span> See the SQLite limitation for yourself</h3>
+      <p>Create some data, then force the service to recycle:</p>
+      <pre><code># wait a few minutes for it to scale to zero, OR deploy a new revision:
+gcloud run services update taskflow-backend --region $REGION \
+  --update-env-vars TOUCH=$RANDOM</code></pre>
+      <p>Reload and log in again — your tasks may be <strong>gone</strong>. That's the ephemeral filesystem: the SQLite file lived inside an instance that was replaced. <strong>This is the exact problem B.3 fixes</strong> by moving to a shared, durable Cloud SQL Postgres database.</p>
+    </div>
+  </section>
+
+  <section class="full">
+    <h2>📄 Quick reference — the whole deploy</h2>
+    <pre><code># 0. vars
+export PROJECT=taskflow-prod-$RANDOM REGION=asia-southeast1 REPO=taskflow
+export REG=$REGION-docker.pkg.dev/$PROJECT/$REPO
+
+# 1. project + apis + registry
+gcloud projects create $PROJECT &amp;&amp; gcloud config set project $PROJECT
+gcloud services enable run.googleapis.com artifactregistry.googleapis.com \
+  secretmanager.googleapis.com cloudbuild.googleapis.com
+gcloud artifacts repositories create $REPO --repository-format=docker --location=$REGION
+
+# 2. secret
+printf '%s' "$(openssl rand -hex 32)" | gcloud secrets create jwt-secret --data-file=-
+
+# 3. backend
+gcloud builds submit --tag $REG/backend:1.0.0 ./backend
+gcloud run deploy taskflow-backend --image $REG/backend:1.0.0 --region $REGION \
+  --port 8000 --allow-unauthenticated --set-env-vars ENV=production \
+  --set-secrets JWT_SECRET=jwt-secret:latest
+export BACKEND_URL=$(gcloud run services describe taskflow-backend --region $REGION --format='value(status.url)')
+
+# 4. frontend
+docker build --platform linux/amd64 --build-arg VITE_API_URL=$BACKEND_URL/api/v1 -t $REG/frontend:1.0.0 ./frontend
+docker push $REG/frontend:1.0.0
+gcloud run deploy taskflow-frontend --image $REG/frontend:1.0.0 --region $REGION --port 80 --allow-unauthenticated
+export FRONTEND_URL=$(gcloud run services describe taskflow-frontend --region $REGION --format='value(status.url)')
+
+# 5. cors
+gcloud run services update taskflow-backend --region $REGION --update-env-vars CORS_ORIGINS=$FRONTEND_URL</code></pre>
+  </section>
+
+  <section>
+    <h2>🛠️ Troubleshooting</h2>
+    <table>
+      <tr><th>Symptom</th><th>Fix</th></tr>
+      <tr><td>Deploy fails: "container failed to start / listen on PORT"</td><td>Cloud Run injects <code>$PORT</code>. Make sure the backend binds <code>0.0.0.0:$PORT</code> (or set <code>--port 8000</code> and have the app listen on 8000). Check logs: <code>gcloud run services logs read taskflow-backend</code>.</td></tr>
+      <tr><td><code>exec format error</code> in logs</td><td>Wrong CPU arch — you pushed an arm64 image. Rebuild with <code>--platform linux/amd64</code> or use <code>gcloud builds submit</code>.</td></tr>
+      <tr><td>Frontend loads but API calls fail (CORS error in console)</td><td>Backend's <code>CORS_ORIGINS</code> doesn't include the frontend URL. Run the <code>update-env-vars</code> step (no trailing slash mismatch).</td></tr>
+      <tr><td>Frontend calls <code>localhost</code></td><td><code>VITE_API_URL</code> wasn't set at build time. Rebuild the frontend image with the build arg.</td></tr>
+      <tr><td>"Permission denied on secret"</td><td>Service account lacks <code>secretAccessor</code>. Re-run the <code>add-iam-policy-binding</code> from step 5.</td></tr>
+      <tr><td><code>gcloud builds submit</code> fails: API not enabled</td><td>Enable Cloud Build: <code>gcloud services enable cloudbuild.googleapis.com</code>.</td></tr>
+      <tr><td>403 on the public URL</td><td>You didn't pass <code>--allow-unauthenticated</code>. Re-deploy or add the invoker binding for <code>allUsers</code>.</td></tr>
+    </table>
+  </section>
+
+  <section class="cleanup">
+    <h2>🧹 Clean up (do this to avoid charges)</h2>
+    <p>Cloud Run scales to zero, but Artifact Registry storage and any other resources keep costing. If you're <strong>not continuing straight to B.3</strong>, tear it down. (If you ARE doing B.3 next, keep the services — you'll build on them.)</p>
+    <pre><code># delete the Cloud Run services
+gcloud run services delete taskflow-backend  --region $REGION --quiet
+gcloud run services delete taskflow-frontend --region $REGION --quiet
+
+# delete the image repo (frees storage)
+gcloud artifacts repositories delete $REPO --location=$REGION --quiet
+
+# delete the secret
+gcloud secrets delete jwt-secret --quiet
+
+# nuclear option: delete the whole project (stops ALL billing for it)
+gcloud projects delete $PROJECT</code></pre>
+    <div class="callout tip">
+      <div class="label">💡 Budget alert</div>
+      In the Console → Billing → Budgets &amp; alerts, set a small monthly budget (e.g. $5) with email alerts. It won't stop spend automatically but it warns you early.
+    </div>
+  </section>
+
+  <section class="done">
+    <h2>🎉 You're done</h2>
+    <p>TaskFlow now runs on Google Cloud: two Cloud Run services, images in Artifact Registry, secrets in Secret Manager, and a live HTTPS URL anyone can visit. You also saw <em>first-hand</em> why SQLite can't stay — its data evaporates on Cloud Run's ephemeral disks.</p>
+    <p><strong>Up next → Chunk B.3: GCP Load Balancing, Managed Data &amp; CI/CD.</strong> You'll put a global HTTPS load balancer in front, migrate to <strong>Cloud SQL Postgres</strong> so data survives, and wire up CI/CD so every merge to <code>main</code> (from your B.1 workflow) auto-deploys.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment · Chunk B.2 — Deploy the Capstone to GCP (Cloud Run)</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #ede9fe;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:#ede9fe;border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#5b21b6;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--task);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .deliverable{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .deliverable h2{border-color:#a7f3d0;color:#065f46;}
+  .check{list-style:none;padding-left:0;} .check li{padding-left:30px;position:relative;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:18px;color:var(--task);}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · ⭐ Bonus Track — Git Strategy &amp; GCP</div>
+    <h1>Chunk B.2 — Lab: TaskFlow Live on Cloud Run</h1>
+    <span class="badge">🧪 ASSIGNMENT</span>
+    <span class="badge">⏱️ 90–120 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 Your mission</h2>
+    <p>Get TaskFlow running on Google Cloud. You'll create a project, enable APIs, push both container images to Artifact Registry, deploy the <strong>backend</strong> and <strong>frontend</strong> to Cloud Run, wire up env vars and a JWT secret via Secret Manager, and finish by loading your <strong>live public URL</strong> in a browser.</p>
+  </section>
+
+  <section>
+    <h2>Prerequisites</h2>
+    <ul>
+      <li><strong>Module 9 done:</strong> a containerized TaskFlow with working Dockerfiles for backend (FastAPI, port 8000) and frontend (Vite build served by Nginx).</li>
+      <li>A <strong>Google Cloud account with billing enabled</strong>. (New accounts get sign-up credit.)</li>
+      <li><strong><code>gcloud</code> CLI</strong> installed (<code>gcloud --version</code>) and <strong>Docker</strong> running.</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ This may cost a little — and you must clean up</div>
+      Most of this lab fits in the free tier and Cloud Run scales to zero when idle, but Artifact Registry storage and build minutes can incur small charges. <strong>Do the teardown</strong> at the end of the solution to avoid lingering costs, and set a budget alert. Treat your billing account as real money.
+    </div>
+  </section>
+
+  <section>
+    <h2>Tasks</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Authenticate &amp; create a project</h3>
+      <p>Run <code>gcloud auth login</code> (opens a browser in <em>your</em> terminal). Create a new project (e.g. <code>taskflow-prod-XXXX</code>), set it as your default, link it to your billing account, and set a default region near you (e.g. <code>asia-southeast1</code>). Confirm with <code>gcloud config list</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Enable the APIs you'll use</h3>
+      <p>Enable Cloud Run, Artifact Registry, Secret Manager, and Cloud Build on the project in one command. This is a one-time toggle per service.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Create an Artifact Registry repo</h3>
+      <p>Create a Docker-format repository named <code>taskflow</code> in your region. Configure Docker auth so you can push to <code>REGION-docker.pkg.dev</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Build &amp; push the backend image</h3>
+      <p>Build the backend image <strong>for linux/amd64</strong> (or let Cloud Build build it) and push it to your Artifact Registry repo, tagged <code>backend:1.0.0</code>.</p>
+      <div class="callout tip">
+        <div class="label">💡 Easiest path</div>
+        <code>gcloud builds submit --tag REGION-docker.pkg.dev/PROJECT/taskflow/backend:1.0.0 .</code> builds in the cloud and pushes for you — no local arch headaches. The solution shows both this and the local-Docker route.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Store the JWT secret in Secret Manager</h3>
+      <p>Generate a strong random value and store it as a secret named <code>jwt-secret</code> (pipe it in — don't type it as a plain argument). Grant Cloud Run's service account permission to read it.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Deploy the backend to Cloud Run</h3>
+      <p>Deploy <code>taskflow-backend</code> from the pushed image: port 8000, <code>--allow-unauthenticated</code>, <code>ENV=production</code> as an env var, and <code>JWT_SECRET</code> mounted from the <code>jwt-secret</code> secret. <strong>Copy the service URL</strong> it prints. Hit <code>/health</code> in your browser to confirm it's live.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Build &amp; deploy the frontend (pointed at the backend URL)</h3>
+      <p>Build the frontend image with <code>VITE_API_URL</code> set to the backend's Cloud Run URL (remember: Vite bakes this in at <strong>build time</strong>), push it, and deploy <code>taskflow-frontend</code> to Cloud Run (port 80, allow-unauthenticated).</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">8</span> Fix CORS &amp; open your live app</h3>
+      <p>Update the backend's <code>CORS_ORIGINS</code> env var to include the frontend's Cloud Run URL and redeploy. Open the <strong>frontend URL</strong> in your browser, register a user, create a project and a task. You're live on the cloud. 🎉</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">9</span> Observe the SQLite limitation (then plan the fix)</h3>
+      <p>Note that with SQLite on Cloud Run, data can disappear when the service scales to zero or scales out to a second instance. Write one sentence in your notes about <em>why</em> — this is exactly what B.3's Cloud SQL migration fixes.</p>
+    </div>
+  </section>
+
+  <section class="deliverable">
+    <h2>✅ Deliverable — acceptance checklist</h2>
+    <ul class="check">
+      <li>A GCP project exists, is linked to billing, with Run / Artifact Registry / Secret Manager / Cloud Build APIs enabled.</li>
+      <li>An Artifact Registry repo <code>taskflow</code> contains a <code>backend</code> and a <code>frontend</code> image.</li>
+      <li>A <code>jwt-secret</code> exists in Secret Manager and Cloud Run can read it.</li>
+      <li><code>taskflow-backend</code> is deployed; <code>/health</code> returns OK at its <code>*.run.app</code> URL.</li>
+      <li><code>taskflow-frontend</code> is deployed and reachable at its own <code>*.run.app</code> URL.</li>
+      <li>The frontend was built with <code>VITE_API_URL</code> = the backend URL, and CORS allows the frontend origin.</li>
+      <li>You can register, log in, and create a project/task through the live public URL.</li>
+      <li>You can explain why SQLite is a problem here and what fixes it (Cloud SQL).</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🚀 Stretch goals (optional)</h2>
+    <ul>
+      <li>Set <code>--min-instances=0 --max-instances=3</code> and a <code>--memory</code>/<code>--cpu</code> limit; observe cold starts.</li>
+      <li>Set a <strong>budget alert</strong> in Billing so you're emailed if spend crosses a threshold.</li>
+      <li>View live logs with <code>gcloud run services logs read taskflow-backend</code>.</li>
+      <li>Add a second secret (e.g. an API key) and confirm it mounts as an env var.</li>
+      <li>Add a custom env var to disable Swagger docs in production.</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a class="current">🧪 Assignment</a>
+    <a href="solution.html">✅ Solution →</a>
+  </div>
+</footer>
+</body>
+</html>

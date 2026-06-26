@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk 9.4 — Deployment &amp; CI/CD Basics</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  .checkpoint{background:#fffbeb;border:2px solid #f59e0b;}
+  .checkpoint h2{border-color:#fde68a;color:#92400e;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .full{border:2px solid #16a34a;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 9 — Production &amp; Load Balancing</div>
+    <h1>Chunk 9.4 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>We add automated migrations, a CI workflow, a test, and the production docs — then run the 🏁 Checkpoint. New/changed files:</p>
+    <div class="filetree">project-root/
+├── .github/workflows/ci.yml     (CI: lint + test + build)
+├── PRODUCTION.md                (deploy runbook)
+├── POSTGRES.md                  (SQLite -&gt; Postgres path)
+├── .env.example                 (documented placeholders)
+└── tasks-api/
+    ├── entrypoint.sh            (migrate, then serve)
+    ├── Dockerfile               (uses entrypoint)
+    └── tests/test_health.py     (a real test for CI)</div>
+  </section>
+
+  <section>
+    <h2>Part A — Automated migrations</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> <code>tasks-api/entrypoint.sh</code></h3>
+      <pre><code>#!/bin/sh
+set -e
+
+echo "Running database migrations..."
+alembic upgrade head
+
+echo "Starting server..."
+exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2</code></pre>
+      <div class="callout note">
+        <div class="label">📝 Why <code>exec</code></div>
+        <code>exec</code> replaces the shell with uvicorn so it becomes PID 1 in the container. That means Docker's stop signals reach uvicorn directly for a clean shutdown — without <code>exec</code>, signals hit the shell and your server may not stop gracefully.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Use it in the Dockerfile</h3>
+      <pre><code># tasks-api/Dockerfile  (replace the old CMD)
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+EXPOSE 8000
+CMD ["/entrypoint.sh"]</code></pre>
+      <p>Rebuild and bring it up — migrations now run on start, no manual step:</p>
+      <pre><code>docker compose up --build --scale api=3</code></pre>
+      <pre><code>api-1  | Running database migrations...
+api-1  | INFO  [alembic.runtime.migration] Running upgrade ... -&gt; ..., add auth fields
+api-1  | Starting server...
+api-1  | {"timestamp":"...","level":"INFO","logger":"uvicorn.error","message":"Uvicorn running on http://0.0.0.0:8000","request_id":"-"}</code></pre>
+      <div class="callout warning">
+        <div class="label">⚠️ Avoiding the migration stampede</div>
+        With <code>--scale api=3</code> every replica runs the entrypoint, so three try to migrate. Alembic tracks the version and migrations are transactional, so this is usually safe (the first wins; the rest see "already at head"). The cleaner pattern for real deploys: a one-shot migrate before scaling —
+        <pre><code>docker compose run --rm api alembic upgrade head
+docker compose up -d --scale api=3</code></pre>
+        Document whichever you choose in the runbook.
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Part B — CI pipeline</h2>
+
+    <div class="step">
+      <h3><span class="num">3</span> A test for CI to run — <code>tasks-api/tests/test_health.py</code></h3>
+      <pre><code>from fastapi.testclient import TestClient
+from app.main import app
+
+client = TestClient(app)
+
+def test_health_ok():
+    res = client.get("/health")
+    assert res.status_code == 200
+    assert res.json()["status"] == "ok"</code></pre>
+      <pre><code># run locally first
+cd tasks-api
+pip install pytest httpx
+SECRET_KEY=test-secret pytest -q
+# 1 passed</code></pre>
+      <div class="callout tip">
+        <div class="label">💡 <code>TestClient</code> needs <code>httpx</code></div>
+        Starlette's <code>TestClient</code> is built on <code>httpx</code>. If you see an import error, <code>pip install httpx</code> (and add it to a dev-requirements list).
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> <code>.github/workflows/ci.yml</code></h3>
+      <pre><code>name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tasks-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - run: pip install ruff pytest httpx
+      - run: ruff check .
+      - run: pytest -q
+        env:
+          SECRET_KEY: test-secret-not-real
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tasks-web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: tasks-web/package-lock.json
+      - run: npm ci
+      - run: npm run build</code></pre>
+      <div class="callout note">
+        <div class="label">📝 The throwaway SECRET_KEY</div>
+        Your Module 7 settings refuse to start without <code>SECRET_KEY</code> (a good thing). CI just needs <em>a</em> value to import the app and run tests, so we pass a non-secret literal via the step's <code>env</code>. Real secrets in CI come from <code>${{ secrets.NAME }}</code>, never literals — but a test key is fine to hardcode because it protects nothing.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Simulate the pipeline locally</h3>
+      <pre><code>cd tasks-api &amp;&amp; ruff check . &amp;&amp; SECRET_KEY=test pytest -q
+cd ../tasks-web &amp;&amp; npm ci &amp;&amp; npm run build</code></pre>
+      <p>If both pass locally, they'll pass on GitHub. Push to a branch, open a PR, and watch the checks run.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Part C — Production docs</h2>
+
+    <div class="step">
+      <h3><span class="num">6</span> <code>.env.example</code> + <code>POSTGRES.md</code></h3>
+      <pre><code># .env.example  (root — placeholders only, committed)
+SECRET_KEY=
+ENVIRONMENT=production
+FRONTEND_ORIGIN=http://localhost
+LOG_LEVEL=INFO
+# Default DB (SQLite). For Postgres, see POSTGRES.md
+DATABASE_URL=sqlite:////data/tasks.db</code></pre>
+      <pre><code># POSTGRES.md — moving off SQLite
+
+When: multiple writing replicas, a networked/managed DB, or an
+ephemeral filesystem (e.g. Cloud Run).
+
+1. Add a driver:        pip install "psycopg[binary]"
+2. Add a db service (compose) or use a managed instance.
+3. Set the URL (env only):
+   DATABASE_URL=postgresql+psycopg://user:pass@db:5432/tasks
+4. Drop SQLite-only bits in database.py:
+   - remove connect_args={"check_same_thread": False}
+   - remove the WAL / foreign_keys PRAGMA listener
+   - (optionally) configure a connection pool
+5. Run existing migrations:  alembic upgrade head
+
+Models, schemas, routers, and the load-balanced topology are unchanged.</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> <code>PRODUCTION.md</code> — the runbook</h3>
+      <pre><code># PRODUCTION.md — Tasks App Deploy Runbook
+
+## Prerequisites
+- Docker + Docker Compose on the host
+- A root .env with a STRONG, production-only SECRET_KEY (chmod 600)
+
+## Required env vars (see .env.example)
+SECRET_KEY, ENVIRONMENT=production, FRONTEND_ORIGIN, LOG_LEVEL, DATABASE_URL
+
+## Build &amp; start (load-balanced)
+docker compose run --rm api alembic upgrade head     # migrate once
+docker compose up -d --build --scale api=3           # Nginx + 3 replicas
+
+## Stop
+docker compose down            # keeps the data volume
+docker compose down -v         # DANGER: also deletes the database volume
+
+## Migrations
+Run automatically via entrypoint.sh, OR once via the command above.
+
+## Health
+- Liveness:  GET http://HOST/api/health
+- Readiness: GET http://HOST/api/health/ready
+
+## Logs
+docker compose logs -f         # structured JSON, with request ids
+
+## Scale
+docker compose up -d --scale api=N
+
+## Rollback
+Redeploy the previous image tag (git revert + rebuild, or pull prior tag),
+then re-run migrations only if the schema changed.</code></pre>
+    </div>
+  </section>
+
+  <section class="checkpoint">
+    <h2>🏁 Module 9 Checkpoint — verification walkthrough</h2>
+    <p>Bring the whole thing up and confirm each property. This is the demo you can give from the runbook alone.</p>
+    <pre><code># 0. Up: load-balanced + containerized, migrations automatic
+docker compose up -d --build --scale api=3
+
+# 1. Single origin + frontend served
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost/        # 200
+
+# 2. Load balancing visible (instance rotates)
+for i in $(seq 1 6); do curl -s http://localhost/api/health; echo; done
+# {"status":"ok","instance":"...a..."}
+# {"status":"ok","instance":"...b..."}
+# {"status":"ok","instance":"...c..."}  (cycles)
+
+# 3. Readiness (DB reachable)
+curl -s http://localhost/api/health/ready
+# {"status":"ready","database":"ok"}
+
+# 4. Stateless auth across replicas (browser): register, log in,
+#    create tasks, refresh -&gt; still logged in though requests hit
+#    different replicas (shared SECRET_KEY).
+docker compose exec api printenv SECRET_KEY   # same on every replica
+
+# 5. Resilience: kill a replica, app keeps serving
+docker compose ps                              # find an api container id
+docker compose stop &lt;one-api-container&gt;
+for i in $(seq 1 6); do curl -s http://localhost/api/health; echo; done
+# still answers (from the surviving replicas)
+
+# 6. Observability: structured logs + clean errors
+docker compose logs -f api                     # JSON lines w/ request_id
+
+# 7. CI green (locally or on GitHub)
+cd tasks-api &amp;&amp; ruff check . &amp;&amp; SECRET_KEY=test pytest -q
+cd ../tasks-web &amp;&amp; npm ci &amp;&amp; npm run build</code></pre>
+    <p>When all seven pass and your <code>PRODUCTION.md</code> lets someone else reproduce them, the checkpoint is complete: a <strong>documented, load-balanced, containerized deployment</strong>. 🏁</p>
+  </section>
+
+  <section>
+    <h2>🔧 Troubleshooting</h2>
+    <table>
+      <tr><th>Symptom</th><th>Fix</th></tr>
+      <tr><td><code>entrypoint.sh: permission denied</code></td><td>You didn't <code>chmod +x</code>. Add <code>RUN chmod +x /entrypoint.sh</code> in the Dockerfile (line endings must be LF, not CRLF).</td></tr>
+      <tr><td>Migrations run but app doesn't start</td><td>You forgot <code>exec</code> (or the uvicorn line). The script should end with <code>exec uvicorn ...</code>.</td></tr>
+      <tr><td>CI fails: <code>field required: secret_key</code></td><td>Add <code>env: SECRET_KEY: test-...</code> to the step that imports the app / runs pytest.</td></tr>
+      <tr><td>CI fails on <code>ruff</code> style nits</td><td>Run <code>ruff check . --fix</code> locally, commit, push. Or relax rules in <code>pyproject.toml</code>.</td></tr>
+      <tr><td><code>npm ci</code> fails in CI</td><td>Commit your <code>package-lock.json</code> — <code>ci</code> requires it and installs exactly from it.</td></tr>
+      <tr><td>All replicas migrate and one errors</td><td>Use the one-shot <code>docker compose run --rm api alembic upgrade head</code> before scaling, as documented.</td></tr>
+      <tr><td><code>database is locked</code> under real write load</td><td>SQLite's ceiling. Follow <code>POSTGRES.md</code> — it's mostly a <code>DATABASE_URL</code> change.</td></tr>
+    </table>
+  </section>
+
+  <section class="full">
+    <h2>📄 Complete <code>.github/workflows/ci.yml</code></h2>
+    <pre><code>name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tasks-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - run: pip install ruff pytest httpx
+      - run: ruff check .
+      - run: pytest -q
+        env:
+          SECRET_KEY: test-secret-not-real
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tasks-web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: tasks-web/package-lock.json
+      - run: npm ci
+      - run: npm run build</code></pre>
+  </section>
+
+  <section class="done">
+    <h2>🎉 Module 9 complete</h2>
+    <p>You took the Tasks app from "runs on my laptop" to a production-shaped system:</p>
+    <ul>
+      <li><strong>9.1</strong> — production builds, env (build-time vs runtime), secrets hygiene, prod run config.</li>
+      <li><strong>9.2</strong> — Dockerfiles (incl. a multi-stage frontend), <code>.dockerignore</code>, and the whole app via <code>docker compose up</code> with a durable volume.</li>
+      <li><strong>9.3</strong> — Nginx reverse proxy + load balancing across multiple FastAPI replicas; stateless JWT means no sticky sessions; the honest SQLite single-writer limit.</li>
+      <li><strong>9.4</strong> — automated migrations, a GitHub Actions CI pipeline, a documented deploy runbook, the path to Postgres — and the 🏁 Checkpoint.</li>
+    </ul>
+    <p>Combined with Module 8's observability, you now have an app that's <strong>built, containerized, load-balanced, observable, deployable, and documented</strong>. That's a genuinely production-grade story you can defend in an interview.</p>
+    <div class="callout note">
+      <div class="label">📝 Where this goes next</div>
+      You've practiced every production skill on the Tasks API. In <strong>Module 10 (Capstone: TaskFlow)</strong> you'll apply all of it — auth, logging, Docker, load balancing, CI — to build and ship a real, portfolio-grade app from scratch. And the optional <strong>Bonus Track</strong> takes this exact containerized stack to the cloud on GCP (Cloud Run, a managed HTTPS load balancer, Cloud SQL/Postgres, and CI/CD).
+    </div>
+    <p><strong>Up next → Module 10, Chunk 10.1: Capstone Planning &amp; Data Modeling.</strong></p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

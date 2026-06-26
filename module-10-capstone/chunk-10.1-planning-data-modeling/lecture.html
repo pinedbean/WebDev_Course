@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 10.1 — Capstone Planning &amp; Data Modeling</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--accent);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  .checkpoint{background:#fffbeb;border:2px solid #f59e0b;}
+  .checkpoint h2{border-color:#fde68a;color:#92400e;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 10 — Capstone: TaskFlow</div>
+    <h1>Chunk 10.1 — Capstone Planning &amp; Data Modeling</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 90–120 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>How professionals turn a fuzzy idea into a <strong>buildable plan</strong>: MVP scope, user stories, and acceptance criteria.</li>
+      <li>How to design an <strong>entity-relationship model</strong> (ERD) for TaskFlow's four tables and draw the relationships.</li>
+      <li>How to write an <strong>API contract</strong> — the exact endpoints, request bodies, responses, and status codes — <em>before</em> writing code.</li>
+      <li>How to wireframe the screens so the frontend and backend agree on what data each page needs.</li>
+      <li>How to scaffold the two repos (<code>backend/</code> + <code>frontend/</code>) you'll grow over the next five chunks.</li>
+    </ul>
+    <p>This is the start of the capstone. By the end of the lab you'll have a written spec, an ERD, an API contract, and two running "hello world" projects.</p>
+  </section>
+
+  <section>
+    <h2>1. Meet TaskFlow — and why we plan first</h2>
+    <p><strong>TaskFlow</strong> is a team task &amp; project tracker. A user signs up, creates <em>projects</em>, invites teammates, and tracks <em>tasks</em> on a board with columns: <em>To Do → In Progress → Done</em>. Think a stripped-down Trello/Jira you could actually put on a résumé.</p>
+    <p>You already know every ingredient — this module just assembles them. Here's the map of what you reuse:</p>
+    <table>
+      <tr><th>From module</th><th>Skill you'll reuse in TaskFlow</th></tr>
+      <tr><td>1–2 (HTML/CSS)</td><td>Semantic markup &amp; responsive layout for the board and forms.</td></tr>
+      <tr><td>3 (JavaScript)</td><td><code>fetch</code>, <code>async/await</code>, array methods to shape API data.</td></tr>
+      <tr><td>4 (React + Vite)</td><td>Components, hooks, React Router, Context, a <code>useFetch</code>-style data layer.</td></tr>
+      <tr><td>5 (FastAPI)</td><td>Routers, Pydantic schemas, dependency injection, error handling.</td></tr>
+      <tr><td>6 (SQLite + SQLAlchemy)</td><td>Models, relationships, sessions, Alembic migrations.</td></tr>
+      <tr><td>7 (Auth)</td><td>Password hashing, JWT, <code>get_current_user</code>, protected routes, roles.</td></tr>
+      <tr><td>8 (Logging)</td><td>Structured logs, request IDs, <code>/health</code>.</td></tr>
+      <tr><td>9 (Production)</td><td>Docker, Nginx load balancing, CI/CD.</td></tr>
+    </table>
+    <div class="callout note">
+      <div class="label">📝 Why plan at all?</div>
+      Writing code is cheap to <em>start</em> and expensive to <em>redo</em>. A half-page of planning (scope + data model + API contract) prevents the classic capstone trap: building the frontend and backend in two different shapes that don't fit together. Plan once, build calmly.
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Define the MVP scope</h2>
+    <p>An <strong>MVP</strong> (Minimum Viable Product) is the smallest version that delivers the core value. The skill is saying <em>no</em> to good ideas so you can ship the essential ones. Draw a hard line:</p>
+    <table>
+      <tr><th>✅ In scope (build it)</th><th>🚫 Out of scope (write it down, skip it)</th></tr>
+      <tr><td>Register / login / logout (JWT)</td><td>Password reset emails, OAuth/Google login</td></tr>
+      <tr><td>Create &amp; list projects you own or belong to</td><td>Project archiving, project templates</td></tr>
+      <tr><td>Invite a member to a project by email</td><td>Notifications, activity feeds, comments</td></tr>
+      <tr><td>Create / edit / delete tasks</td><td>Subtasks, attachments, labels/tags</td></tr>
+      <tr><td>Task status (todo / in_progress / done), assignee, due date</td><td>Drag-and-drop reordering, Gantt charts</td></tr>
+      <tr><td>Filter the board (by status / assignee)</td><td>Full-text search, saved filters</td></tr>
+    </table>
+    <div class="callout tip">
+      <div class="label">💡 The "out" list is a feature, not a failure</div>
+      Recording what you deliberately left out shows judgment. In an interview, "I scoped these out to ship a working MVP, and here's how I'd add them" is a strong answer.
+    </div>
+  </section>
+
+  <section>
+    <h2>3. User stories &amp; acceptance criteria</h2>
+    <p>A <strong>user story</strong> captures a requirement from the user's point of view in one sentence: <em>"As a &lt;role&gt;, I want &lt;goal&gt;, so that &lt;benefit&gt;."</em> It keeps you focused on value, not on technology. Each story gets <strong>acceptance criteria</strong> — the checklist that proves it's done.</p>
+    <pre><code>As a visitor, I want to register with email + password,
+  so that I can have my own account.
+  ✓ Given a unique email, when I submit, then an account is created and I'm logged in.
+  ✓ Given an email already in use, then I see a clear "email taken" error.
+
+As a user, I want to create a project,
+  so that I can organize my team's work.
+  ✓ The new project appears in my project list immediately.
+  ✓ I am set as the project "owner".
+
+As a project owner, I want to invite a teammate by email,
+  so that we can collaborate.
+  ✓ An existing user is added as a "member".
+  ✓ Members can see the project's tasks but cannot delete the project.
+
+As a member, I want to move a task between To Do / In Progress / Done,
+  so that the board reflects reality.
+  ✓ Changing status persists and survives a page reload.</code></pre>
+    <p>Notice each story maps cleanly to an API endpoint and a screen. That's the point — stories become your build checklist.</p>
+  </section>
+
+  <section>
+    <h2>4. Entity-Relationship (ER) modeling</h2>
+    <p>Now the heart of planning: the <strong>data model</strong>. An entity becomes a database table; relationships become foreign keys. TaskFlow has four entities. Read each as "a row in this table is one ___":</p>
+
+    <h3>The four entities</h3>
+    <table>
+      <tr><th>Entity</th><th>Fields</th></tr>
+      <tr><td><strong>User</strong></td><td><code>id</code>, <code>email</code> (unique), <code>hashed_password</code>, <code>name</code>, <code>role</code> ("user"/"admin"), <code>created_at</code></td></tr>
+      <tr><td><strong>Project</strong></td><td><code>id</code>, <code>name</code>, <code>description</code>, <code>owner_id</code> → User, <code>created_at</code></td></tr>
+      <tr><td><strong>Membership</strong></td><td><code>id</code>, <code>project_id</code> → Project, <code>user_id</code> → User, <code>role</code> ("owner"/"member")</td></tr>
+      <tr><td><strong>Task</strong></td><td><code>id</code>, <code>project_id</code> → Project, <code>title</code>, <code>description</code>, <code>status</code> ("todo"/"in_progress"/"done"), <code>assignee_id</code> → User (nullable), <code>due_date</code> (nullable), <code>created_at</code></td></tr>
+    </table>
+
+    <h3>The relationships</h3>
+    <ul>
+      <li>A <strong>User</strong> owns many <strong>Projects</strong> (one-to-many via <code>Project.owner_id</code>).</li>
+      <li>A <strong>Project</strong> has many <strong>Tasks</strong> (one-to-many via <code>Task.project_id</code>).</li>
+      <li>A <strong>Task</strong> may be assigned to one <strong>User</strong> (many-to-one via <code>Task.assignee_id</code>, nullable = unassigned).</li>
+      <li><strong>Users ↔ Projects</strong> is <em>many-to-many</em> (a user can be in many projects; a project has many users). We model that with the <strong>Membership</strong> join table — the same many-to-many pattern from Module 6.</li>
+    </ul>
+
+    <h3>The ERD (text form)</h3>
+    <p>You don't need fancy tools — a crisp text/ASCII diagram is perfectly professional. Each box is a table; arrows point from the foreign key to what it references.</p>
+    <div class="filetree">┌────────────────────┐          ┌────────────────────┐
+│        User        │          │      Project       │
+├────────────────────┤          ├────────────────────┤
+│ id            (PK) │◄──────┐  │ id            (PK)  │
+│ email   (unique)   │       └──┤ owner_id      (FK)  │
+│ hashed_password    │          │ name               │
+│ name               │          │ description        │
+│ role               │          │ created_at         │
+│ created_at         │          └─────────┬──────────┘
+└─────────┬──────────┘                    │ 1
+          │ 1                              │
+          │            ┌──────────────────┴───────┐
+          │            │        Membership         │   (join: User ↔ Project)
+          │            ├───────────────────────────┤
+          └───────────►│ user_id        (FK)       │◄──┐
+                       │ project_id     (FK)       │   │
+                       │ role  (owner|member)      │   │
+                       └───────────────────────────┘   │
+          ┌────────────────────┐                       │
+          │        Task        │                       │
+          ├────────────────────┤                       │
+          │ id            (PK)  │      * many           │
+          │ project_id    (FK) ─┼──► Project.id         │
+          │ assignee_id   (FK) ─┼──► User.id (nullable) ┘
+          │ title / description │
+          │ status              │
+          │ due_date (nullable) │
+          │ created_at          │
+          └─────────────────────┘</div>
+    <div class="callout note">
+      <div class="label">📝 Why a Membership table (not a column)?</div>
+      You can't store "many users" in a single column. The join table is the standard relational way to model many-to-many, and it gives us a natural home for a per-project <code>role</code> (owner vs. member). The project's <code>owner_id</code> is a convenient shortcut; the owner also gets a Membership row with <code>role="owner"</code> so all access checks can go through one place.
+    </div>
+  </section>
+
+  <section>
+    <h2>5. Designing the API contract</h2>
+    <p>The <strong>API contract</strong> is the agreement between frontend and backend: every URL, method, what you send, what you get back, and the status code. Designing it now means both halves can be built in parallel and they'll fit. We follow REST conventions from Module 5 and version the API under <code>/api/v1</code>.</p>
+
+    <h3>Endpoint summary</h3>
+    <table>
+      <tr><th>Method &amp; path</th><th>Purpose</th><th>Auth?</th></tr>
+      <tr><td><code>POST /api/v1/auth/register</code></td><td>Create account, return token</td><td>No</td></tr>
+      <tr><td><code>POST /api/v1/auth/login</code></td><td>Log in, return token</td><td>No</td></tr>
+      <tr><td><code>GET /api/v1/auth/me</code></td><td>Current user profile</td><td>Yes</td></tr>
+      <tr><td><code>GET /api/v1/projects</code></td><td>List projects I own or belong to</td><td>Yes</td></tr>
+      <tr><td><code>POST /api/v1/projects</code></td><td>Create a project (I become owner)</td><td>Yes</td></tr>
+      <tr><td><code>GET /api/v1/projects/{id}</code></td><td>Get one project</td><td>Yes (member)</td></tr>
+      <tr><td><code>PATCH /api/v1/projects/{id}</code></td><td>Update project</td><td>Yes (owner)</td></tr>
+      <tr><td><code>DELETE /api/v1/projects/{id}</code></td><td>Delete project</td><td>Yes (owner)</td></tr>
+      <tr><td><code>GET /api/v1/projects/{id}/members</code></td><td>List members</td><td>Yes (member)</td></tr>
+      <tr><td><code>POST /api/v1/projects/{id}/members</code></td><td>Invite a member by email</td><td>Yes (owner)</td></tr>
+      <tr><td><code>GET /api/v1/projects/{id}/tasks</code></td><td>List tasks (with filters)</td><td>Yes (member)</td></tr>
+      <tr><td><code>POST /api/v1/projects/{id}/tasks</code></td><td>Create a task</td><td>Yes (member)</td></tr>
+      <tr><td><code>PATCH /api/v1/projects/{id}/tasks/{taskId}</code></td><td>Edit / move / assign a task</td><td>Yes (member)</td></tr>
+      <tr><td><code>DELETE /api/v1/projects/{id}/tasks/{taskId}</code></td><td>Delete a task</td><td>Yes (member)</td></tr>
+      <tr><td><code>GET /api/v1/health</code></td><td>Liveness check (no auth)</td><td>No</td></tr>
+    </table>
+
+    <h3>Worked example — the shape of one request/response</h3>
+    <p>Pin down exact JSON. Here's <code>POST /api/v1/projects/{id}/tasks</code>:</p>
+    <pre><code>// Request body (what the frontend sends)
+{
+  "title": "Design the board UI",
+  "description": "Three columns, drag later",
+  "status": "todo",
+  "assignee_id": 4,        // or null = unassigned
+  "due_date": "2026-07-10" // ISO date, or null
+}
+
+// 201 Created response (what the backend returns)
+{
+  "id": 17,
+  "project_id": 3,
+  "title": "Design the board UI",
+  "description": "Three columns, drag later",
+  "status": "todo",
+  "assignee_id": 4,
+  "due_date": "2026-07-10",
+  "created_at": "2026-06-26T09:14:00Z"
+}</code></pre>
+    <p>And the standard error shape (FastAPI's default), so the frontend always knows where to read the message:</p>
+    <pre><code>// 403 Forbidden — you're not a member of this project
+{ "detail": "You do not have access to this project" }</code></pre>
+
+    <h3>Status codes we commit to</h3>
+    <table>
+      <tr><th>Code</th><th>When</th></tr>
+      <tr><td><code>200 OK</code></td><td>Successful GET / PATCH</td></tr>
+      <tr><td><code>201 Created</code></td><td>Successful POST that creates a resource</td></tr>
+      <tr><td><code>204 No Content</code></td><td>Successful DELETE</td></tr>
+      <tr><td><code>400 / 422</code></td><td>Bad input / validation failure (Pydantic returns 422)</td></tr>
+      <tr><td><code>401 Unauthorized</code></td><td>Missing/expired token</td></tr>
+      <tr><td><code>403 Forbidden</code></td><td>Logged in, but not allowed (not a member/owner)</td></tr>
+      <tr><td><code>404 Not Found</code></td><td>Resource doesn't exist (or you can't see it)</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>6. Wireframing the screens</h2>
+    <p>A <strong>wireframe</strong> is a rough sketch of a screen's layout — boxes and labels, no colors. It forces you to ask "what data does this page need?", which feeds the API contract. TaskFlow's MVP has five screens:</p>
+    <div class="filetree">┌─────────────────────────────┐   ┌─────────────────────────────────────────┐
+│        /login  /register    │   │   /projects   (after login)               │
+│  ┌───────────────────────┐  │   │  TaskFlow            [user ▾] [Logout]    │
+│  │ email   [__________]  │  │   │ ───────────────────────────────────────  │
+│  │ password[__________]  │  │   │  My Projects            [ + New Project ] │
+│  │     [   Log in    ]   │  │   │  ┌────────┐ ┌────────┐ ┌────────┐        │
+│  │  no account? Register │  │   │  │Website │ │Mobile  │ │Backlog │ ...    │
+│  └───────────────────────┘  │   │  └────────┘ └────────┘ └────────┘        │
+└─────────────────────────────┘   └─────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│  /projects/3   "Website Redesign"        Filter: [status ▾][assignee ▾]    │
+│  ──────────────────────────────────────────────────────────────────────   │
+│   Members: Ana(owner) Ben Cara   [ + Invite ]            [ + New Task ]     │
+│  ┌─────────────┐   ┌─────────────┐   ┌─────────────┐                       │
+│  │  TO DO      │   │ IN PROGRESS │   │   DONE       │                       │
+│  ├─────────────┤   ├─────────────┤   ├─────────────┤                       │
+│  │ ▢ Hero copy │   │ ▢ Nav bar   │   │ ▣ Set up CI  │                       │
+│  │   @Ben 7/10 │   │   @Ana 7/02 │   │   @Cara      │                       │
+│  │ ▢ Footer    │   │             │   │              │                       │
+│  └─────────────┘   └─────────────┘   └─────────────┘                       │
+└──────────────────────────────────────────────────────────────────────────┘</div>
+    <p>Each card shows the fields your API returns: title, assignee, due date. The columns <em>are</em> the <code>status</code> values. This is why we modeled status as a fixed set of strings — it maps 1:1 to UI columns.</p>
+  </section>
+
+  <section>
+    <h2>7. Scaffolding the two repos</h2>
+    <p>Finally, set up the folders you'll grow over the next five chunks. TaskFlow is a <strong>monorepo</strong>: one top-level folder with a backend and a frontend side-by-side. That keeps the whole app in one Git repo (handy for Module 9's Docker Compose and the Bonus Track).</p>
+    <div class="filetree">capstone-taskflow/
+├── README.md
+├── SPEC.md                 ← scope, user stories, ERD, API contract
+├── backend/                ← FastAPI + SQLAlchemy (Modules 5–8)
+│   ├── app/
+│   │   ├── main.py
+│   │   ├── database.py
+│   │   ├── models.py
+│   │   ├── schemas.py
+│   │   ├── deps.py
+│   │   └── routers/
+│   ├── requirements.txt
+│   └── .env.example
+└── frontend/               ← React + Vite (Module 4)
+    ├── src/
+    │   ├── api/
+    │   ├── context/
+    │   ├── components/
+    │   ├── pages/
+    │   └── App.jsx
+    ├── index.html
+    └── package.json</div>
+    <p>The lab walks you through creating this exact structure and getting a "hello" route plus a Vite dev server running. You won't write feature code yet — that starts in 10.2.</p>
+    <div class="callout tip">
+      <div class="label">💡 Plan-as-code</div>
+      Your <code>SPEC.md</code> lives <em>in the repo</em>. When the spec changes, you edit the file and commit it — the plan and the code evolve together, and reviewers can see both.
+    </div>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li>An <strong>MVP scope</strong> with an explicit "out" list keeps the capstone shippable.</li>
+      <li><strong>User stories</strong> (As a… I want… so that…) + acceptance criteria become your build checklist.</li>
+      <li>The <strong>ERD</strong> has four entities — User, Project, Membership (join), Task — with foreign keys for every relationship and a join table for the User↔Project many-to-many.</li>
+      <li>The <strong>API contract</strong> nails down every endpoint, body, response, and status code under <code>/api/v1</code> before any code is written.</li>
+      <li><strong>Wireframes</strong> connect screens to the data they need; the repo is a monorepo with <code>backend/</code> + <code>frontend/</code>.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and produce your <code>SPEC.md</code>, ERD, API contract, and two scaffolded projects.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

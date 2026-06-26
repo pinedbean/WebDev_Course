@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment · Chunk 9.4 — Deployment &amp; CI/CD Basics</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #ede9fe;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .objective{background:#ede9fe;border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#5b21b6;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--task);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .deliverable{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .deliverable h2{border-color:#a7f3d0;color:#065f46;}
+  .check{list-style:none;padding-left:0;} .check li{padding-left:30px;position:relative;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:18px;color:var(--task);}
+  .checkpoint{background:#fffbeb;border:2px solid #f59e0b;}
+  .checkpoint h2{border-color:#fde68a;color:#92400e;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 9 — Production &amp; Load Balancing</div>
+    <h1>Chunk 9.4 — Lab: CI/CD &amp; the Module 9 Checkpoint</h1>
+    <span class="badge">🧪 ASSIGNMENT</span>
+    <span class="badge">⏱️ 90–120 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 Your mission</h2>
+    <p>Make the Tasks app <strong>deployable and self-checking</strong>. You'll automate database migrations at container start, write a <strong>GitHub Actions CI pipeline</strong> (lint + test backend, build frontend), document a deploy runbook, and lay out the path off SQLite. Then you'll complete the 🏁 <strong>Module 9 Checkpoint</strong>: a documented, load-balanced, containerized deployment you can demo end to end.</p>
+  </section>
+
+  <section>
+    <h2>Before you start</h2>
+    <ul>
+      <li>You finished <strong>9.1–9.3</strong>: production builds, Docker images, Compose, and the Nginx-load-balanced stack with multiple API replicas.</li>
+      <li>Your project is in a Git repo (you'll add a workflow under <code>.github/workflows/</code>). A GitHub remote helps for the CI stretch goal but isn't required to write the file.</li>
+      <li>Docker Desktop running.</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ Try it yourself first</div>
+      Build from the lecture and these tasks. Only open <code>solution.html</code> when stuck or to compare at the end.
+    </div>
+  </section>
+
+  <section>
+    <h2>Part A — Automated migrations</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Write an entrypoint that migrates then serves</h3>
+      <p>Create <code>tasks-api/entrypoint.sh</code> that runs <code>alembic upgrade head</code> and then starts the server (uvicorn/gunicorn, bound to <code>0.0.0.0</code>, multiple workers). Use <code>set -e</code> so a failed migration aborts startup loudly.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Wire it into the Dockerfile</h3>
+      <p>Copy <code>entrypoint.sh</code> into the image, make it executable, and set it as the container's <code>CMD</code>/<code>ENTRYPOINT</code>. Rebuild and bring the stack up — confirm migrations now run automatically (you no longer need the manual <code>alembic upgrade head</code> from 9.2/9.3).</p>
+      <div class="callout tip">
+        <div class="label">💡 Avoid a migration stampede</div>
+        With multiple replicas, don't have all of them migrate at once. Either run the entrypoint migration on a single designated service, or use a one-shot <code>docker compose run --rm api alembic upgrade head</code> before scaling up. Note your choice in the runbook.
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Part B — CI pipeline</h2>
+
+    <div class="step">
+      <h3><span class="num">3</span> Create <code>.github/workflows/ci.yml</code></h3>
+      <p>Add a workflow triggered on push to <code>main</code> and on pull requests, with two parallel jobs:</p>
+      <ul>
+        <li><strong>backend</strong> — checkout, set up Python 3.11, install requirements + <code>ruff</code> + <code>pytest</code>, run <code>ruff check .</code> and <code>pytest</code> (provide a throwaway <code>SECRET_KEY</code> via step env).</li>
+        <li><strong>frontend</strong> — checkout, set up Node 20, <code>npm ci</code>, <code>npm run build</code>.</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Add a tiny backend test</h3>
+      <p>So <code>pytest</code> has something to run, add <code>tasks-api/tests/test_health.py</code> using FastAPI's <code>TestClient</code> to assert <code>GET /health</code> returns 200 and <code>{"status":"ok", ...}</code>. (Install <code>httpx</code> if needed.) Confirm it passes locally with <code>pytest</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Run the checks locally (simulate CI)</h3>
+      <p>Before relying on GitHub, run the same commands locally so you know the pipeline will be green:</p>
+      <pre><code>cd tasks-api &amp;&amp; ruff check . &amp;&amp; pytest
+cd ../tasks-web &amp;&amp; npm ci &amp;&amp; npm run build</code></pre>
+    </div>
+  </section>
+
+  <section>
+    <h2>Part C — Production readiness</h2>
+
+    <div class="step">
+      <h3><span class="num">6</span> Secrets &amp; the Postgres path</h3>
+      <p>Confirm no secret is baked into any image or <code>VITE_</code> var, and that a root <code>.env.example</code> documents required variables with placeholders. Then add a short <code>POSTGRES.md</code> (or a section in your runbook) describing the exact change to move from SQLite to Postgres: install a driver, change <code>DATABASE_URL</code>, run existing migrations, drop SQLite-only pragmas.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Write the deploy runbook</h3>
+      <p>Expand your 9.1 <code>PRODUCTION.md</code> into a real runbook covering: prerequisites, required env vars, build commands, how migrations run, start/stop (<code>docker compose up -d</code> / <code>down</code>), how to scale (<code>--scale api=N</code>), health-check URLs, where logs go, and how to roll back (redeploy the previous image tag).</p>
+    </div>
+  </section>
+
+  <section class="checkpoint">
+    <h2>🏁 Module 9 Checkpoint — Documented, load-balanced, containerized deployment</h2>
+    <p>Tie the whole module together. Bring up the full stack and verify each property. You should be able to demo this start to finish from your runbook alone.</p>
+    <ol>
+      <li><strong>One command up:</strong> <code>docker compose up -d --build --scale api=3</code> brings up Nginx + 3 API replicas + the shared DB.</li>
+      <li><strong>Migrations ran automatically</strong> (or via your documented one-shot step) — the DB schema is current with no manual SQL.</li>
+      <li><strong>Single origin:</strong> the browser uses <code>http://localhost</code> only; the frontend loads and API calls go through <code>/api/</code>.</li>
+      <li><strong>Load balancing is visible:</strong> repeated <code>/api/health</code> calls show the <code>instance</code> rotating across replicas.</li>
+      <li><strong>Stateless auth works across replicas:</strong> log in once, use the app — staying logged in despite requests hitting different replicas (shared <code>SECRET_KEY</code>).</li>
+      <li><strong>Resilience:</strong> stop one replica; the app keeps serving (Nginx routes around it).</li>
+      <li><strong>Observability:</strong> <code>docker compose logs -f</code> shows structured JSON logs with request ids; an induced error returns a clean 500 and is logged.</li>
+      <li><strong>CI is green:</strong> the GitHub Actions workflow (or the local simulation) passes lint, tests, and the frontend build.</li>
+      <li><strong>Documented:</strong> the runbook lets someone else reproduce all of the above, and the Postgres-migration path is written down.</li>
+    </ol>
+  </section>
+
+  <section class="deliverable">
+    <h2>✅ Deliverable — acceptance checklist</h2>
+    <ul class="check">
+      <li><code>entrypoint.sh</code> runs <code>alembic upgrade head</code> then starts the server; the Dockerfile uses it.</li>
+      <li><code>.github/workflows/ci.yml</code> runs backend lint+test and frontend build on push/PR.</li>
+      <li>A passing backend test exists (at least <code>GET /health</code>), and the CI steps pass when simulated locally.</li>
+      <li>No secrets in images or <code>VITE_</code> vars; <code>.env.example</code> documents required vars; a Postgres-migration note exists.</li>
+      <li>A deploy runbook documents build, env, migrations, start/stop, scaling, health, logs, and rollback.</li>
+      <li>🏁 The full stack comes up load-balanced and containerized, and you can demo every checkpoint item from the runbook.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🚀 Stretch goals (optional)</h2>
+    <ul>
+      <li>Add a CD job (<code>on: push: branches:[main]</code>) that builds and pushes the Docker images to a registry (GHCR), using <code>${{ secrets.* }}</code> for credentials.</li>
+      <li>Actually deploy: spin up a cheap VPS, install Docker, copy your repo + a server-side <code>.env</code>, and run <code>docker compose up -d</code> behind the host's firewall.</li>
+      <li>Add a real Postgres service to a <code>docker-compose.prod.yml</code> and point <code>DATABASE_URL</code> at it; run your migrations against it and confirm the app is unchanged.</li>
+      <li>Cache CI dependencies (<code>actions/setup-node</code> cache, pip cache) to speed up runs.</li>
+      <li>Add a CI status badge to your README.</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a class="current">🧪 Assignment</a>
+    <a href="solution.html">✅ Solution →</a>
+  </div>
+</footer>
+</body>
+</html>

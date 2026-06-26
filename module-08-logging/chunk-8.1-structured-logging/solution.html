@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk 8.1 — Structured Logging in FastAPI</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .full{border:2px solid #16a34a;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 8 — Logging &amp; Observability</div>
+    <h1>Chunk 8.1 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>We'll add a logging module, a request-logging middleware, and wire both into the app. New/changed files:</p>
+    <div class="filetree">tasks-api/
+└── app/
+    ├── logging_config.py     (new: ContextVar, JSON formatter, filter, setup_logging)
+    ├── middleware.py         (new: request-ID + request-logging middleware)
+    ├── main.py               (call setup_logging, register middleware)
+    ├── routers/
+    │   ├── auth.py           (log failed logins)
+    │   └── tasks.py          (log task creation)</div>
+  </section>
+
+  <section>
+    <div class="step">
+      <h3><span class="num">1</span> <code>app/logging_config.py</code> — the whole logging brain</h3>
+      <p>One file owns the context variable, the JSON formatter, the request-ID filter, and the setup function.</p>
+      <pre><code># app/logging_config.py
+import json
+import logging
+import sys
+from contextvars import ContextVar
+from datetime import datetime, timezone
+
+# Request-scoped id. Each async request gets its own value; default "-".
+request_id_ctx: ContextVar[str] = ContextVar("request_id", default="-")
+
+# The attributes every LogRecord already has; anything else is our `extra`.
+_STANDARD = set(logging.LogRecord(
+    "", 0, "", 0, "", None, None
+).__dict__.keys()) | {"message", "asctime", "taskName"}
+
+
+class RequestIdFilter(logging.Filter):
+    """Copy the current request id onto every record."""
+    def filter(self, record: logging.LogRecord) -&gt; bool:
+        record.request_id = request_id_ctx.get()
+        return True
+
+
+class JsonFormatter(logging.Formatter):
+    """Render each record as a single-line JSON object."""
+    def format(self, record: logging.LogRecord) -&gt; str:
+        payload = {
+            "timestamp": datetime.fromtimestamp(
+                record.created, tz=timezone.utc
+            ).isoformat(timespec="milliseconds").replace("+00:00", "Z"),
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+            "request_id": getattr(record, "request_id", "-"),
+        }
+        # Fold in any extra={...} keys the caller passed.
+        for key, value in record.__dict__.items():
+            if key not in _STANDARD and key not in payload:
+                payload[key] = value
+        # Include exception info when present.
+        if record.exc_info:
+            payload["exception"] = self.formatException(record.exc_info)
+        return json.dumps(payload, default=str)
+
+
+def setup_logging(level: str = "INFO") -&gt; None:
+    """Configure the root logger once: JSON to stdout, with request ids."""
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(JsonFormatter())
+    handler.addFilter(RequestIdFilter())
+
+    root = logging.getLogger()
+    root.handlers.clear()          # idempotent: avoid duplicate handlers on --reload
+    root.addHandler(handler)
+    root.setLevel(level)
+
+    # Let our middleware be the single per-request line; mute uvicorn's access log.
+    logging.getLogger("uvicorn.access").setLevel(logging.WARNING)</code></pre>
+      <div class="callout note">
+        <div class="label">📝 Why build <code>_STANDARD</code> from a throwaway record</div>
+        A fresh <code>LogRecord</code> already carries all the built-in attributes (<code>levelname</code>, <code>pathname</code>, <code>lineno</code>…). Anything NOT in that set is something <em>you</em> added via <code>extra=</code> — exactly the fields we want in the JSON. We add <code>message</code>/<code>asctime</code>/<code>taskName</code> because they appear only after formatting.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> <code>app/middleware.py</code> — one structured line per request</h3>
+      <pre><code># app/middleware.py
+import logging
+import time
+from uuid import uuid4
+
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+
+from app.logging_config import request_id_ctx
+
+logger = logging.getLogger("app.request")
+
+
+class RequestLoggingMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        # Reuse an incoming id (e.g. from a load balancer) or make a new one.
+        request_id = request.headers.get("X-Request-ID") or uuid4().hex[:8]
+        token = request_id_ctx.set(request_id)
+
+        start = time.perf_counter()
+        try:
+            response = await call_next(request)
+        finally:
+            request_id_ctx.reset(token)
+
+        duration_ms = round((time.perf_counter() - start) * 1000, 2)
+        logger.info(
+            "request completed",
+            extra={
+                "method": request.method,
+                "path": request.url.path,
+                "status_code": response.status_code,
+                "duration_ms": duration_ms,
+            },
+        )
+        response.headers["X-Request-ID"] = request_id
+        return response</code></pre>
+      <div class="callout tip">
+        <div class="label">💡 Why <code>BaseHTTPMiddleware</code> instead of <code>@app.middleware("http")</code></div>
+        Both work. A class is tidier to keep in its own file and is the same style you'll reuse for error handling in 8.2. The <code>reset(token)</code> in the <code>finally</code> block restores the previous context value cleanly even if the route raises.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Wire it into <code>app/main.py</code></h3>
+      <p>Call <code>setup_logging()</code> <strong>before</strong> creating the app, and register the middleware. (Driving the level from settings is a nice touch — add <code>log_level: str = "INFO"</code> to <code>Settings</code> if you like.)</p>
+      <pre><code># app/main.py  (additions)
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.config import settings
+from app.logging_config import setup_logging
+from app.middleware import RequestLoggingMiddleware
+from app.routers import auth, tasks, admin
+
+setup_logging(getattr(settings, "log_level", "INFO"))
+
+app = FastAPI(title="Tasks API")
+
+app.add_middleware(RequestLoggingMiddleware)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[settings.frontend_origin],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(auth.router)
+app.include_router(tasks.router)
+app.include_router(admin.router)</code></pre>
+      <div class="callout warning">
+        <div class="label">⚠️ Middleware order</div>
+        Middleware runs in the reverse order it's added for the response. Adding <code>RequestLoggingMiddleware</code> first means it's the <em>outermost</em> wrapper, so it times the full request (including CORS handling) and always sets the request id before anything else runs.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Add real logs in the routers</h3>
+      <pre><code># app/routers/auth.py  (top of file + inside login)
+import logging
+logger = logging.getLogger(__name__)
+
+# ... inside login(), when credentials fail:
+if not user or not verify_password(form_data.password, user.hashed_password):
+    logger.warning("login failed", extra={"email": form_data.username.lower()})
+    raise HTTPException(status_code=401, detail="Invalid credentials")
+logger.info("login succeeded", extra={"user_id": user.id})</code></pre>
+      <pre><code># app/routers/tasks.py  (top of file + inside create_task)
+import logging
+logger = logging.getLogger(__name__)
+
+# ... after db.refresh(task):
+logger.info("task created", extra={"task_id": task.id, "owner_id": current_user.id})
+return task</code></pre>
+      <div class="callout note">
+        <div class="label">📝 Log the email, never the password</div>
+        Logging the attempted email on a failed login is useful for spotting attacks. The password must never appear — note we only pass <code>email</code> in <code>extra</code>.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Run &amp; read the logs</h3>
+      <pre><code>uvicorn app.main:app --reload</code></pre>
+      <p>Hit a few endpoints. Each request now prints one JSON line to your terminal:</p>
+      <pre><code>{"timestamp": "2026-06-26T14:03:11.482Z", "level": "INFO", "logger": "app.request", "message": "request completed", "request_id": "9f2c1a7b", "method": "GET", "path": "/health", "status_code": 200, "duration_ms": 1.74}
+{"timestamp": "2026-06-26T14:03:20.119Z", "level": "WARNING", "logger": "app.routers.auth", "message": "login failed", "request_id": "3b8e0d52", "email": "a@x.com"}
+{"timestamp": "2026-06-26T14:03:20.121Z", "level": "INFO", "logger": "app.request", "message": "request completed", "request_id": "3b8e0d52", "method": "POST", "path": "/auth/login", "status_code": 401, "duration_ms": 88.3}</code></pre>
+      <p>Notice the failed-login WARNING and its "request completed" line share <code>request_id: 3b8e0d52</code> — that's correlation working.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Confirm the response header</h3>
+      <pre><code>curl -i http://localhost:8000/health</code></pre>
+      <pre><code>HTTP/1.1 200 OK
+x-request-id: 9f2c1a7b
+content-type: application/json
+
+{"status":"ok"}</code></pre>
+      <p>The <code>x-request-id</code> matches the <code>request_id</code> in the log for that call — a user can quote it and you can find their exact request instantly.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>🔧 Troubleshooting</h2>
+    <table>
+      <tr><th>Symptom</th><th>Fix</th></tr>
+      <tr><td>Each request prints the log line <em>twice</em></td><td><code>--reload</code> re-imported the module and stacked handlers. Keep <code>root.handlers.clear()</code> in <code>setup_logging()</code>.</td></tr>
+      <tr><td>Logs are still plain text, not JSON</td><td>You're seeing uvicorn's own startup/access logs. Your app logs are JSON; mute <code>uvicorn.access</code> (set it to WARNING) and look for your lines.</td></tr>
+      <tr><td><code>request_id</code> is always <code>"-"</code></td><td>The filter isn't attached to the handler, or the middleware isn't setting the ContextVar. Confirm <code>handler.addFilter(RequestIdFilter())</code> and that the request-logging middleware runs.</td></tr>
+      <tr><td>All requests share one request id</td><td>You used a module-level global instead of a <code>ContextVar</code>, or set it once at import. It must be <code>.set()</code> per request inside the middleware.</td></tr>
+      <tr><td><code>TypeError: Object of type ... is not JSON serializable</code></td><td>An <code>extra</code> value isn't JSON-native (e.g. a datetime). <code>json.dumps(..., default=str)</code> (as shown) handles it.</td></tr>
+      <tr><td><code>X-Request-ID</code> header missing</td><td>Make sure you set it on the <code>response</code> object the middleware returns, after <code>call_next</code>.</td></tr>
+    </table>
+  </section>
+
+  <section class="full">
+    <h2>📄 Complete <code>app/logging_config.py</code></h2>
+    <pre><code>import json
+import logging
+import sys
+from contextvars import ContextVar
+from datetime import datetime, timezone
+
+request_id_ctx: ContextVar[str] = ContextVar("request_id", default="-")
+
+_STANDARD = set(logging.LogRecord(
+    "", 0, "", 0, "", None, None
+).__dict__.keys()) | {"message", "asctime", "taskName"}
+
+
+class RequestIdFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -&gt; bool:
+        record.request_id = request_id_ctx.get()
+        return True
+
+
+class JsonFormatter(logging.Formatter):
+    def format(self, record: logging.LogRecord) -&gt; str:
+        payload = {
+            "timestamp": datetime.fromtimestamp(
+                record.created, tz=timezone.utc
+            ).isoformat(timespec="milliseconds").replace("+00:00", "Z"),
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+            "request_id": getattr(record, "request_id", "-"),
+        }
+        for key, value in record.__dict__.items():
+            if key not in _STANDARD and key not in payload:
+                payload[key] = value
+        if record.exc_info:
+            payload["exception"] = self.formatException(record.exc_info)
+        return json.dumps(payload, default=str)
+
+
+def setup_logging(level: str = "INFO") -&gt; None:
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(JsonFormatter())
+    handler.addFilter(RequestIdFilter())
+
+    root = logging.getLogger()
+    root.handlers.clear()
+    root.addHandler(handler)
+    root.setLevel(level)
+
+    logging.getLogger("uvicorn.access").setLevel(logging.WARNING)</code></pre>
+  </section>
+
+  <section class="done">
+    <h2>🎉 You're done</h2>
+    <p>The Tasks API is now observable from the outside: every request produces one structured JSON line with timing and status, every line carries a <strong>request id</strong> that ties a single request's events together, and that id rides back to the client in <code>X-Request-ID</code>. This is the exact foundation log-aggregation tools expect — and the habit (log to stdout, structured, with correlation) you'll rely on in Docker and behind a load balancer.</p>
+    <p>Logging tells you what <em>happened</em>. Next you'll make failures loud and catchable: centralized error handling, health checks, and a React error boundary that reports crashes instead of showing a blank screen.</p>
+    <p><strong>Up next → Chunk 8.2: Error Tracking &amp; Frontend Logging.</strong></p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

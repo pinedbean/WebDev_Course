@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment · Chunk 9.3 — Nginx Reverse Proxy &amp; Load Balancing</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #ede9fe;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .objective{background:#ede9fe;border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#5b21b6;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--task);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .deliverable{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .deliverable h2{border-color:#a7f3d0;color:#065f46;}
+  .check{list-style:none;padding-left:0;} .check li{padding-left:30px;position:relative;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:18px;color:var(--task);}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 9 — Production &amp; Load Balancing</div>
+    <h1>Chunk 9.3 — Lab: Load-Balance the API</h1>
+    <span class="badge">🧪 ASSIGNMENT</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 Your mission</h2>
+    <p>Put an <strong>Nginx reverse proxy / load balancer</strong> in front of <strong>2+ FastAPI replicas</strong> and serve the frontend through it. The browser will talk to a single origin (Nginx), which serves the built frontend at <code>/</code> and round-robins API calls at <code>/api/</code> across the replicas. You'll add a way to <em>see</em> which replica answered, prove round-robin works, and confirm stateless JWT means no sticky sessions are needed. Final shape: <strong>Nginx → multiple API instances → one shared SQLite</strong>.</p>
+  </section>
+
+  <section>
+    <h2>Before you start</h2>
+    <ul>
+      <li>You finished <strong>9.2</strong>: backend + frontend Dockerfiles and a working <code>docker compose up</code>.</li>
+      <li>Your auth is <strong>stateless JWT</strong> (Module 7) — the property that makes this work.</li>
+      <li>Docker Desktop running.</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ Try it yourself first</div>
+      Build from the lecture and these tasks. Only open <code>solution.html</code> when stuck or to compare at the end.
+    </div>
+  </section>
+
+  <section>
+    <h2>Tasks</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Make replicas identifiable</h3>
+      <p>So you can observe load balancing, have the backend expose which instance answered. Add the container hostname to the <code>/health</code> response and to your request logs, e.g. <code>{"status":"ok","instance": socket.gethostname()}</code>. (Each replica's hostname is its container id, so it'll differ per replica.)</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Enable WAL on SQLite</h3>
+      <p>Multiple replicas will share one SQLite file. Turn on WAL mode so reads and a writer coexist better. In <code>app/database.py</code>'s SQLite pragma event (you have one from Module 6 for foreign keys), also run <code>PRAGMA journal_mode=WAL;</code>.</p>
+      <div class="callout note">
+        <div class="label">📝 This is a demo mitigation, not a fix</div>
+        WAL helps you show load balancing without constant lock errors. It does <strong>not</strong> make SQLite a multi-writer database — that's the honest limit you'll address in 9.4.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Add an Nginx load-balancer service</h3>
+      <p>Create <code>nginx/nginx.conf</code> with an <code>upstream</code> pool pointing at your API replicas and a <code>server</code> block that: serves the built frontend at <code>/</code> (with SPA fallback) and <code>proxy_pass</code>es <code>/api/</code> to the pool with the standard forwarded headers. Add an <code>nginx</code> (or <code>proxy</code>) service to Compose that mounts this config and publishes port <code>80</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Run multiple API replicas</h3>
+      <p>Scale the <code>api</code> service to 2+ instances. The simplest path: remove the host port mapping from <code>api</code> (only Nginx needs to reach it, internally) and start with <code>--scale</code>:</p>
+      <pre><code>docker compose up --build --scale api=3</code></pre>
+      <p>Make the Nginx <code>upstream</code> target the service name so Docker's DNS round-robins to all replicas (e.g. <code>server api:8000;</code>), or list explicit replica hostnames — your choice; the solution shows both.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Point the frontend at the same origin</h3>
+      <p>Since Nginx serves both, set the frontend to call the relative path: <code>VITE_API_URL=/api</code> in <code>.env.production</code>, then rebuild the frontend image. Now the browser only ever talks to Nginx — no CORS, no host/port baked in.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Migrate the shared DB once</h3>
+      <p>Apply migrations against the shared volume (run it in any one replica):</p>
+      <pre><code>docker compose exec api alembic upgrade head</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Prove round-robin</h3>
+      <p>Hit the proxied health endpoint repeatedly and watch the <code>instance</code> value rotate across replicas:</p>
+      <pre><code>for i in $(seq 1 6); do curl -s http://localhost/api/health; echo; done</code></pre>
+      <p>You should see the hostname cycle through your replicas (e.g. a, b, c, a, b, c).</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">8</span> Prove stateless auth survives balancing</h3>
+      <p>Through the browser (<code>http://localhost</code>), register/log in once and use the app normally. Even though consecutive requests land on different replicas, you stay logged in and see your data — because every replica verifies the same JWT with the shared <code>SECRET_KEY</code>. Confirm all replicas got the <em>same</em> <code>SECRET_KEY</code> env var.</p>
+    </div>
+  </section>
+
+  <section class="deliverable">
+    <h2>✅ Deliverable — acceptance checklist</h2>
+    <ul class="check">
+      <li>An Nginx service load-balances <code>/api/</code> across <strong>2+ FastAPI replicas</strong> and serves the frontend at <code>/</code> (single origin).</li>
+      <li><code>nginx.conf</code> has an <code>upstream</code> pool and a <code>proxy_pass</code> with forwarded headers; SPA fallback still works.</li>
+      <li>Repeated calls to <code>/api/health</code> show the <code>instance</code>/hostname rotating across replicas (round-robin visible).</li>
+      <li>Logging in via the browser works and stays logged in even though requests hit different replicas (stateless JWT, shared <code>SECRET_KEY</code>).</li>
+      <li>All replicas share one SQLite file via the named volume (WAL enabled); migrations applied once.</li>
+      <li>You can articulate <em>why</em> no sticky sessions are needed, and the SQLite single-writer limitation.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🚀 Stretch goals (optional)</h2>
+    <ul>
+      <li>Switch the strategy to <code>least_conn;</code> and add an artificially slow endpoint; observe the distribution change vs round-robin.</li>
+      <li>Kill one replica (<code>docker compose stop &lt;container&gt;</code>) mid-loop and watch Nginx route around it — the app keeps serving.</li>
+      <li>Add <code>max_fails</code>/<code>fail_timeout</code> to the upstream and a <code>healthcheck</code> in Compose tied to <code>/health</code>.</li>
+      <li>Give each replica a <code>weight</code> and confirm the busier one gets more traffic.</li>
+      <li>Add basic Nginx access logging and correlate its lines with your backend's <code>X-Request-ID</code> (pass the header through with <code>proxy_set_header</code>).</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a class="current">🧪 Assignment</a>
+    <a href="solution.html">✅ Solution →</a>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 10.3 — Frontend: Auth, Layout &amp; Project Views</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  .checkpoint{background:#fffbeb;border:2px solid #f59e0b;}
+  .checkpoint h2{border-color:#fde68a;color:#92400e;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 10 — Capstone: TaskFlow</div>
+    <h1>Chunk 10.3 — Frontend: Auth, Layout &amp; Project Views</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 90–120 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>How to build a small <strong>API client</strong> that attaches the JWT to every request and centralizes error handling.</li>
+      <li>How to manage login state app-wide with an <strong>Auth Context</strong> (Module 4.6 + 7.3) and persist the token.</li>
+      <li>How to <strong>protect routes</strong> so unauthenticated users get bounced to <code>/login</code>.</li>
+      <li>How to build the <strong>app shell</strong>: a layout with a nav bar and an <code>&lt;Outlet&gt;</code> for nested pages.</li>
+      <li>How to fetch and render the <strong>projects list</strong> and a <strong>create-project</strong> form against the 10.2 API.</li>
+    </ul>
+    <p>The lab delivers a usable, authenticated frontend wired to your backend.</p>
+  </section>
+
+  <section>
+    <h2>1. The architecture of the frontend</h2>
+    <p>Everything you learned in Module 4 and 7.3 comes together here. The shape:</p>
+    <div class="filetree">frontend/src/
+├── main.jsx              (mount + BrowserRouter)
+├── App.jsx              (route table)
+├── api/client.js        (fetch wrapper: base URL + token + errors)
+├── context/AuthContext.jsx  (user, token, login(), logout())
+├── components/
+│   ├── ProtectedRoute.jsx   (redirect if not logged in)
+│   └── Layout.jsx           (nav bar + &lt;Outlet/&gt;)
+└── pages/
+    ├── Login.jsx
+    ├── Register.jsx
+    └── Projects.jsx         (list + create)</div>
+    <p>Data flows in one direction: a page calls the <strong>api client</strong>, which reads the token from the <strong>auth context</strong>, hits the <strong>backend</strong>, and the page renders the result. Keeping the fetch logic in one file means we add the token (and later, request IDs) in exactly one place.</p>
+  </section>
+
+  <section>
+    <h2>2. The API client</h2>
+    <p>Rather than scatter <code>fetch</code> calls everywhere, we wrap it once. It reads <code>VITE_API_URL</code> (set in 10.1), attaches the bearer token, parses JSON, and throws a useful error on non-2xx responses.</p>
+    <pre><code>// src/api/client.js
+const BASE = import.meta.env.VITE_API_URL;  // http://localhost:8000/api/v1
+
+export function getToken() {
+  return localStorage.getItem("taskflow_token");
+}
+
+export async function api(path, { method = "GET", body, form } = {}) {
+  const headers = {};
+  const token = getToken();
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  let payload;
+  if (form) {                       // login uses form-encoded data
+    headers["Content-Type"] = "application/x-www-form-urlencoded";
+    payload = new URLSearchParams(form).toString();
+  } else if (body) {
+    headers["Content-Type"] = "application/json";
+    payload = JSON.stringify(body);
+  }
+
+  const res = await fetch(`${BASE}${path}`, { method, headers, body: payload });
+  if (res.status === 204) return null;        // no content (DELETE)
+  const data = await res.json().catch(() =&gt; ({}));
+  if (!res.ok) {
+    throw new Error(data.detail || `Request failed (${res.status})`);
+  }
+  return data;
+}</code></pre>
+    <div class="callout note">
+      <div class="label">📝 One place for the token</div>
+      Because every call goes through <code>api()</code>, adding the <code>Authorization</code> header happens once. When you add request-ID echoing in 10.5, it's a one-line change here.
+    </div>
+  </section>
+
+  <section>
+    <h2>3. Storing the token: the trade-off</h2>
+    <p>Where do you keep the JWT between page loads? You met this in 7.3. The honest summary:</p>
+    <table>
+      <tr><th>Option</th><th>Pro</th><th>Con</th></tr>
+      <tr><td><code>localStorage</code></td><td>Simple; survives refresh; easy with a SPA</td><td>Readable by JS → vulnerable if you have an XSS hole</td></tr>
+      <tr><td><code>httpOnly</code> cookie</td><td>JS can't read it (XSS-safer)</td><td>Needs CSRF protection + server cookie handling</td></tr>
+    </table>
+    <p>For this capstone we use <code>localStorage</code> — it's the common SPA choice and keeps the focus on the full-stack flow. We mitigate XSS by never using <code>dangerouslySetInnerHTML</code> and validating input (10.5). We'll call this out explicitly in the README's "security notes".</p>
+  </section>
+
+  <section>
+    <h2>4. The Auth Context</h2>
+    <p>Login state must be readable anywhere (the nav bar shows your name; protected routes check if you're in). That's exactly what React Context is for. The context holds the <code>user</code>, exposes <code>login()</code>/<code>register()</code>/<code>logout()</code>, and restores the session on refresh by calling <code>/auth/me</code>.</p>
+    <pre><code>// src/context/AuthContext.jsx  (essentials)
+const AuthContext = createContext(null);
+
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() =&gt; {
+    if (!getToken()) { setLoading(false); return; }
+    api("/auth/me")                       // token already attached by client
+      .then(setUser)
+      .catch(() =&gt; localStorage.removeItem("taskflow_token"))
+      .finally(() =&gt; setLoading(false));
+  }, []);
+
+  async function login(email, password) {
+    const { access_token } = await api("/auth/login",
+      { method: "POST", form: { username: email, password } });
+    localStorage.setItem("taskflow_token", access_token);
+    setUser(await api("/auth/me"));
+  }
+
+  function logout() {
+    localStorage.removeItem("taskflow_token");
+    setUser(null);
+  }
+
+  return (
+    &lt;AuthContext.Provider value={{ user, loading, login, logout }}&gt;
+      {children}
+    &lt;/AuthContext.Provider&gt;
+  );
+}
+
+export const useAuth = () =&gt; useContext(AuthContext);</code></pre>
+    <div class="callout tip">
+      <div class="label">💡 Restore on refresh</div>
+      Storing only the token (not the user object) and re-fetching <code>/auth/me</code> on mount keeps the user data fresh and confirms the token is still valid. The <code>loading</code> flag prevents a flash of the login page before we know who you are.
+    </div>
+  </section>
+
+  <section>
+    <h2>5. Protected routes</h2>
+    <p>A tiny wrapper component gates everything behind login. If there's no user (and we're done loading), redirect to <code>/login</code>; otherwise render the child route via <code>&lt;Outlet/&gt;</code>.</p>
+    <pre><code>// src/components/ProtectedRoute.jsx
+import { Navigate, Outlet } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+
+export default function ProtectedRoute() {
+  const { user, loading } = useAuth();
+  if (loading) return &lt;p style={{ padding: 24 }}&gt;Loading…&lt;/p&gt;;
+  return user ? &lt;Outlet /&gt; : &lt;Navigate to="/login" replace /&gt;;
+}</code></pre>
+    <p>And the route table composes it with the layout:</p>
+    <pre><code>// src/App.jsx
+&lt;Routes&gt;
+  &lt;Route path="/login" element={&lt;Login /&gt;} /&gt;
+  &lt;Route path="/register" element={&lt;Register /&gt;} /&gt;
+  &lt;Route element={&lt;ProtectedRoute /&gt;}&gt;        {/* everything below needs auth */}
+    &lt;Route element={&lt;Layout /&gt;}&gt;             {/* nav + &lt;Outlet/&gt; */}
+      &lt;Route path="/" element={&lt;Projects /&gt;} /&gt;
+      &lt;Route path="/projects/:id" element={&lt;Board /&gt;} /&gt;  {/* added in 10.4 */}
+    &lt;/Route&gt;
+  &lt;/Route&gt;
+&lt;/Routes&gt;</code></pre>
+  </section>
+
+  <section>
+    <h2>6. The app layout &amp; nav</h2>
+    <p>The layout is the persistent shell: a top nav with the app name, the logged-in user, and a logout button. <code>&lt;Outlet/&gt;</code> is where the active page renders (Module 4.5's nested layouts).</p>
+    <pre><code>// src/components/Layout.jsx
+import { Link, Outlet, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+
+export default function Layout() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  return (
+    &lt;div&gt;
+      &lt;header className="topbar"&gt;
+        &lt;Link to="/" className="brand"&gt;TaskFlow&lt;/Link&gt;
+        &lt;div className="spacer" /&gt;
+        &lt;span&gt;{user?.name}&lt;/span&gt;
+        &lt;button onClick={() =&gt; { logout(); navigate("/login"); }}&gt;
+          Logout
+        &lt;/button&gt;
+      &lt;/header&gt;
+      &lt;main className="content"&gt;&lt;Outlet /&gt;&lt;/main&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+  </section>
+
+  <section>
+    <h2>7. The projects page: list + create</h2>
+    <p>This page does two things: fetch projects on mount, and create new ones. The fetch pattern is your Module 4.4 <code>useEffect</code> + loading/error states; the form is a controlled input from 4.3.</p>
+    <pre><code>// src/pages/Projects.jsx  (essentials)
+export default function Projects() {
+  const [projects, setProjects] = useState([]);
+  const [name, setName] = useState("");
+  const [error, setError] = useState("");
+
+  useEffect(() =&gt; {
+    api("/projects").then(setProjects).catch((e) =&gt; setError(e.message));
+  }, []);
+
+  async function create(e) {
+    e.preventDefault();
+    try {
+      const project = await api("/projects",
+        { method: "POST", body: { name, description: "" } });
+      setProjects((prev) =&gt; [...prev, project]);   // optimistic-ish update
+      setName("");
+    } catch (err) { setError(err.message); }
+  }
+
+  return (
+    &lt;section&gt;
+      &lt;h1&gt;My Projects&lt;/h1&gt;
+      {error &amp;&amp; &lt;p className="error"&gt;{error}&lt;/p&gt;}
+      &lt;form onSubmit={create}&gt;
+        &lt;input value={name} onChange={(e) =&gt; setName(e.target.value)}
+               placeholder="New project name" required /&gt;
+        &lt;button&gt;+ Create&lt;/button&gt;
+      &lt;/form&gt;
+      &lt;ul className="project-grid"&gt;
+        {projects.map((p) =&gt; (
+          &lt;li key={p.id}&gt;
+            &lt;Link to={`/projects/${p.id}`}&gt;{p.name}&lt;/Link&gt;
+          &lt;/li&gt;
+        ))}
+      &lt;/ul&gt;
+    &lt;/section&gt;
+  );
+}</code></pre>
+    <div class="callout warning">
+      <div class="label">⚠️ The cross-origin gotcha</div>
+      Your frontend (port 5173) calls your backend (port 8000) — a different origin. That's why 10.2's <code>main.py</code> has CORS middleware allowing <code>http://localhost:5173</code>. If requests fail with a CORS error in the console, check that origin matches.
+    </div>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li>A single <strong>API client</strong> centralizes the base URL, the bearer token, and error parsing.</li>
+      <li>The <strong>Auth Context</strong> holds the user, exposes <code>login/register/logout</code>, persists the token in <code>localStorage</code>, and restores the session via <code>/auth/me</code>.</li>
+      <li><strong>ProtectedRoute</strong> + a nested <strong>Layout</strong> with <code>&lt;Outlet/&gt;</code> give you a clean app shell where every inner page requires auth.</li>
+      <li>The <strong>Projects</strong> page reuses Module 4's fetch-on-mount and controlled-form patterns against the real API.</li>
+      <li>CORS must allow your Vite origin — already configured on the backend.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and build the authenticated frontend shell + projects views.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

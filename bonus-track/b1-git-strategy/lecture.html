@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk B.1 — Git Strategy &amp; Collaborative Workflows</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .flow{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · ⭐ Bonus Track — Git Strategy &amp; GCP</div>
+    <h1>Chunk B.1 — Git Strategy &amp; Collaborative Workflows</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>Why teams need a <strong>branching strategy</strong> — not just "everyone pushes to main".</li>
+      <li>The three strategies compared: <strong>trunk-based</strong>, <strong>GitHub Flow</strong>, and <strong>Git Flow</strong> — and when to pick each.</li>
+      <li>Feature branches, <strong>pull requests</strong>, and code review the way real teams work.</li>
+      <li><strong>Merge vs. rebase</strong> — what each does and a sane default.</li>
+      <li>Resolving merge conflicts calmly.</li>
+      <li><strong>Conventional commits</strong>, <strong>SemVer</strong> tags &amp; releases.</li>
+      <li>Protecting <code>main</code> with branch protection, and keeping secrets out of history.</li>
+    </ul>
+    <p>In the lab you'll adopt <strong>GitHub Flow</strong> on your TaskFlow repo end-to-end: feature branch → PR → conflict → squash-merge → <code>v1.0.0</code> tag.</p>
+  </section>
+
+  <section>
+    <h2>1. Why a strategy at all?</h2>
+    <p>Back in Module 0 you learned the Git basics: <code>commit</code>, <code>branch</code>, <code>push</code>. That's enough when you work alone. But TaskFlow is the kind of app a <em>team</em> builds, and the moment two people touch the same code, "just push to <code>main</code>" stops working:</p>
+    <ul>
+      <li>Someone pushes a half-finished feature and breaks <code>main</code> for everyone.</li>
+      <li>Two people edit the same file and overwrite each other's work.</li>
+      <li>There's no moment to <em>review</em> code before it ships, so bugs and secrets leak in.</li>
+      <li>You can't tell which commit is "the version we shipped to users".</li>
+    </ul>
+    <p>A <strong>branching strategy</strong> is a shared agreement about <em>where work happens, how it gets reviewed, and how it reaches users</em>. It's the difference between a codebase that scales to a team and one that descends into chaos. The strategy is mostly social (a convention everyone follows), backed by a few technical guardrails (branch protection, CI).</p>
+    <div class="callout note">
+      <div class="label">📝 The one rule behind all strategies</div>
+      <code>main</code> should <em>always</em> be deployable. Whatever lands there is, in principle, ready to ship. Everything risky happens on branches first.
+    </div>
+  </section>
+
+  <section>
+    <h2>2. The mental model: trunk, branches, PRs</h2>
+    <p>Picture a tree. The <strong>trunk</strong> is your long-lived main line — the branch named <code>main</code>. A <strong>feature branch</strong> is a short twig that grows off the trunk while you build one thing, then merges back in. A <strong>pull request (PR)</strong> is the formal proposal: "here's my twig — please review and merge it into the trunk."</p>
+    <div class="flow">main:    A───B───C─────────────F   (always deployable)
+                  \             /
+feature/login:     D───E───────     (your work, in isolation)</div>
+    <p>You branch off <code>main</code> (commit C), make commits D and E in isolation, open a PR, and once it's approved your work merges back as commit F. Nobody saw your broken intermediate states on <code>main</code>; <code>main</code> stayed green the whole time.</p>
+    <table>
+      <tr><th>Term</th><th>Meaning</th></tr>
+      <tr><td><strong>Trunk / <code>main</code></strong></td><td>The single source of truth. Always releasable.</td></tr>
+      <tr><td><strong>Feature branch</strong></td><td>A short-lived branch for one unit of work (a feature, a fix).</td></tr>
+      <tr><td><strong>Remote</strong></td><td>The shared copy on GitHub everyone pushes to / pulls from (<code>origin</code>).</td></tr>
+      <tr><td><strong>Pull Request (PR)</strong></td><td>A request to merge a branch into another, with review &amp; discussion attached. (GitLab calls it a Merge Request.)</td></tr>
+      <tr><td><strong>Code review</strong></td><td>A teammate reading your diff before it merges — catches bugs early.</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>3. The three strategies, compared</h2>
+    <p>There are three widely-used branching strategies. They differ mainly in <em>how many long-lived branches</em> exist and <em>how features reach production</em>.</p>
+
+    <h3>a) Trunk-Based Development</h3>
+    <p>Everyone commits to <code>main</code> (the "trunk") in very small, frequent increments — often via tiny, short-lived branches that merge the same day. There are essentially no long-lived branches. Releases are cut straight from <code>main</code>. This requires strong automated testing and feature flags (to hide unfinished work). It's how high-velocity teams (and most big tech) operate.</p>
+
+    <h3>b) GitHub Flow</h3>
+    <p>One long-lived branch (<code>main</code>) plus short-lived <strong>feature branches</strong>. The loop is simple: branch off <code>main</code> → commit → open a PR → review → merge → deploy. <code>main</code> is always deployable; you deploy after each merge. This is the sweet spot for small teams, web apps, and continuous deployment — and it's what we'll adopt for TaskFlow.</p>
+
+    <h3>c) Git Flow</h3>
+    <p>Many long-lived branches: <code>main</code> (released code), <code>develop</code> (integration), plus <code>feature/*</code>, <code>release/*</code>, and <code>hotfix/*</code> branches. Powerful but heavy — designed for software with <em>scheduled, versioned releases</em> (e.g. desktop apps shipping v2.3 every few months). For a continuously-deployed web app it's usually overkill.</p>
+
+    <table>
+      <tr><th></th><th>Trunk-Based</th><th>GitHub Flow</th><th>Git Flow</th></tr>
+      <tr><td>Long-lived branches</td><td><code>main</code> only</td><td><code>main</code> only</td><td><code>main</code> + <code>develop</code></td></tr>
+      <tr><td>Branch lifetime</td><td>Hours</td><td>Hours–days</td><td>Days–weeks</td></tr>
+      <tr><td>Release model</td><td>Continuous</td><td>Continuous</td><td>Scheduled / versioned</td></tr>
+      <tr><td>Complexity</td><td>Low (needs flags + tests)</td><td>Low</td><td>High</td></tr>
+      <tr><td>Best for</td><td>High-velocity teams, big orgs</td><td>Web apps, small teams, SaaS</td><td>Released/installed software, mobile/desktop</td></tr>
+    </table>
+    <div class="callout tip">
+      <div class="label">💡 A sane default</div>
+      For almost any modern web app (including TaskFlow), start with <strong>GitHub Flow</strong>. It gives you isolation, review, and continuous deploys without ceremony. Reach for Git Flow only when you genuinely have scheduled versioned releases.
+    </div>
+  </section>
+
+  <section>
+    <h2>4. Feature branches in practice</h2>
+    <p>A feature branch isolates one piece of work. Keep them <strong>small and short-lived</strong> — a branch that lives for three weeks drifts far from <code>main</code> and becomes a merge nightmare.</p>
+    <pre><code># start from an up-to-date main
+git switch main
+git pull origin main
+
+# create and switch to a feature branch
+git switch -c feature/task-due-dates
+
+# ...edit files...
+git add .
+git commit -m "feat(tasks): add due-date field to task model"
+
+# push the branch to GitHub (first push sets the upstream)
+git push -u origin feature/task-due-dates</code></pre>
+    <p>Notice the branch <em>name</em> describes the work: <code>feature/task-due-dates</code>, <code>fix/login-redirect</code>, <code>chore/bump-deps</code>. A consistent prefix convention makes the branch list readable.</p>
+    <div class="callout note">
+      <div class="label">📝 <code>git switch</code> vs <code>git checkout</code></div>
+      Modern Git split the overloaded <code>checkout</code> into <code>git switch</code> (change branches) and <code>git restore</code> (discard file changes). Both still work; <code>switch</code> is clearer. <code>-c</code> means "create".
+    </div>
+  </section>
+
+  <section>
+    <h2>5. Pull requests &amp; code review</h2>
+    <p>A <strong>pull request</strong> is where your branch is proposed for merging. It bundles: the diff, a description, automated checks (CI), and a conversation. Even solo, PRs are valuable — they give you a moment to re-read your own diff and a clean record of <em>why</em> a change happened.</p>
+    <p>A good PR:</p>
+    <ul>
+      <li>Is <strong>small</strong> and does <em>one</em> thing (easy to review).</li>
+      <li>Has a clear title and a description: <em>what</em> changed and <em>why</em>.</li>
+      <li>Passes CI (tests, linting) before anyone reviews it.</li>
+      <li>Links the issue it closes (e.g. "Closes #42").</li>
+    </ul>
+    <p>A good <strong>review</strong> is kind and specific: ask questions, suggest, praise good code, and block only on real problems. A <strong>PR template</strong> (a file at <code>.github/pull_request_template.md</code>) auto-fills the description box so every PR answers the same questions.</p>
+    <pre><code># .github/pull_request_template.md
+## What &amp; why
+&lt;!-- What does this PR change, and why? --&gt;
+
+## How to test
+1.
+
+## Checklist
+- [ ] Tests pass locally
+- [ ] No secrets or .env files committed
+- [ ] Updated docs if needed</code></pre>
+  </section>
+
+  <section>
+    <h2>6. Merge vs. rebase</h2>
+    <p>Both bring changes from one branch into another, but they shape history differently.</p>
+    <h3>Merge</h3>
+    <p>A <strong>merge</strong> ties two histories together with a new <em>merge commit</em>. Nothing is rewritten — your branch's commits stay exactly as they were. History is truthful but can look like a tangle of merge commits.</p>
+    <div class="flow">main:    A───B───────M
+                  \     /
+feature:           D───E      →  M is a merge commit joining D,E into main</div>
+    <h3>Rebase</h3>
+    <p>A <strong>rebase</strong> <em>replays</em> your commits on top of the latest <code>main</code>, as if you'd branched from there just now. History becomes a clean straight line — but it <strong>rewrites</strong> your commits (new IDs).</p>
+    <div class="flow">before:  A───B───C  (main)
+              \
+               D───E  (feature)
+
+after rebase:  A───B───C───D'──E'   (feature, replayed on top of C)</div>
+    <table>
+      <tr><th></th><th>Merge</th><th>Rebase</th></tr>
+      <tr><td>History</td><td>Preserved, with merge commits</td><td>Linear, rewritten</td></tr>
+      <tr><td>Safe on shared branches?</td><td>Yes</td><td><strong>No</strong> — never rebase commits others have pulled</td></tr>
+      <tr><td>Good for</td><td>Integrating finished branches</td><td>Tidying <em>your own</em> branch before a PR</td></tr>
+    </table>
+    <div class="callout warning">
+      <div class="label">⚠️ The golden rule of rebase</div>
+      Never rebase commits that you've already pushed and others may have based work on. Rebasing rewrites history; rewriting <em>shared</em> history forces painful "force-push" recoveries. Rebase only your own un-shared feature branch.
+    </div>
+    <h3>A sane default + squash merge</h3>
+    <p>For GitHub Flow, a great default is: <strong>rebase your feature branch onto <code>main</code></strong> to keep it current while you work, then <strong>squash-merge the PR</strong>. A "squash merge" collapses all the messy commits on your branch ("wip", "fix typo", "oops") into one clean commit on <code>main</code>. The result is a tidy, linear, one-commit-per-feature history.</p>
+    <pre><code># keep your branch current with main while working
+git switch feature/task-due-dates
+git fetch origin
+git rebase origin/main
+# (resolve any conflicts, then:)
+git push --force-with-lease   # safe force-push of YOUR branch only</code></pre>
+    <p><code>--force-with-lease</code> is the polite force-push: it refuses to overwrite the remote if someone else pushed in the meantime.</p>
+  </section>
+
+  <section>
+    <h2>7. Resolving merge conflicts</h2>
+    <p>A <strong>conflict</strong> happens when two branches changed the <em>same lines</em> of the same file and Git can't decide which to keep. It's not an error — it's Git asking <em>you</em> to choose. Git marks the spot:</p>
+    <pre><code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+const PAGE_SIZE = 20;        // your current branch's version
+=======
+const PAGE_SIZE = 50;        // the incoming branch's version
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; main</code></pre>
+    <p>To resolve: open the file, decide what the final lines should be, delete the <code>&lt;&lt;&lt;</code> / <code>===</code> / <code>&gt;&gt;&gt;</code> markers, then stage and continue:</p>
+    <pre><code># after editing the file to the version you want:
+git add src/config.js
+git rebase --continue      # if you were rebasing
+# or
+git commit                 # if you were merging</code></pre>
+    <div class="callout tip">
+      <div class="label">💡 Conflicts are routine</div>
+      Conflicts feel scary the first time, but they're a normal part of collaboration. Small, frequent merges = small, easy conflicts. Long-lived branches = giant, painful ones. Keep branches short.
+    </div>
+  </section>
+
+  <section>
+    <h2>8. Conventional commits</h2>
+    <p>A commit message is documentation. <strong>Conventional Commits</strong> is a simple, widely-adopted format that makes history readable and even <em>machine-readable</em> (tools can auto-generate changelogs and version bumps from it):</p>
+    <pre><code>&lt;type&gt;(optional scope): &lt;short summary&gt;
+
+feat(tasks): add due-date field to tasks
+fix(auth): reject expired JWTs with 401
+docs(readme): add local setup instructions
+chore(deps): bump fastapi to 0.115
+refactor(api): extract pagination helper
+test(projects): cover membership permission checks</code></pre>
+    <table>
+      <tr><th>Type</th><th>Use for</th></tr>
+      <tr><td><code>feat</code></td><td>A new feature (user-visible).</td></tr>
+      <tr><td><code>fix</code></td><td>A bug fix.</td></tr>
+      <tr><td><code>docs</code></td><td>Documentation only.</td></tr>
+      <tr><td><code>refactor</code></td><td>Code change that neither fixes a bug nor adds a feature.</td></tr>
+      <tr><td><code>test</code></td><td>Adding or fixing tests.</td></tr>
+      <tr><td><code>chore</code></td><td>Tooling, deps, config — no production code change.</td></tr>
+    </table>
+    <p>The summary is imperative ("add", not "added"), lowercase, and under ~50 characters. A <code>!</code> after the type (e.g. <code>feat!:</code>) or a <code>BREAKING CHANGE:</code> footer flags a breaking change — which matters for versioning, next.</p>
+  </section>
+
+  <section>
+    <h2>9. Tags &amp; SemVer releases</h2>
+    <p>A <strong>tag</strong> is a permanent label on a specific commit — usually marking a release. Unlike a branch, a tag never moves. <strong>Semantic Versioning (SemVer)</strong> gives tags meaning with three numbers: <code>MAJOR.MINOR.PATCH</code>.</p>
+    <table>
+      <tr><th>Part</th><th>Bump when…</th><th>Example</th></tr>
+      <tr><td><strong>MAJOR</strong></td><td>You make a breaking change.</td><td>1.4.2 → <strong>2</strong>.0.0</td></tr>
+      <tr><td><strong>MINOR</strong></td><td>You add a feature, backward-compatible.</td><td>1.4.2 → 1.<strong>5</strong>.0</td></tr>
+      <tr><td><strong>PATCH</strong></td><td>You fix a bug, backward-compatible.</td><td>1.4.2 → 1.4.<strong>3</strong></td></tr>
+    </table>
+    <p>Your first stable release is <code>v1.0.0</code>. Create an <strong>annotated</strong> tag (it stores a message, author, and date — better than a lightweight tag):</p>
+    <pre><code>git tag -a v1.0.0 -m "TaskFlow 1.0.0 — first public release"
+git push origin v1.0.0      # tags aren't pushed by default</code></pre>
+    <p>On GitHub, a tag can be turned into a <strong>Release</strong> with notes and downloadable artifacts. Notice how conventional commits feed this: <code>feat</code> commits → MINOR bump, <code>fix</code> → PATCH, <code>feat!</code> → MAJOR.</p>
+  </section>
+
+  <section>
+    <h2>10. Branch protection</h2>
+    <p>The strategy is a social agreement — <strong>branch protection rules</strong> are the technical enforcement. On GitHub (Settings → Branches → Add rule for <code>main</code>) you can require that:</p>
+    <ul>
+      <li>Changes to <code>main</code> arrive <strong>only through a PR</strong> — no direct pushes.</li>
+      <li>The PR has at least one <strong>approving review</strong>.</li>
+      <li><strong>Status checks pass</strong> (CI green) before merging.</li>
+      <li>The branch is <strong>up to date</strong> with <code>main</code> before merging.</li>
+      <li>Even admins follow the rules ("Do not allow bypassing").</li>
+    </ul>
+    <p>This is what guarantees "<code>main</code> is always deployable" isn't just a hope. In B.3 you'll wire CI/CD so that a green <code>main</code> auto-deploys — branch protection is what keeps that pipeline safe.</p>
+  </section>
+
+  <section>
+    <h2>11. <code>.gitignore</code> hygiene &amp; keeping secrets out of history</h2>
+    <p>Some files must <strong>never</strong> be committed: secrets (<code>.env</code>, API keys, service-account JSON), dependency folders (<code>node_modules</code>), build output (<code>dist/</code>), and local databases (<code>*.db</code>). A <code>.gitignore</code> file tells Git to ignore them:</p>
+    <pre><code># .gitignore — TaskFlow
+# secrets &amp; env
+.env
+.env.*
+*-key.json
+service-account*.json
+
+# python
+__pycache__/
+.venv/
+*.db
+
+# node / vite
+node_modules/
+dist/
+
+# os
+.DS_Store</code></pre>
+    <div class="callout warning">
+      <div class="label">⚠️ Git never forgets</div>
+      If you commit a secret, deleting it in a <em>later</em> commit does <strong>not</strong> remove it — it lives forever in history and anyone with the repo can recover it. The only real fixes are: (1) <strong>rotate the secret immediately</strong> (assume it's burned), and (2) rewrite history with a tool like <code>git filter-repo</code> or BFG. Prevention beats cure: ignore secrets <em>before</em> the first commit, and consider a pre-commit secret scanner.
+    </div>
+    <p>The pattern you'll use everywhere: commit a <code>.env.example</code> with the <em>names</em> of the variables (no values), so teammates know what to set, while the real <code>.env</code> stays ignored.</p>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li>A <strong>branching strategy</strong> keeps <code>main</code> always-deployable while many people work in parallel.</li>
+      <li><strong>GitHub Flow</strong> (one <code>main</code> + short feature branches + PRs) is the sane default for web apps like TaskFlow.</li>
+      <li><strong>PRs + code review</strong> catch problems early; a PR template keeps them consistent.</li>
+      <li><strong>Merge</strong> preserves history; <strong>rebase</strong> linearizes it but rewrites commits — never rebase shared history. Squash-merge for a clean trunk.</li>
+      <li>Conflicts are normal; resolve by choosing the final lines and removing the markers.</li>
+      <li><strong>Conventional commits</strong> + <strong>SemVer</strong> tags make history meaningful; <code>v1.0.0</code> is your first stable release.</li>
+      <li><strong>Branch protection</strong> enforces the strategy; <code>.gitignore</code> keeps secrets out — and rotate any secret that slips in.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and adopt GitHub Flow on your TaskFlow repo for real.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

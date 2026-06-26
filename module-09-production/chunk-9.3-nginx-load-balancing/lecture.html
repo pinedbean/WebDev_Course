@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 9.3 — Nginx Reverse Proxy &amp; Load Balancing</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .flow{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 9 — Production &amp; Load Balancing</div>
+    <h1>Chunk 9.3 — Nginx Reverse Proxy &amp; Load Balancing</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 90–120 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>What a <strong>reverse proxy</strong> is, and how it differs from a <strong>load balancer</strong> (and a forward proxy).</li>
+      <li>Why you <strong>scale out</strong> (horizontal) instead of just up (vertical).</li>
+      <li>How an Nginx <strong>upstream</strong> block distributes requests across multiple FastAPI replicas (<strong>round-robin</strong> and friends).</li>
+      <li>Why <strong>stateless JWT</strong> auth lets you load-balance freely — and what <strong>sticky sessions</strong> are for when you can't.</li>
+      <li>The <strong>SQLite single-writer</strong> problem that appears the moment you run multiple replicas, and when to move to Postgres.</li>
+    </ul>
+    <p>In the lab you'll put Nginx in front of <strong>2+ FastAPI replicas</strong> and watch requests fan out across them.</p>
+  </section>
+
+  <section>
+    <h2>1. Proxies, reverse proxies, load balancers</h2>
+    <p>These terms overlap, so pin them down. They're all "a server in the middle," but facing different directions:</p>
+    <table>
+      <tr><th>Thing</th><th>Sits in front of</th><th>Job</th></tr>
+      <tr><td><strong>Forward proxy</strong></td><td>The <em>clients</em></td><td>Hides/controls users going out to the internet (e.g. a corporate proxy).</td></tr>
+      <tr><td><strong>Reverse proxy</strong></td><td>Your <em>servers</em></td><td>One public front door; forwards incoming requests to backend services.</td></tr>
+      <tr><td><strong>Load balancer</strong></td><td>Your <em>servers</em></td><td>A reverse proxy that spreads traffic across <em>multiple</em> identical backends.</td></tr>
+    </table>
+    <p>A <strong>reverse proxy</strong> is a single entry point that receives every request and decides where it goes. Even with one backend it's valuable: it terminates TLS (HTTPS), serves static files, sets headers, hides your internal topology, and gives the browser a single origin to talk to. You already used Nginx as a reverse-proxy-ish static server in 9.2.</p>
+    <p>A <strong>load balancer</strong> is a reverse proxy with more than one backend behind it, sharing the load. Nginx is both — flip on a few extra lines and your reverse proxy becomes a load balancer.</p>
+    <div class="callout note">
+      <div class="label">📝 One mental model</div>
+      Think of a restaurant host. A <strong>reverse proxy</strong> is the host who greets everyone at the door and points them to the kitchen. A <strong>load balancer</strong> is that host when there are several identical kitchens — seating parties across them so no one kitchen is swamped.
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Why scale out?</h2>
+    <p>A single backend container can only do so much. When traffic grows you have two options:</p>
+    <ul>
+      <li><strong>Vertical scaling (up):</strong> give the one server more CPU/RAM. Simple, but there's a ceiling, it's expensive at the top end, and that one server is a single point of failure.</li>
+      <li><strong>Horizontal scaling (out):</strong> run <em>more copies</em> of the server and share traffic among them. Near-unlimited headroom, and if one copy dies the others carry on.</li>
+    </ul>
+    <p>Horizontal scaling is the production default — it's how you handle both <strong>load</strong> (more replicas = more throughput) and <strong>resilience</strong> (a dead replica is routed around). It's exactly why you containerized in 9.2: an image is trivially copyable, so running 2 or 20 replicas is just a number.</p>
+    <div class="flow">           ┌─────────────┐
+           │   Nginx     │   one public door, spreads the load
+  users ──&gt;│ load balancer│
+           └──────┬──────┘
+        ┌─────────┼─────────┐
+        ▼         ▼         ▼
+     api #1     api #2    api #3      &lt;- replicas of the SAME image
+        └─────────┼─────────┘
+                  ▼
+            shared database</div>
+  </section>
+
+  <section>
+    <h2>3. The Nginx <code>upstream</code> block</h2>
+    <p>You tell Nginx about a pool of backends with an <code>upstream</code> block, then <code>proxy_pass</code> to that pool. Here's the heart of it:</p>
+    <pre><code>upstream api_pool {
+    server api1:8000;
+    server api2:8000;
+    server api3:8000;
+}
+
+server {
+    listen 80;
+
+    # Serve the built frontend...
+    location / {
+        root /usr/share/nginx/html;
+        try_files $uri $uri/ /index.html;
+    }
+
+    # ...and forward API calls to the pool.
+    location /api/ {
+        proxy_pass http://api_pool/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}</code></pre>
+    <p>By default Nginx uses <strong>round-robin</strong>: request 1 → api1, request 2 → api2, request 3 → api3, request 4 → api1, and so on. Even, simple, effective. Those <code>proxy_set_header</code> lines pass the real client info through so your backend logs (8.1!) can still see who's calling instead of just "Nginx."</p>
+    <div class="callout tip">
+      <div class="label">💡 Same origin, no more CORS headaches</div>
+      Notice the browser now talks <em>only</em> to Nginx: the frontend at <code>/</code> and the API at <code>/api/</code> are the <strong>same origin</strong>. That sidesteps CORS entirely and means the frontend can use a relative <code>VITE_API_URL=/api</code> — no hardcoded host or port. This is the clean production layout.
+    </div>
+  </section>
+
+  <section>
+    <h2>4. Load-balancing strategies</h2>
+    <p>Round-robin is the default, but Nginx offers others for when your backends aren't uniform or requests vary wildly in cost:</p>
+    <table>
+      <tr><th>Strategy</th><th>Directive</th><th>When to use</th></tr>
+      <tr><td><strong>Round-robin</strong></td><td>(default)</td><td>Backends are identical &amp; requests are similar. The sane default.</td></tr>
+      <tr><td><strong>Least connections</strong></td><td><code>least_conn;</code></td><td>Request durations vary a lot — send the next request to the least-busy replica.</td></tr>
+      <tr><td><strong>Weighted</strong></td><td><code>server api1:8000 weight=3;</code></td><td>Some replicas are bigger/faster — give them a larger share.</td></tr>
+      <tr><td><strong>IP hash</strong></td><td><code>ip_hash;</code></td><td>Pin each client IP to the same backend (a form of sticky sessions — see below).</td></tr>
+    </table>
+    <p>For the Tasks API, identical replicas + round-robin is exactly right.</p>
+  </section>
+
+  <section>
+    <h2>5. Sticky sessions vs stateless JWT (the big idea)</h2>
+    <p>Here's the question load balancing forces you to answer: <strong>request 2 might land on a different replica than request 1. Will that break anything?</strong></p>
+    <p>It depends entirely on where your auth state lives — and this is where Module 7's design pays off enormously.</p>
+
+    <h3>The session approach (would need stickiness)</h3>
+    <p>If you'd used server-side <strong>sessions</strong> (session data stored in <em>one</em> server's memory), then a user who logged in on api1 has their session only on api1. If round-robin sends their next request to api2, api2 has no idea who they are → logged out. The patch is <strong>sticky sessions</strong> (a.k.a. session affinity): the load balancer pins each user to the same backend (e.g. via <code>ip_hash</code> or a cookie). It works, but it undermines balancing (one replica can get overloaded) and breaks when that replica dies (those users lose their sessions).</p>
+
+    <h3>The JWT approach (no stickiness needed)</h3>
+    <p>You used <strong>stateless JWTs</strong>. The token <em>itself</em> carries the user's identity and is signed with a <code>SECRET_KEY</code> that <strong>every replica shares</strong>. So <em>any</em> replica can verify <em>any</em> token with no lookup and no shared session store. Request 1 on api1, request 2 on api2, request 3 on api3 — all work identically. Your backends are <strong>stateless</strong>, so the load balancer can send each request anywhere. <em>This is why the course chose JWT back in 7.2.</em></p>
+    <div class="callout warning">
+      <div class="label">⚠️ One condition: every replica must share the same SECRET_KEY</div>
+      Stateless auth across replicas only works if all replicas verify with the same signing secret. If api1 signs with one key and api2 has a different key, api2 rejects api1's tokens (401). In Compose, pass the <em>same</em> <code>SECRET_KEY</code> env var to every replica (you already do — one env, many containers).
+    </div>
+    <table>
+      <tr><th></th><th>Server sessions</th><th>Stateless JWT (you)</th></tr>
+      <tr><td>State lives</td><td>In one server's memory</td><td>In the token (client holds it)</td></tr>
+      <tr><td>Needs sticky sessions?</td><td>Yes</td><td><strong>No</strong></td></tr>
+      <tr><td>Replica dies</td><td>Its users get logged out</td><td>No impact — any replica serves them</td></tr>
+      <tr><td>Scales out cleanly</td><td>Awkward</td><td>Trivially</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>6. Health checks &amp; routing around dead replicas</h2>
+    <p>What happens when a replica crashes? Nginx does <strong>passive health checks</strong> out of the box: if a backend fails or times out, Nginx marks it temporarily down and sends the request to another one — the user never notices. You can tune the thresholds:</p>
+    <pre><code>upstream api_pool {
+    server api1:8000 max_fails=3 fail_timeout=10s;
+    server api2:8000 max_fails=3 fail_timeout=10s;
+}</code></pre>
+    <p>This is where your 8.2 <code>/health</code> endpoint earns its keep: Docker (and orchestrators like Kubernetes) call it to decide whether a replica is alive and should receive traffic. Cheap liveness checks + a load balancer that routes around failures = an app that stays up even when individual replicas don't.</p>
+  </section>
+
+  <section>
+    <h2>7. The catch: SQLite and multiple writers</h2>
+    <p>You scaled the <em>app</em> tier to N replicas. But they all talk to <strong>one</strong> database. The app is stateless; the data is not — and SQLite has a hard limit here.</p>
+    <p><strong>SQLite allows only one writer at a time.</strong> It's a file, not a server. Multiple replicas sharing one SQLite file (via the volume from 9.2) can <em>read</em> concurrently just fine, but concurrent <em>writes</em> serialize, and under real load you'll see <code>database is locked</code> errors. Two mitigations help a little:</p>
+    <ul>
+      <li><strong>WAL mode</strong> (<code>PRAGMA journal_mode=WAL</code>) lets readers and a writer coexist better — but still only one writer.</li>
+      <li>A shared volume so every replica opens the <em>same</em> file (multiple separate files would be chaos).</li>
+    </ul>
+    <p>These let you <em>demonstrate</em> load balancing for the lab, which is the goal. But they don't make SQLite a multi-writer database — it isn't one.</p>
+    <div class="callout warning">
+      <div class="label">⚠️ The honest limit — when to move to Postgres</div>
+      SQLite is superb for development, single-instance apps, and low write concurrency. The moment you genuinely scale out a write-heavy app, you've outgrown it. The fix is a real client/server database — <strong>PostgreSQL</strong> — which is built for many concurrent writers over the network. Thanks to SQLAlchemy, that migration is mostly changing <code>DATABASE_URL</code> and the driver; your models and queries barely change. We'll lay this out concretely in 9.4 (and the Bonus Track does it on GCP with Cloud SQL).
+    </div>
+  </section>
+
+  <section>
+    <h2>8. Seeing it work: which replica answered?</h2>
+    <p>Round-robin is invisible unless you make it visible. The trick: have each replica reveal its identity. Inside a container, the hostname is the container id, so you can log it or return it in a header/field. If your backend reports <code>os.uname().nodename</code> (or <code>socket.gethostname()</code>), then repeated requests will show the value rotating across replicas — proof the load balancer is spreading the work. You'll add exactly this in the lab.</p>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li>A <strong>reverse proxy</strong> is one front door for your servers; a <strong>load balancer</strong> is a reverse proxy spreading traffic across <em>multiple</em> identical backends.</li>
+      <li><strong>Scale out</strong> (more replicas) beats scaling up for throughput and resilience — easy because your app is a copyable image.</li>
+      <li>Nginx's <strong>upstream</strong> + <code>proxy_pass</code> gives round-robin by default; <code>least_conn</code>/weights/<code>ip_hash</code> exist for special cases.</li>
+      <li><strong>Stateless JWT</strong> (with a shared <code>SECRET_KEY</code>) means any replica serves any request — <strong>no sticky sessions</strong> needed. That's why the course chose JWT.</li>
+      <li>One database under many replicas exposes <strong>SQLite's single-writer limit</strong>; fine to demo, but real write-scaling means <strong>moving to Postgres</strong>.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and build the load-balanced stack.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

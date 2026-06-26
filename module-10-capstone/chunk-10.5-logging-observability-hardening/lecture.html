@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 10.5 — Logging, Observability &amp; Hardening</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  .checkpoint{background:#fffbeb;border:2px solid #f59e0b;}
+  .checkpoint h2{border-color:#fde68a;color:#92400e;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 10 — Capstone: TaskFlow</div>
+    <h1>Chunk 10.5 — Logging, Observability &amp; Hardening</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 90–120 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>How to emit <strong>structured (JSON) logs</strong> from FastAPI and why they beat <code>print</code>.</li>
+      <li>How to attach a <strong>request ID</strong> to every request so you can trace one request across logs (and replicas).</li>
+      <li>How to build <strong>health checks</strong> (<code>/health</code> liveness + a DB-aware readiness check) for load balancers and orchestrators.</li>
+      <li>How to add a React <strong>error boundary</strong> so one broken component doesn't blank the whole app.</li>
+      <li>How to run a <strong>security &amp; validation hardening pass</strong>: input rules, CORS, secrets, headers, and rate-limiting basics.</li>
+    </ul>
+    <p>The lab delivers an observable, hardened TaskFlow ready to containerize.</p>
+  </section>
+
+  <section>
+    <h2>1. Why structured logging (reprise of Module 8)</h2>
+    <p>In production you don't watch a terminal — you ship logs to a system that <em>searches</em> and <em>filters</em> them. That only works if each log line is machine-readable. A <strong>structured log</strong> is one JSON object per line:</p>
+    <pre><code>{"ts":"2026-06-26T09:14:02Z","level":"INFO","msg":"request",
+ "request_id":"a1b2c3d4","method":"POST","path":"/api/v1/projects",
+ "status":201,"duration_ms":12,"user_id":4}</code></pre>
+    <p>Now you can answer "show me all 5xx responses for user 4 in the last hour" with a query. With <code>print("created project")</code> you can't. The rule from Module 8 holds: <strong>log, don't print</strong>, and make every line structured.</p>
+    <table>
+      <tr><th>Level</th><th>Use for</th></tr>
+      <tr><td><code>DEBUG</code></td><td>Verbose developer detail (off in prod)</td></tr>
+      <tr><td><code>INFO</code></td><td>Normal events: requests, startup, a project created</td></tr>
+      <tr><td><code>WARNING</code></td><td>Recoverable oddities: a 404, a failed login attempt</td></tr>
+      <tr><td><code>ERROR</code></td><td>Unhandled exceptions, failed DB writes</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>2. A JSON log formatter</h2>
+    <p>Python's <code>logging</code> module is built-in. We give it a custom formatter that renders the record (plus any extra fields) as JSON:</p>
+    <pre><code>import json, logging
+from datetime import datetime, timezone
+
+class JsonFormatter(logging.Formatter):
+    def format(self, record):
+        payload = {
+            "ts": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "level": record.levelname,
+            "msg": record.getMessage(),
+            "logger": record.name,
+        }
+        # merge any structured "extra" fields we attached
+        if hasattr(record, "extra_fields"):
+            payload.update(record.extra_fields)
+        if record.exc_info:
+            payload["exc"] = self.formatException(record.exc_info)
+        return json.dumps(payload)
+
+def configure_logging():
+    handler = logging.StreamHandler()       # stdout -&gt; Docker captures it
+    handler.setFormatter(JsonFormatter())
+    root = logging.getLogger()
+    root.handlers = [handler]
+    root.setLevel(logging.INFO)</code></pre>
+    <div class="callout note">
+      <div class="label">📝 Log to stdout, not a file</div>
+      In containers (Module 9), the platform collects whatever you print to stdout/stderr. So don't write log files — write JSON to stdout and let Docker/the host aggregate it. One less thing to manage.
+    </div>
+  </section>
+
+  <section>
+    <h2>3. Request IDs &amp; a logging middleware</h2>
+    <p>A <strong>request ID</strong> is a unique token per request. You log it on every line for that request, return it in a response header, and (in 10.6) it lets you trace a request even when it bounced through one of several backend replicas. We generate or honor an incoming <code>X-Request-ID</code> in middleware:</p>
+    <pre><code>import time, uuid, logging
+from starlette.middleware.base import BaseHTTPMiddleware
+
+log = logging.getLogger("taskflow.request")
+
+class RequestLogMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        request_id = request.headers.get("X-Request-ID") or uuid.uuid4().hex[:12]
+        request.state.request_id = request_id
+        start = time.perf_counter()
+        response = await call_next(request)
+        duration_ms = round((time.perf_counter() - start) * 1000, 1)
+        log.info("request", extra={"extra_fields": {
+            "request_id": request_id,
+            "method": request.method,
+            "path": request.url.path,
+            "status": response.status_code,
+            "duration_ms": duration_ms,
+        }})
+        response.headers["X-Request-ID"] = request_id
+        return response</code></pre>
+    <p>Because <code>request.state.request_id</code> is set, any handler or error logger can include the same id — so all the lines for one request share a key.</p>
+    <div class="callout tip">
+      <div class="label">💡 Show the id to the user (carefully)</div>
+      Returning <code>X-Request-ID</code> in the response lets your frontend display "Error — reference a1b2c3d4" on a failure. A user can quote that id in a bug report and you can find the exact request in your logs.
+    </div>
+  </section>
+
+  <section>
+    <h2>4. Health checks: liveness vs. readiness</h2>
+    <p>Load balancers and orchestrators poll an endpoint to decide whether to send traffic to an instance. Two flavors:</p>
+    <table>
+      <tr><th>Check</th><th>Question</th><th>Implementation</th></tr>
+      <tr><td><code>/health</code> (liveness)</td><td>"Is the process up?"</td><td>Return <code>{"status":"ok"}</code> — cheap, no dependencies.</td></tr>
+      <tr><td><code>/health/ready</code> (readiness)</td><td>"Can it serve real traffic?"</td><td>Try a trivial DB query; 200 if it works, 503 if not.</td></tr>
+    </table>
+    <pre><code>from sqlalchemy import text
+
+@app.get("/api/v1/health")
+def health():
+    return {"status": "ok"}
+
+@app.get("/api/v1/health/ready")
+def ready(db: Session = Depends(get_db)):
+    try:
+        db.execute(text("SELECT 1"))
+        return {"status": "ready"}
+    except Exception:
+        raise HTTPException(503, "database unavailable")</code></pre>
+    <p>Nginx (10.6) will hit <code>/health</code> to drop dead replicas out of rotation. Keep liveness dependency-free so a slow DB doesn't get a healthy process killed.</p>
+  </section>
+
+  <section>
+    <h2>5. Catching errors centrally</h2>
+    <p>Unhandled exceptions should be <em>logged with the request id</em> and returned as a clean 500 — never a stack trace to the user. A global exception handler does both:</p>
+    <pre><code>from fastapi import Request
+from fastapi.responses import JSONResponse
+
+@app.exception_handler(Exception)
+async def unhandled(request: Request, exc: Exception):
+    rid = getattr(request.state, "request_id", "-")
+    logging.getLogger("taskflow").error(
+        "unhandled_exception",
+        extra={"extra_fields": {"request_id": rid, "path": request.url.path}},
+        exc_info=exc,
+    )
+    return JSONResponse(status_code=500,
+        content={"detail": "Internal server error", "request_id": rid})</code></pre>
+    <div class="callout warning">
+      <div class="label">⚠️ Never leak internals</div>
+      A raw traceback in an HTTP response is an information-disclosure vulnerability (it reveals file paths, library versions, sometimes secrets). Log the detail server-side; return a generic message + the request id to the client.
+    </div>
+  </section>
+
+  <section>
+    <h2>6. The React error boundary</h2>
+    <p>A JavaScript error in one component will, by default, unmount your entire React tree — the user sees a blank white page. An <strong>error boundary</strong> (Module 8.2) catches render errors in its subtree and shows a fallback instead. It must be a class component (the one place we still use one):</p>
+    <pre><code>import { Component } from "react";
+
+export default class ErrorBoundary extends Component {
+  state = { error: null };
+  static getDerivedStateFromError(error) { return { error }; }
+  componentDidCatch(error, info) {
+    // send to your logging endpoint / console
+    console.error("UI crash:", error, info);
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        &lt;div className="crash"&gt;
+          &lt;h1&gt;Something went wrong&lt;/h1&gt;
+          &lt;button onClick={() =&gt; location.reload()}&gt;Reload&lt;/button&gt;
+        &lt;/div&gt;
+      );
+    }
+    return this.props.children;
+  }
+}</code></pre>
+    <p>Wrap the app with it in <code>main.jsx</code> so any page crash degrades gracefully instead of going blank.</p>
+  </section>
+
+  <section>
+    <h2>7. The hardening pass</h2>
+    <p>Walk a checklist before shipping. Each item closes a real gap (these echo Module 7.4):</p>
+    <table>
+      <tr><th>Area</th><th>Hardening</th></tr>
+      <tr><td>Input validation</td><td>Pydantic field rules: <code>min_length</code> on passwords, max lengths on titles/names, the <code>Literal</code> status set, <code>EmailStr</code>. Reject junk at the edge.</td></tr>
+      <tr><td>Secrets</td><td><code>SECRET_KEY</code> from env only; no defaults in prod; <code>.env</code> gitignored; fail fast if missing.</td></tr>
+      <tr><td>CORS</td><td>Allow only your real frontend origin(s) — not <code>"*"</code> — via an env var.</td></tr>
+      <tr><td>Auth</td><td>Token expiry enforced; generic "incorrect email or password" (don't reveal which); password length minimum.</td></tr>
+      <tr><td>Headers</td><td>Add basic security headers (e.g. <code>X-Content-Type-Options: nosniff</code>) — easy via middleware or Nginx in 10.6.</td></tr>
+      <tr><td>XSS</td><td>Never use <code>dangerouslySetInnerHTML</code>; React escapes by default. Validate/normalize inputs.</td></tr>
+      <tr><td>Rate limiting</td><td>At minimum, throttle <code>/auth/login</code> to slow brute-force (a simple in-memory limiter for the MVP; a shared store in real prod).</td></tr>
+      <tr><td>Errors</td><td>Global handler logs detail, returns generic message + request id (section 5).</td></tr>
+    </table>
+    <pre><code># Example: tighten a password rule in schemas.py
+from pydantic import BaseModel, EmailStr, Field
+
+class RegisterIn(BaseModel):
+    email: EmailStr
+    password: str = Field(min_length=8, max_length=128)
+    name: str = Field(min_length=1, max_length=80)</code></pre>
+    <div class="callout tip">
+      <div class="label">💡 Hardening is a habit, not a feature</div>
+      You won't make TaskFlow unhackable in one session — but a documented checklist you actually ran is exactly what reviewers and interviewers want to see. Note what you did (and what you'd add next) in the README's security section.
+    </div>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li><strong>Structured JSON logs</strong> to stdout make production debuggable; <code>print</code> doesn't.</li>
+      <li>A <strong>request-ID middleware</strong> tags every line and the response header so you can trace one request anywhere.</li>
+      <li><strong>Liveness</strong> (<code>/health</code>) and <strong>readiness</strong> (<code>/health/ready</code>) checks serve load balancers; keep liveness dependency-free.</li>
+      <li>A <strong>global exception handler</strong> logs the detail + request id and returns a clean 500; a React <strong>error boundary</strong> prevents blank-page crashes.</li>
+      <li>The <strong>hardening pass</strong> tightens validation, secrets, CORS, auth messages, headers, and rate limiting — and you document it.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and make TaskFlow observable and hardened.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

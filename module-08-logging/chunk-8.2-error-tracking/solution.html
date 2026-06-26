@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk 8.2 — Error Tracking &amp; Frontend Logging</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .full{border:2px solid #16a34a;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 8 — Logging &amp; Observability</div>
+    <h1>Chunk 8.2 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>Part A hardens the backend (error handler, health checks, client-log sink). Part B catches frontend crashes. New/changed files:</p>
+    <div class="filetree">tasks-api/                          tasks-web/
+└── app/                             └── src/
+    ├── main.py    (handler + health)    ├── api.js        (reportClientError)
+    ├── schemas.py (ClientErrorReport)   ├── main.jsx      (wrap with boundary)
+    └── routers/                         └── components/
+        └── meta.py (/client-logs)           └── ErrorBoundary.jsx  (new)</div>
+  </section>
+
+  <section>
+    <h2>Part A — Backend</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Catch-all exception handler in <code>app/main.py</code></h3>
+      <pre><code># app/main.py  (additions — keep your 8.1 setup_logging + middleware)
+import logging
+from fastapi import FastAPI, Request, Depends
+from fastapi.responses import JSONResponse
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+
+logger = logging.getLogger("app.errors")
+
+app = FastAPI(title="Tasks API")
+# ... add_middleware(...) and include_router(...) as before ...
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    logger.exception(
+        "unhandled exception",
+        extra={"method": request.method, "path": request.url.path},
+    )
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
+    )</code></pre>
+      <div class="callout note">
+        <div class="label">📝 Your purposeful errors are safe</div>
+        FastAPI handles <code>HTTPException</code> (and <code>RequestValidationError</code>) with its own built-in handlers, which run before this catch-all. A <code>raise HTTPException(404, ...)</code> still returns a real 404 — only genuinely unhandled exceptions reach this function.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Health checks (liveness + readiness)</h3>
+      <pre><code># app/main.py  (additions)
+
+@app.get("/health", tags=["health"])
+def health():
+    """Liveness: is the process up? Cheap, no dependencies."""
+    return {"status": "ok"}
+
+
+@app.get("/health/ready", tags=["health"])
+def readiness(db: Session = Depends(get_db)):
+    """Readiness: can we actually serve? Check the database."""
+    try:
+        db.execute(text("SELECT 1"))
+        return {"status": "ready", "database": "ok"}
+    except Exception:
+        logger.exception("readiness check failed")
+        return JSONResponse(
+            status_code=503,
+            content={"status": "not ready", "database": "down"},
+        )</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> The client-log sink</h3>
+      <p>Schema first:</p>
+      <pre><code># app/schemas.py  (add)
+from pydantic import BaseModel
+
+class ClientErrorReport(BaseModel):
+    message: str
+    stack: str = ""
+    url: str = ""</code></pre>
+      <p>Then a tiny router (kept separate so it's clearly public):</p>
+      <pre><code># app/routers/meta.py  (new)
+import logging
+from fastapi import APIRouter, status
+
+from app import schemas
+
+logger = logging.getLogger("app.client")
+router = APIRouter(tags=["meta"])
+
+
+@router.post("/client-logs", status_code=status.HTTP_202_ACCEPTED)
+def client_logs(report: schemas.ClientErrorReport):
+    logger.error(
+        "client error",
+        extra={
+            "client_message": report.message[:500],
+            "client_url": report.url[:300],
+            "client_stack": report.stack[:2000],   # cap untrusted input
+        },
+    )
+    return {"received": True}</code></pre>
+      <pre><code># app/main.py
+from app.routers import auth, tasks, admin, meta
+app.include_router(meta.router)</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Test the backend</h3>
+      <p>Add a throwaway <code>/boom</code> route (<code>raise ValueError("kaboom")</code>) and exercise everything:</p>
+      <pre><code>curl -i localhost:8000/health
+# HTTP/1.1 200 OK   {"status":"ok"}
+
+curl -s localhost:8000/health/ready
+# {"status":"ready","database":"ok"}
+
+curl -i localhost:8000/boom
+# HTTP/1.1 500 Internal Server Error   {"detail":"Internal server error"}</code></pre>
+      <p>The <code>/boom</code> call leaves a structured error log in your terminal — note the traceback in <code>exception</code> and the matching request id:</p>
+      <pre><code>{"timestamp": "2026-06-26T14:20:02.551Z", "level": "ERROR", "logger": "app.errors", "message": "unhandled exception", "request_id": "7c1a9e02", "method": "GET", "path": "/boom", "exception": "Traceback (most recent call last):\n  ...\nValueError: kaboom"}</code></pre>
+      <p>Delete <code>/boom</code> once you're satisfied.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Part B — Frontend</h2>
+
+    <div class="step">
+      <h3><span class="num">5</span> <code>reportClientError</code> in <code>src/api.js</code></h3>
+      <pre><code>// src/api.js  (add; BASE already defined at top)
+export async function reportClientError(error, componentStack = "") {
+  try {
+    await fetch(`${BASE}/client-logs`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: String(error?.message || error),
+        stack: componentStack || error?.stack || "",
+        url: window.location.href,
+      }),
+    });
+  } catch {
+    // Swallow: the reporter must never crash the app.
+  }
+}</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> <code>src/components/ErrorBoundary.jsx</code></h3>
+      <pre><code>import { Component } from "react";
+import { reportClientError } from "../api";
+
+export default class ErrorBoundary extends Component {
+  state = { hasError: false };
+
+  static getDerivedStateFromError(_error) {
+    return { hasError: true };          // render the fallback next
+  }
+
+  componentDidCatch(error, info) {
+    // info.componentStack tells us which component tree threw.
+    reportClientError(error, info?.componentStack);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        &lt;div role="alert" style={{ maxWidth: 480, margin: "60px auto", textAlign: "center" }}&gt;
+          &lt;h1&gt;Something went wrong.&lt;/h1&gt;
+          &lt;p&gt;The error has been reported. Try reloading the page.&lt;/p&gt;
+          &lt;button onClick={() =&gt; window.location.reload()}&gt;Reload&lt;/button&gt;
+        &lt;/div&gt;
+      );
+    }
+    return this.props.children;
+  }
+}</code></pre>
+      <div class="callout note">
+        <div class="label">📝 Why this is still a class</div>
+        There is no hook equivalent for <code>getDerivedStateFromError</code> / <code>componentDidCatch</code> yet, so error boundaries remain class components. You write it once and never touch it again — everything inside can be modern function components.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Wrap the app in <code>src/main.jsx</code></h3>
+      <pre><code>import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import ErrorBoundary from "./components/ErrorBoundary";
+import App from "./App";
+
+ReactDOM.createRoot(document.getElementById("root")).render(
+  &lt;React.StrictMode&gt;
+    &lt;ErrorBoundary&gt;
+      &lt;BrowserRouter&gt;
+        &lt;AuthProvider&gt;
+          &lt;App /&gt;
+        &lt;/AuthProvider&gt;
+      &lt;/BrowserRouter&gt;
+    &lt;/ErrorBoundary&gt;
+  &lt;/React.StrictMode&gt;
+);</code></pre>
+      <div class="callout tip">
+        <div class="label">💡 Where to place the boundary</div>
+        At the very top it catches everything (shown above). You can <em>also</em> wrap smaller sections (e.g. just the dashboard) with their own boundaries so a crash in one widget doesn't blank the whole app. Start with one at the root.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">8</span> Trigger a crash and verify end to end</h3>
+      <p>Add a temporary component that throws during render and drop it into a page:</p>
+      <pre><code>function Boom() {
+  throw new Error("frontend boom for testing");
+}
+// render &lt;Boom /&gt; somewhere, e.g. on the Dashboard, to test.</code></pre>
+      <p>Run both servers, load the page that renders <code>&lt;Boom /&gt;</code>, and confirm:</p>
+      <ul>
+        <li>You see the <strong>fallback UI</strong> ("Something went wrong." + Reload), not a blank white page.</li>
+        <li>DevTools → Network shows a <code>POST /client-logs</code> returning <code>202</code>.</li>
+        <li>Your backend terminal prints a JSON <code>"client error"</code> line:</li>
+      </ul>
+      <pre><code>{"timestamp": "2026-06-26T14:25:40.880Z", "level": "ERROR", "logger": "app.client", "message": "client error", "request_id": "b4d9f1a0", "client_message": "frontend boom for testing", "client_url": "http://localhost:5173/dashboard", "client_stack": "\n    at Boom ...\n    at Dashboard ..."}</code></pre>
+      <p>Remove the <code>&lt;Boom /&gt;</code> component when done.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>🔧 Troubleshooting</h2>
+    <table>
+      <tr><th>Symptom</th><th>Fix</th></tr>
+      <tr><td>The catch-all 500 hides a real 404/401</td><td>You're catching <code>HTTPException</code>. Only register <code>@app.exception_handler(Exception)</code>; let FastAPI keep handling <code>HTTPException</code> itself.</td></tr>
+      <tr><td><code>/health/ready</code> always 200 even with no DB</td><td>You didn't actually execute a query. Use <code>db.execute(text("SELECT 1"))</code> and wrap it in <code>try/except</code>.</td></tr>
+      <tr><td>Error boundary doesn't catch the crash</td><td>The error is in an event handler or async code (boundaries only catch render errors), or the throwing component isn't inside the boundary. Test by throwing during render.</td></tr>
+      <tr><td>In dev, React shows its own error overlay first</td><td>That's Vite's dev overlay — dismiss it (or press Esc). Your fallback still rendered underneath; the overlay doesn't appear in a production build.</td></tr>
+      <tr><td><code>POST /client-logs</code> fails with CORS</td><td>Add it under your existing CORS config; it's a normal POST so the Module 7 allowlist covers it (match the frontend origin).</td></tr>
+      <tr><td>Reporter throws and re-crashes the page</td><td>Keep the whole <code>fetch</code> inside <code>try/catch</code> in <code>reportClientError</code> — never let it raise.</td></tr>
+    </table>
+  </section>
+
+  <section class="full">
+    <h2>📄 Complete <code>src/components/ErrorBoundary.jsx</code></h2>
+    <pre><code>import { Component } from "react";
+import { reportClientError } from "../api";
+
+export default class ErrorBoundary extends Component {
+  state = { hasError: false };
+
+  static getDerivedStateFromError(_error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, info) {
+    reportClientError(error, info?.componentStack);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        &lt;div role="alert" style={{ maxWidth: 480, margin: "60px auto", textAlign: "center" }}&gt;
+          &lt;h1&gt;Something went wrong.&lt;/h1&gt;
+          &lt;p&gt;The error has been reported. Try reloading the page.&lt;/p&gt;
+          &lt;button onClick={() =&gt; window.location.reload()}&gt;Reload&lt;/button&gt;
+        &lt;/div&gt;
+      );
+    }
+    return this.props.children;
+  }
+}</code></pre>
+  </section>
+
+  <section class="done">
+    <h2>🎉 Module 8 complete</h2>
+    <p>Your Tasks app is now <strong>observable end to end</strong>:</p>
+    <ul>
+      <li><strong>8.1</strong> — structured JSON logs to stdout, a request-logging middleware, and a request id on every line + <code>X-Request-ID</code> header.</li>
+      <li><strong>8.2</strong> — a catch-all exception handler that logs tracebacks and returns clean 500s, <code>/health</code> + <code>/health/ready</code>, a <code>/client-logs</code> sink, and a React error boundary that turns crashes into a graceful fallback you actually hear about.</li>
+    </ul>
+    <p>When something goes wrong now — backend or frontend — it's caught, logged with context, and traceable by id. That's exactly what you need before exposing the app to the world. Next you'll take it to production: real builds, containers, and a load balancer.</p>
+    <div class="callout note">
+      <div class="label">📝 You just earned health checks for free</div>
+      Those <code>/health</code> and <code>/health/ready</code> endpoints aren't just nice to have — Nginx and Docker will <em>call</em> them in Module 9 to route around dead replicas. You built them at exactly the right time.
+    </div>
+    <p><strong>Up next → Module 9, Chunk 9.1: Production Builds &amp; Environments.</strong></p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

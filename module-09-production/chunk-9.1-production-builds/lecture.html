@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 9.1 — Production Builds &amp; Environments</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .flow{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 9 — Production &amp; Load Balancing</div>
+    <h1>Chunk 9.1 — Production Builds &amp; Environments</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>Why <strong>development</strong> and <strong>production</strong> need different configurations.</li>
+      <li>What <code>npm run build</code> actually does to a Vite app, and why you never ship the dev server.</li>
+      <li>How <strong>environment variables</strong> work in Vite (<strong>build-time</strong>) vs FastAPI (<strong>runtime</strong>) — and why the difference matters.</li>
+      <li>How to keep <strong>secrets</strong> out of your code and your frontend bundle.</li>
+      <li>How a production frontend is just <strong>static files</strong>, and how a production backend runs (multiple workers, no reload).</li>
+    </ul>
+    <p>In the lab you'll produce real build artifacts: a minified frontend <code>dist/</code> and a prod-configured backend.</p>
+  </section>
+
+  <section>
+    <h2>1. Dev mode is a lie you tell yourself (on purpose)</h2>
+    <p>Everything you've run so far was optimized for <em>your</em> convenience: <code>npm run dev</code> hot-reloads on every save, <code>uvicorn --reload</code> restarts on code changes, error pages show full stack traces, and CORS is wide open to <code>localhost:5173</code>. That's perfect for building — and <strong>wrong for production</strong>, where you want the opposite: fast, minified, cached, locked down, and stable.</p>
+    <p>"Going to production" is mostly about flipping those defaults. Same code, different configuration.</p>
+    <table>
+      <tr><th></th><th>Development</th><th>Production</th></tr>
+      <tr><td>Frontend</td><td>Vite dev server, hot reload, source maps</td><td>Pre-built static files (minified, hashed)</td></tr>
+      <tr><td>Backend reload</td><td><code>--reload</code> on</td><td>Off; multiple worker processes</td></tr>
+      <tr><td>Errors</td><td>Full tracebacks shown</td><td>Clean 500s (you built this in 8.2)</td></tr>
+      <tr><td>Config</td><td>Hardcoded localhost is fine</td><td>From environment variables</td></tr>
+      <tr><td>Goal</td><td>Fast feedback while coding</td><td>Speed, security, stability</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>2. What <code>npm run build</code> does</h2>
+    <p>The Vite dev server serves your source files on the fly and re-transforms them as you edit — great for iteration, far too slow and unoptimized to put in front of real users. For production you run a one-time <strong>build</strong>:</p>
+    <pre><code>npm run build      # runs "vite build"</code></pre>
+    <p>Vite takes all your <code>.jsx</code>, CSS, and assets and produces a <code>dist/</code> folder of plain, optimized static files. Along the way it:</p>
+    <ul>
+      <li><strong>Bundles</strong> many modules into a few files (fewer network requests).</li>
+      <li><strong>Minifies</strong> JS/CSS (strips whitespace, shortens names → smaller downloads).</li>
+      <li><strong>Tree-shakes</strong> — drops code you never import.</li>
+      <li><strong>Hashes filenames</strong> — <code>index-a1b2c3.js</code> — so browsers can cache aggressively yet always get the new file when it changes (cache busting).</li>
+      <li>Rewrites <code>index.html</code> to point at the hashed files.</li>
+    </ul>
+    <div class="flow">src/                          dist/
+  main.jsx        vite build    index.html
+  App.jsx         ─────────&gt;    assets/index-a1b2c3.js   (minified, hashed)
+  components/...                assets/index-d4e5f6.css
+  index.html                    (plus images, favicon, etc.)</div>
+    <p>The result is a <strong>static site</strong>: just HTML, CSS, JS, and images. There's no Node.js running it — any web server (Nginx, a CDN, even a dumb file host) can serve <code>dist/</code>. To sanity-check the build locally before shipping, Vite gives you a tiny static server:</p>
+    <pre><code>npm run preview    # serves the built dist/ at http://localhost:4173</code></pre>
+    <div class="callout warning">
+      <div class="label">⚠️ <code>preview</code> is for testing, not production</div>
+      <code>vite preview</code> proves your build works, but it's a minimal server not meant to face real traffic. In production a proper web server (Nginx, in Chunk 9.3) serves <code>dist/</code>.
+    </div>
+  </section>
+
+  <section>
+    <h2>3. Environment variables: build-time vs runtime</h2>
+    <p>This is the single most-misunderstood part of going to production, so go slow here. Both halves of your stack use environment variables, but at <em>completely different moments</em>.</p>
+
+    <h3>Backend (FastAPI): runtime env vars</h3>
+    <p>Your FastAPI app reads <code>settings.secret_key</code>, <code>settings.database_url</code>, etc. <em>when it starts</em> (you built this with <code>pydantic-settings</code> in Module 7). The same built code can run with different values just by changing the environment — dev points at <code>tasks.db</code>, prod points at a real database, and you never rebuild anything. Change a variable, restart the process, done.</p>
+
+    <h3>Frontend (Vite): build-time env vars</h3>
+    <p>The browser has no environment — it just downloads files. So Vite <strong>bakes</strong> env vars into the bundle <em>at build time</em>. Only variables prefixed <code>VITE_</code> are exposed, via <code>import.meta.env</code>:</p>
+    <pre><code>// reads at build time, frozen into the bundle:
+const BASE = import.meta.env.VITE_API_URL;</code></pre>
+    <p>Whatever <code>VITE_API_URL</code> was when you ran <code>npm run build</code> is literally substituted into the output JS. To point the frontend at a different API, you must <strong>rebuild</strong> with a new value.</p>
+    <table>
+      <tr><th></th><th>FastAPI (runtime)</th><th>Vite (build-time)</th></tr>
+      <tr><td>When read</td><td>When the process starts</td><td>When <code>npm run build</code> runs</td></tr>
+      <tr><td>To change a value</td><td>Edit env + restart</td><td>Edit env + <strong>rebuild</strong></td></tr>
+      <tr><td>Where it lives</td><td>Server process env</td><td>Baked into the JS files</td></tr>
+      <tr><td>Prefix required</td><td>No</td><td><code>VITE_</code></td></tr>
+    </table>
+    <div class="callout warning">
+      <div class="label">⚠️ The #1 frontend secret mistake</div>
+      Because <code>VITE_</code> vars are baked into JS that ships to the browser, <strong>anyone can read them</strong> (just open DevTools → Sources). Never put a secret — API keys, the JWT signing secret, DB passwords — in a <code>VITE_</code> variable. Those belong on the <em>backend</em> only. The frontend should only hold non-secret config like the API URL.
+    </div>
+  </section>
+
+  <section>
+    <h2>4. Env files &amp; secrets hygiene</h2>
+    <p>Vite reads env files by mode. The important ones:</p>
+    <table>
+      <tr><th>File</th><th>Loaded when</th><th>Commit to git?</th></tr>
+      <tr><td><code>.env</code></td><td>Always</td><td>No (local values)</td></tr>
+      <tr><td><code>.env.development</code></td><td><code>npm run dev</code></td><td>Sometimes (non-secret defaults)</td></tr>
+      <tr><td><code>.env.production</code></td><td><code>npm run build</code></td><td>Only if values are non-secret</td></tr>
+      <tr><td><code>.env.example</code></td><td>Never (template)</td><td>Yes — placeholders only</td></tr>
+    </table>
+    <p>The rules you already started in Module 7 hold across the whole project:</p>
+    <ul>
+      <li><strong>Never commit real secrets.</strong> <code>.env</code> stays in <code>.gitignore</code>; commit a <code>.env.example</code> with blank/placeholder values so teammates know what to set.</li>
+      <li><strong>Backend secrets live in the server environment</strong> (or a secret manager in Chunk 9.4), not in code and not in the frontend.</li>
+      <li><strong>If a secret ever lands in git history, rotate it.</strong> Deleting the line isn't enough — it's in the history.</li>
+    </ul>
+    <div class="callout tip">
+      <div class="label">💡 A clean split for the Tasks app</div>
+      Frontend <code>.env.production</code>: <code>VITE_API_URL=https://api.yourdomain.com</code> (not a secret — fine to commit). Backend env: <code>SECRET_KEY</code>, <code>DATABASE_URL</code>, <code>FRONTEND_ORIGIN</code> (secret-ish — never in the frontend, never committed).
+    </div>
+  </section>
+
+  <section>
+    <h2>5. Running the backend in production</h2>
+    <p>In development you run a single auto-reloading process. In production you change two things.</p>
+    <p><strong>Turn off reload and turn on workers.</strong> A single Python process handles one request at a time per CPU core (roughly). To use the whole machine you run <strong>multiple worker processes</strong>. The classic way is Gunicorn managing Uvicorn workers; modern Uvicorn can also spawn workers directly:</p>
+    <pre><code># development
+uvicorn app.main:app --reload
+
+# production (no reload; bind all interfaces; multiple workers)
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
+
+# or, the battle-tested combo:
+gunicorn app.main:app -k uvicorn.workers.UvicornWorker \
+    --workers 4 --bind 0.0.0.0:8000</code></pre>
+    <p>Two details that trip people up:</p>
+    <ul>
+      <li><code>--host 0.0.0.0</code> means "accept connections on all network interfaces," not just <code>localhost</code>. Inside a container or on a server you need this so the outside world (and the load balancer) can reach it.</li>
+      <li>Workers are separate processes that <strong>don't share memory</strong>. Anything you cached in a module-level Python variable exists once <em>per worker</em> — fine for the Tasks API because state lives in the database and auth is stateless JWT (which is exactly why this scales; more in 9.3).</li>
+    </ul>
+    <div class="callout note">
+      <div class="label">📝 How many workers?</div>
+      A common starting point is <code>(2 × CPU cores) + 1</code>. Don't over-tune now — the point is "more than one, and reload off." You'll wire the real command into Docker in 9.2.
+    </div>
+  </section>
+
+  <section>
+    <h2>6. Config that knows where it's running</h2>
+    <p>Tie it together with one setting that flags the environment, so the same codebase behaves correctly in both worlds. You already have <code>pydantic-settings</code>; just add a field:</p>
+    <pre><code># app/config.py  (extend your Module 7 Settings)
+class Settings(BaseSettings):
+    environment: str = "development"          # "production" in prod
+    secret_key: str
+    database_url: str = "sqlite:///./tasks.db"
+    frontend_origin: str = "http://localhost:5173"
+    log_level: str = "INFO"
+    model_config = SettingsConfigDict(env_file=".env")</code></pre>
+    <p>Now you can branch on it where it matters — for example, the 8.1 logging picks JSON vs pretty text, and you'd never expose docs or verbose errors in prod:</p>
+    <pre><code>settings = get_settings()
+app = FastAPI(
+    title="Tasks API",
+    docs_url="/docs" if settings.environment != "production" else None,
+)</code></pre>
+    <div class="callout tip">
+      <div class="label">💡 One image, many environments</div>
+      The goal — which Docker (9.2) makes literal — is a single build artifact you promote unchanged from dev to staging to prod, configured entirely by environment variables. No "prod branch," no editing code to deploy.
+    </div>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li>Production flips dev defaults: minified static frontend, no reload, multiple workers, clean errors, env-driven config.</li>
+      <li><code>npm run build</code> → a <code>dist/</code> of bundled, minified, tree-shaken, hash-named <strong>static files</strong>; <code>npm run preview</code> tests it locally.</li>
+      <li>FastAPI env vars are read at <strong>runtime</strong> (change + restart); Vite <code>VITE_</code> vars are baked in at <strong>build time</strong> (change + <strong>rebuild</strong>).</li>
+      <li><strong>Never</strong> put secrets in <code>VITE_</code> vars — they ship to the browser. Secrets live on the backend, never in git.</li>
+      <li>Run prod with <code>--host 0.0.0.0</code>, no <code>--reload</code>, and multiple workers (Uvicorn/Gunicorn). Stateless JWT means workers scale freely.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and produce real production build artifacts.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

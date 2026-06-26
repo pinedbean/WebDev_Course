@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment · Chunk 10.6 — Containerize, Load-Balance &amp; Deploy</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #ede9fe;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:#ede9fe;border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#5b21b6;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--task);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  .deliverable{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .deliverable h2{border-color:#a7f3d0;color:#065f46;}
+  .check{list-style:none;padding-left:0;} .check li{padding-left:30px;position:relative;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:18px;color:var(--task);}
+  .checkpoint{background:#fffbeb;border:2px solid #f59e0b;}
+  .checkpoint h2{border-color:#fde68a;color:#92400e;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 10 — Capstone: TaskFlow · 🎓 FINALE</div>
+    <h1>Chunk 10.6 — Lab: Ship Load-Balanced TaskFlow</h1>
+    <span class="badge">🧪 ASSIGNMENT</span>
+    <span class="badge">⏱️ 90–120 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 Your mission</h2>
+    <p>Take TaskFlow from "runs on my machine" to a containerized, load-balanced stack that comes up with one command. Dockerize the backend and frontend, put Nginx in front load-balancing across multiple backend replicas, run migrations on startup, add a CI workflow, and polish the README with screenshots. This is the deliverable you put on your résumé.</p>
+  </section>
+
+  <section>
+    <h2>Before you start</h2>
+    <ul>
+      <li>Docker Desktop installed and running (<code>docker --version</code>, <code>docker compose version</code>).</li>
+      <li>Your hardened TaskFlow from 10.5 works locally (health/ready routes, env-based config).</li>
+      <li>Have your Module 9 notes (Dockerfiles, compose, Nginx upstream) close by.</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ Build it yourself first</div>
+      You containerized an app in Module 9 — apply the same moves to TaskFlow. Open the solution to compare configs, not to skip the thinking.
+    </div>
+  </section>
+
+  <section>
+    <h2>Tasks</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Backend Dockerfile</h3>
+      <p>Write <code>backend/Dockerfile</code> (Python slim, cache deps before copying code, expose 8000, a <code>HEALTHCHECK</code> hitting <code>/api/v1/health</code>). Add a <code>backend/.dockerignore</code> (venv, <code>__pycache__</code>, <code>*.db</code>, <code>.env</code>).</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Migrations on startup</h3>
+      <p>Add <code>backend/entrypoint.sh</code> that runs <code>alembic upgrade head</code> then launches uvicorn, and call it from the Dockerfile. Make sure the DB path points at a mounted volume.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Frontend Dockerfile (multi-stage)</h3>
+      <p>Write <code>frontend/Dockerfile</code>: stage 1 builds with Node (<code>npm ci</code> + <code>npm run build</code>, with <code>VITE_API_URL=/api/v1</code>); stage 2 copies <code>dist/</code> into an Nginx image. Add <code>frontend/.dockerignore</code> (node_modules, dist).</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Nginx config</h3>
+      <p>Write <code>frontend/nginx.conf</code>: an <code>upstream</code> pointing at the <code>backend</code> service, a <code>location /api/</code> that proxies to it (forwarding <code>X-Request-ID</code>), and a SPA <code>location /</code> with <code>try_files $uri /index.html</code>. Add a security header.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> docker-compose with replicas</h3>
+      <p>Write <code>docker-compose.yml</code> with a <code>backend</code> service (3 replicas, shared DB volume, env from a root <code>.env</code>) and a <code>frontend</code> service publishing port 80 and depending on the backend. Bring it up with <code>docker compose up --build</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Prove the load balancing</h3>
+      <p>Open <code>http://localhost</code> and use the app (register, projects, board) entirely through Nginx. Then demonstrate that requests hit different replicas — e.g. log the hostname per request and watch the request logs cycle, or stop one replica and confirm the app keeps working.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> CI workflow</h3>
+      <p>Add <code>.github/workflows/ci.yml</code> that, on push/PR, installs backend deps + runs tests and builds the frontend. Confirm the YAML is valid (it'll run when you push).</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">8</span> Polish the README + screenshots</h3>
+      <p>Upgrade the root <code>README.md</code>: pitch, screenshot/GIF of the board, architecture diagram, <code>docker compose up</code> instructions, feature list, security notes, and known limits/next steps. Save 2–3 screenshots under <code>docs/</code>.</p>
+    </div>
+  </section>
+
+  <section class="deliverable">
+    <h2>✅ Deliverable — acceptance checklist</h2>
+    <ul class="check">
+      <li><code>docker compose up --build</code> brings up the full stack; the app works at <code>http://localhost</code>.</li>
+      <li>The frontend is served by Nginx and calls the API same-origin (no CORS errors in prod).</li>
+      <li>The backend runs as <strong>multiple replicas</strong>; Nginx load-balances across them (demonstrated).</li>
+      <li>Migrations run automatically on container start; data persists in a volume across <code>down</code>/<code>up</code>.</li>
+      <li>Health checks pass; stopping one replica doesn't take the app down.</li>
+      <li>A CI workflow builds the frontend and runs backend checks.</li>
+      <li>The README has a screenshot, the architecture diagram, run instructions, features, and security/limits notes.</li>
+    </ul>
+  </section>
+
+  <section class="checkpoint">
+    <h2>🏁 Capstone Checkpoint</h2>
+    <p>Step back and confirm the whole thing: a stranger can clone your repo, run <strong>one command</strong>, and reach a working, load-balanced TaskFlow where users register, collaborate on projects, and manage a task board — observable, hardened, and documented. That is a portfolio-grade, real-world full-stack application.</p>
+  </section>
+
+  <section>
+    <h2>🚀 Stretch goals (optional)</h2>
+    <ul>
+      <li>Deploy to a real host (a small VPS or a container host) and add the live URL to the README.</li>
+      <li>Extend CI to build &amp; push the Docker images to a registry.</li>
+      <li>Add a <code>healthcheck</code> to the compose services and a <code>restart: unless-stopped</code> policy.</li>
+      <li>Record a 20-second GIF of the board in action for the README.</li>
+      <li><strong>Go to the Bonus Track</strong>: adopt a Git branching strategy (B.1) and deploy TaskFlow to GCP Cloud Run with a managed Postgres + HTTPS load balancer (B.2–B.3).</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a class="current">🧪 Assignment</a>
+    <a href="solution.html">✅ Solution →</a>
+  </div>
+</footer>
+</body>
+</html>

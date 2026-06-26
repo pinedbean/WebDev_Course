@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment · Chunk B.1 — Git Strategy &amp; Collaborative Workflows</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #ede9fe;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:#ede9fe;border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#5b21b6;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--task);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .deliverable{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .deliverable h2{border-color:#a7f3d0;color:#065f46;}
+  .check{list-style:none;padding-left:0;} .check li{padding-left:30px;position:relative;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:18px;color:var(--task);}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · ⭐ Bonus Track — Git Strategy &amp; GCP</div>
+    <h1>Chunk B.1 — Lab: Adopt GitHub Flow on TaskFlow</h1>
+    <span class="badge">🧪 ASSIGNMENT</span>
+    <span class="badge">⏱️ 45–75 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 Your mission</h2>
+    <p>Turn your TaskFlow repo into one that follows a real team workflow. You'll document a branching strategy in <code>CONTRIBUTING.md</code>, do a full <strong>GitHub Flow</strong> cycle (feature branch → PR → self-review → deliberately resolve a conflict → squash-merge), protect <code>main</code>, add a PR template, and cut a <strong>v1.0.0</strong> release tag.</p>
+  </section>
+
+  <section>
+    <h2>Prerequisites</h2>
+    <ul>
+      <li>You finished <strong>Module 9</strong> and have a containerized <strong>TaskFlow</strong> repo (<code>capstone-taskflow/</code> with backend + frontend).</li>
+      <li>The repo is on <strong>GitHub</strong> (push it if it's only local). A free personal account is fine.</li>
+      <li>Git installed and configured (<code>git --version</code>, <code>git config user.name</code> set).</li>
+      <li>You read the lecture — you know merge vs. rebase, conventional commits, and SemVer.</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ Try it yourself first</div>
+      Work through the steps from the lecture and your own knowledge. Only open <code>solution.html</code> when you're stuck or to compare at the end.
+    </div>
+  </section>
+
+  <section>
+    <h2>Tasks</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Document the strategy in <code>CONTRIBUTING.md</code></h3>
+      <p>On <code>main</code>, add a <code>CONTRIBUTING.md</code> to your repo root that states: you use <strong>GitHub Flow</strong>; branch naming (<code>feature/*</code>, <code>fix/*</code>, <code>chore/*</code>); that all changes go through a PR with one approval and green CI; that commits follow <strong>Conventional Commits</strong>; and that releases use <strong>SemVer</strong> tags. Commit it with a conventional message.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Add a <code>.gitignore</code> + PR template</h3>
+      <p>Make sure <code>.gitignore</code> excludes secrets and junk (<code>.env</code>, <code>__pycache__/</code>, <code>node_modules/</code>, <code>dist/</code>, <code>*.db</code>, <code>.DS_Store</code>). Add <code>.github/pull_request_template.md</code> with "What &amp; why / How to test / Checklist" sections. Commit and push to <code>main</code> (this is your last direct push — see step 5).</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2.5</span> Plant a conflict seed (so step 4 has a conflict to resolve)</h3>
+      <p>Add a line to your <code>README.md</code> on <code>main</code> — e.g. a <code>## Status</code> heading with a sentence. Commit and push to <code>main</code>. You'll edit the <em>same</em> line differently on your feature branch to create a deliberate conflict.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Create a feature branch &amp; make a change</h3>
+      <p>Branch off an up-to-date <code>main</code> as <code>feature/&lt;something-real&gt;</code> (e.g. <code>feature/readme-badges</code>). Make a small, real improvement and <strong>edit the same README line</strong> from step 2.5 to a different value. Make 2–3 commits with conventional messages, then push the branch with <code>-u</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Open a PR, self-review, and resolve the conflict</h3>
+      <p>On GitHub, open a Pull Request from your feature branch into <code>main</code>. Fill in the template. Read your own diff line by line and leave at least one review comment on yourself. Bring your branch up to date with <code>main</code> (rebase or merge) — you'll hit the conflict on the README line. Resolve it locally, finish, and push.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Turn on branch protection, then squash-merge</h3>
+      <p>In repo Settings → Branches, add a protection rule for <code>main</code>: require a PR before merging, require it be up to date, and (if available on your plan) require an approving review. Then <strong>squash-merge</strong> your PR and delete the branch.</p>
+      <div class="callout note">
+        <div class="label">📝 Solo-account note</div>
+        On a free personal repo you can't "approve" your own PR. That's fine — require the PR + up-to-date checks, and still do the self-review in comments. The solution explains the exact toggles.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Cut the <code>v1.0.0</code> release tag</h3>
+      <p>Back on an updated local <code>main</code>, create an <strong>annotated</strong> tag <code>v1.0.0</code> with a message, push the tag, and (optional) publish a GitHub Release from it with short notes.</p>
+    </div>
+  </section>
+
+  <section class="deliverable">
+    <h2>✅ Deliverable — acceptance checklist</h2>
+    <ul class="check">
+      <li><code>CONTRIBUTING.md</code> documents GitHub Flow, branch naming, PR rules, conventional commits, and SemVer.</li>
+      <li><code>.gitignore</code> excludes secrets/junk and <code>.github/pull_request_template.md</code> exists.</li>
+      <li>A feature branch was created and pushed to GitHub.</li>
+      <li>A PR was opened with the template filled in and at least one self-review comment.</li>
+      <li>A real merge conflict was created and <strong>resolved</strong> (markers removed, change kept intentionally).</li>
+      <li>The PR was <strong>squash-merged</strong> into <code>main</code> and the branch deleted.</li>
+      <li><strong>Branch protection</strong> is enabled on <code>main</code> (PR required before merge).</li>
+      <li>An annotated <code>v1.0.0</code> tag exists on <code>main</code> and is pushed to GitHub.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🚀 Stretch goals (optional)</h2>
+    <ul>
+      <li>Add a tiny <strong>GitHub Actions CI</strong> workflow (lint/test) and make it a <em>required status check</em> in branch protection.</li>
+      <li>Add a <code>CODEOWNERS</code> file so PRs request review automatically.</li>
+      <li>Install a pre-commit secret scanner (e.g. <code>gitleaks</code>) and run it once over your repo.</li>
+      <li>Practice an interactive rebase to squash your branch's commits <em>before</em> opening the PR.</li>
+      <li>Write release notes that group changes by conventional-commit type (Features / Fixes / Chores).</li>
+    </ul>
+    <div class="callout tip">
+      <div class="label">💡 Where this is going</div>
+      The branch protection + green-<code>main</code> habit you build here is exactly what B.3's CI/CD pipeline relies on: every merge to <code>main</code> will auto-deploy to GCP. Get the workflow solid now.
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a class="current">🧪 Assignment</a>
+    <a href="solution.html">✅ Solution →</a>
+  </div>
+</footer>
+</body>
+</html>

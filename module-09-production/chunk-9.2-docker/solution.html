@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk 9.2 — Containerizing with Docker</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .full{border:2px solid #16a34a;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 9 — Production &amp; Load Balancing</div>
+    <h1>Chunk 9.2 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>We'll write four files, a Compose file, and bring the stack up. End state:</p>
+    <div class="filetree">project-root/
+├── docker-compose.yml
+├── .env                       (SECRET_KEY — git-ignored)
+├── tasks-api/
+│   ├── Dockerfile
+│   ├── .dockerignore
+│   └── app/ ...
+└── tasks-web/
+    ├── Dockerfile             (multi-stage)
+    ├── .dockerignore
+    ├── nginx.conf
+    └── src/ ...</div>
+  </section>
+
+  <section>
+    <div class="step">
+      <h3><span class="num">1</span> <code>tasks-api/Dockerfile</code></h3>
+      <pre><code>FROM python:3.11-slim
+
+# Faster, cleaner Python in containers.
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+WORKDIR /app
+
+# Install deps first so this layer is cached across code changes.
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Now the application code.
+COPY . .
+
+EXPOSE 8000
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]</code></pre>
+      <div class="callout note">
+        <div class="label">📝 <code>PYTHONUNBUFFERED=1</code></div>
+        Without it, Python buffers stdout and your 8.1 JSON logs appear late (or not until the container stops). Setting it makes logs stream in real time — essential for <code>docker compose logs -f</code>.
+      </div>
+      <pre><code># tasks-api/.dockerignore
+__pycache__/
+*.pyc
+.venv/
+tasks.db
+.env
+.git/
+alembic/versions/__pycache__/</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Confirm the DB path is env-driven</h3>
+      <p>In <code>app/database.py</code>, the engine must read the URL from settings (not a hardcoded string), so Compose can point it at the volume:</p>
+      <pre><code># app/database.py  (the key line)
+from app.config import settings
+
+engine = create_engine(
+    settings.database_url,                       # e.g. sqlite:////data/tasks.db
+    connect_args={"check_same_thread": False},
+)</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> <code>tasks-web/Dockerfile</code> (multi-stage)</h3>
+      <pre><code># --- Stage 1: build ---
+FROM node:20-alpine AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+# --- Stage 2: serve ---
+FROM nginx:alpine
+COPY --from=build /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]</code></pre>
+      <pre><code># tasks-web/.dockerignore
+node_modules/
+dist/
+.env
+.git/</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> <code>tasks-web/nginx.conf</code></h3>
+      <pre><code>server {
+    listen 80;
+    server_name _;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;     # SPA fallback for React Router
+    }
+}</code></pre>
+      <div class="callout tip">
+        <div class="label">💡 We'll proxy /api here in 9.3</div>
+        Right now the built frontend calls the API directly via the baked-in <code>VITE_API_URL</code>. In 9.3 this same <code>nginx.conf</code> grows a <code>location /api/</code> block that proxies to the backend — so the browser only ever talks to one origin.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> <code>docker-compose.yml</code> + root <code>.env</code></h3>
+      <pre><code># docker-compose.yml  (project root)
+services:
+  api:
+    build: ./tasks-api
+    environment:
+      SECRET_KEY: ${SECRET_KEY}
+      DATABASE_URL: sqlite:////data/tasks.db
+      ENVIRONMENT: production
+      FRONTEND_ORIGIN: http://localhost:5173
+      LOG_LEVEL: INFO
+    volumes:
+      - tasks-data:/data
+    ports:
+      - "8000:8000"
+
+  web:
+    build: ./tasks-web
+    ports:
+      - "5173:80"
+    depends_on:
+      - api
+
+volumes:
+  tasks-data:</code></pre>
+      <pre><code># .env  (project root, git-ignored)
+SECRET_KEY=paste-a-64-hex-char-secret-here</code></pre>
+      <div class="callout warning">
+        <div class="label">⚠️ The volume holds <code>/data</code>, the DB is <code>/data/tasks.db</code></div>
+        Mounting <code>tasks-data</code> at <code>/data</code> + <code>DATABASE_URL=sqlite:////data/tasks.db</code> (four slashes) means the file lives in the volume. <code>docker compose down</code> removes containers but keeps the volume — that's why data survives. <code>docker compose down -v</code> would delete it.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Build &amp; run</h3>
+      <pre><code>docker compose up --build</code></pre>
+      <pre><code> ✔ Network project-root_default   Created
+ ✔ Volume "project-root_tasks-data" Created
+ ✔ Container project-root-api-1   Created
+ ✔ Container project-root-web-1   Created
+api-1  | {"timestamp":"...","level":"INFO","logger":"uvicorn.error","message":"Started server process","request_id":"-"}
+api-1  | {"timestamp":"...","level":"INFO","logger":"uvicorn.error","message":"Uvicorn running on http://0.0.0.0:8000","request_id":"-"}
+web-1  | ... nginx ... start worker processes</code></pre>
+      <pre><code># in another terminal:
+curl -s localhost:8000/health      # {"status":"ok"}</code></pre>
+      <p>Open <code>http://localhost:5173</code> — the frontend loads from the Nginx container.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Migrate the fresh volume DB</h3>
+      <pre><code>docker compose exec api alembic upgrade head</code></pre>
+      <pre><code>INFO  [alembic.runtime.migration] Running upgrade  -&gt; ..., create users and tasks
+INFO  [alembic.runtime.migration] Running upgrade ... -&gt; ..., add auth fields</code></pre>
+      <p>Now register, log in, and create a task in the UI.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">8</span> Prove persistence</h3>
+      <pre><code>docker compose down        # removes containers, KEEPS the volume
+docker compose up          # back up; data still there
+docker compose exec api sqlite3 /data/tasks.db "SELECT count(*) FROM tasks;"
+# -&gt; your task count, unchanged</code></pre>
+    </div>
+  </section>
+
+  <section>
+    <h2>🔧 Troubleshooting</h2>
+    <table>
+      <tr><th>Symptom</th><th>Fix</th></tr>
+      <tr><td>Container runs but you can't reach it from the browser</td><td>Bind to <code>0.0.0.0</code> in the <code>CMD</code> (not <code>127.0.0.1</code>), and check the host:container port map in Compose.</td></tr>
+      <tr><td>Every code change reinstalls all pip packages</td><td>You copied code before <code>requirements.txt</code>. Copy + install requirements <em>first</em> so the install layer caches.</td></tr>
+      <tr><td>Refreshing <code>/dashboard</code> in the deployed frontend 404s</td><td>Missing SPA fallback. Add <code>try_files $uri $uri/ /index.html;</code> in <code>nginx.conf</code>.</td></tr>
+      <tr><td><code>sqlite3.OperationalError: unable to open database file</code></td><td>The <code>/data</code> dir isn't mounted, or you used three slashes. Use <code>sqlite:////data/tasks.db</code> and mount <code>tasks-data:/data</code>.</td></tr>
+      <tr><td>Data disappears after <code>down</code></td><td>You ran <code>down -v</code> (removes volumes) or stored the DB inside the container FS instead of the volume.</td></tr>
+      <tr><td>Logs don't appear until the container stops</td><td>Set <code>ENV PYTHONUNBUFFERED=1</code> in the backend Dockerfile.</td></tr>
+      <tr><td>Frontend can't reach the API in the browser</td><td>The browser uses the baked <code>VITE_API_URL</code> (host-visible <code>localhost:8000</code>), not the internal name. For browser calls, point it at the published host port. (9.3's reverse proxy removes this footgun.)</td></tr>
+    </table>
+  </section>
+
+  <section class="full">
+    <h2>📄 Complete <code>docker-compose.yml</code></h2>
+    <pre><code>services:
+  api:
+    build: ./tasks-api
+    environment:
+      SECRET_KEY: ${SECRET_KEY}
+      DATABASE_URL: sqlite:////data/tasks.db
+      ENVIRONMENT: production
+      FRONTEND_ORIGIN: http://localhost:5173
+      LOG_LEVEL: INFO
+    volumes:
+      - tasks-data:/data
+    ports:
+      - "8000:8000"
+
+  web:
+    build: ./tasks-web
+    ports:
+      - "5173:80"
+    depends_on:
+      - api
+
+volumes:
+  tasks-data:</code></pre>
+  </section>
+
+  <section class="done">
+    <h2>🎉 You're done</h2>
+    <p>The entire Tasks app now lives in containers: a slim Python image for the API, a tiny Nginx image carrying only the built frontend, both orchestrated by Compose, with the database safely in a named volume. One command — <code>docker compose up --build</code> — reproduces the whole stack on any machine with Docker. "Works on my machine" is now "works on every machine."</p>
+    <p>You're running <em>one</em> backend container. Next you'll put Nginx in front as a load balancer and run <em>several</em> backend replicas from the same image — real horizontal scaling.</p>
+    <p><strong>Up next → Chunk 9.3: Nginx Reverse Proxy &amp; Load Balancing.</strong></p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>
