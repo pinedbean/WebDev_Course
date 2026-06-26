@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk 2.3 — Flexbox Layout</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .full{border:2px solid #16a34a;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 2 — CSS &amp; Layout</div>
+    <h1>Chunk 2.3 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>First the navbar, then the card row. The full CSS additions and the updated header/home markup are at the bottom.</p>
+  </section>
+
+  <section>
+    <div class="step">
+      <h3><span class="num">1</span> Clean nav markup</h3>
+      <p>Remove the <code>|</code> characters in every page's header. The links now stand alone:</p>
+      <pre><code>&lt;header&gt;
+  &lt;h1&gt;Jane Doe&lt;/h1&gt;
+  &lt;nav&gt;
+    &lt;a href="index.html" class="active"&gt;Home&lt;/a&gt;
+    &lt;a href="about.html"&gt;About&lt;/a&gt;
+    &lt;a href="contact.html"&gt;Contact&lt;/a&gt;
+  &lt;/nav&gt;
+&lt;/header&gt;</code></pre>
+      <p>(Put <code>class="active"</code> on whichever link matches the current page.)</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Flex the header</h3>
+      <pre><code>header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #1e293b;
+  padding: 14px 22px;
+  border-radius: 10px;
+}
+header h1 { margin: 0; color: #fff; font-size: 1.4rem; }</code></pre>
+      <p><strong>Expected result:</strong> "Jane Doe" sits at the far left, the nav at the far right, both vertically centered on a dark bar. <code>space-between</code> does the left/right split; <code>align-items: center</code> lines them up.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Flex the links</h3>
+      <pre><code>nav { display: flex; gap: 18px; }
+nav a {
+  color: #cbd5e1;
+  text-decoration: none;
+  font-weight: 600;
+}
+nav a:hover, nav a.active { color: #fff; }</code></pre>
+      <p><strong>Expected result:</strong> the three links sit in an evenly-spaced row (the <code>gap</code> replaces the old <code>|</code>), light grey, brightening to white on hover and for the active page.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Card markup on the Home page</h3>
+      <p>Add this section inside <code>&lt;main&gt;</code> on <code>index.html</code>:</p>
+      <pre><code>&lt;section&gt;
+  &lt;h2&gt;What I Do&lt;/h2&gt;
+  &lt;div class="card-row"&gt;
+    &lt;div class="card"&gt;&lt;h3&gt;🎨 Frontend&lt;/h3&gt;&lt;p&gt;HTML, CSS, and JavaScript.&lt;/p&gt;&lt;/div&gt;
+    &lt;div class="card"&gt;&lt;h3&gt;⚙️ Backend&lt;/h3&gt;&lt;p&gt;FastAPI &amp; databases.&lt;/p&gt;&lt;/div&gt;
+    &lt;div class="card"&gt;&lt;h3&gt;🚀 Learning&lt;/h3&gt;&lt;p&gt;Building real projects.&lt;/p&gt;&lt;/div&gt;
+  &lt;/div&gt;
+&lt;/section&gt;</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Flex the card row</h3>
+      <pre><code>.card-row { display: flex; gap: 16px; flex-wrap: wrap; }
+.card {
+  flex: 1;
+  min-width: 180px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 18px;
+}
+.card h3 { margin: 0 0 6px; color: #1e3a8a; }
+.card p  { margin: 0; color: #475569; }</code></pre>
+      <p><strong>Expected result:</strong> three equal-width cards sit side-by-side with even gaps. Because each has <code>flex: 1</code>, they share the row equally.</p>
+      <div class="callout warning">
+        <div class="label">⚠️ Cards overflowing instead of wrapping?</div>
+        You're missing either <code>flex-wrap: wrap</code> on the row or <code>min-width</code> on the cards. Without <code>min-width</code>, flex items shrink forever and never wrap. With it, they wrap once they hit that floor.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Test the reflow</h3>
+      <p>Narrow the window: 3 across → 2 across → 1 column. No horizontal scrollbar should ever appear. That's responsive behavior with zero media queries — Flexbox handled it. (You'll add explicit breakpoints in Chunk 2.5 for finer control.)</p>
+    </div>
+  </section>
+
+  <section class="full">
+    <h2>📄 CSS additions (append to <code>styles.css</code>)</h2>
+    <pre><code>/* --- Navbar (reusable component) --- */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #1e293b;
+  padding: 14px 22px;
+  border-radius: 10px;
+}
+header h1 { margin: 0; color: #fff; font-size: 1.4rem; }
+
+nav { display: flex; gap: 18px; }
+nav a {
+  color: #cbd5e1;
+  text-decoration: none;
+  font-weight: 600;
+}
+nav a:hover, nav a.active { color: #fff; }
+
+/* --- Card row --- */
+.card-row { display: flex; gap: 16px; flex-wrap: wrap; }
+.card {
+  flex: 1;
+  min-width: 180px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 18px;
+}
+.card h3 { margin: 0 0 6px; color: #1e3a8a; }
+.card p  { margin: 0; color: #475569; }</code></pre>
+  </section>
+
+  <section class="full">
+    <h2>📄 Updated header (used on all three pages)</h2>
+    <pre><code>&lt;header&gt;
+  &lt;h1&gt;Jane Doe&lt;/h1&gt;
+  &lt;nav&gt;
+    &lt;a href="index.html" class="active"&gt;Home&lt;/a&gt;
+    &lt;a href="about.html"&gt;About&lt;/a&gt;
+    &lt;a href="contact.html"&gt;Contact&lt;/a&gt;
+  &lt;/nav&gt;
+&lt;/header&gt;</code></pre>
+    <p>Change which link gets <code>class="active"</code> per page (Home on index, About on about, Contact on contact).</p>
+  </section>
+
+  <section class="done">
+    <h2>🎉 You're done</h2>
+    <p>You built a reusable Flexbox navbar that appears identically on every page, and a card row that automatically wraps as the screen narrows. <code>justify-content</code>, <code>align-items</code>, <code>gap</code>, <code>flex-wrap</code>, and <code>flex: 1</code> are now in your toolkit — you'll use them constantly, including inside React components later.</p>
+    <p><strong>Up next → Chunk 2.4: CSS Grid Layout</strong>, where you'll arrange a whole <em>page</em> in two dimensions (header, sidebar, content, footer).</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

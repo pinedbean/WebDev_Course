@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment · Chunk 4.1 — Vite + React Project Setup</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #ede9fe;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .objective{background:#ede9fe;border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#5b21b6;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--task);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .deliverable{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .deliverable h2{border-color:#a7f3d0;color:#065f46;}
+  .check{list-style:none;padding-left:0;} .check li{padding-left:30px;position:relative;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:18px;color:var(--task);}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 4 — React + Vite</div>
+    <h1>Chunk 4.1 — Lab: Scaffold &amp; Customize a React App</h1>
+    <span class="badge">🧪 ASSIGNMENT</span>
+    <span class="badge">⏱️ 45–75 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 Your mission</h2>
+    <p>Create a brand-new React project with Vite, run the dev server, and replace the generated boilerplate with your own <strong>landing component</strong>. This project — <code>recipe-box</code> — is the app you'll grow across all of Module 4.</p>
+  </section>
+
+  <section>
+    <h2>Before you start</h2>
+    <ul>
+      <li>Confirm Node.js is installed: run <code>node --version</code> (you want v18 or newer).</li>
+      <li>Pick a home for the project, e.g. <code>~/Desktop/webdev-course/module-04-react-vite/</code>.</li>
+      <li>Have VS Code and a browser ready.</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ Try it yourself first</div>
+      Work from the lecture and the prompts below. Only open <code>solution.html</code> when you're stuck or to compare at the end.
+    </div>
+  </section>
+
+  <section>
+    <h2>Tasks</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Scaffold the project</h3>
+      <p>In your terminal, <code>cd</code> into your Module 4 folder and run <code>npm create vite@latest</code>. When prompted, name the project <code>recipe-box</code>, choose the <strong>React</strong> framework and the <strong>JavaScript</strong> variant.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Install &amp; run</h3>
+      <p>Follow the three commands Vite prints: <code>cd recipe-box</code>, <code>npm install</code>, then <code>npm run dev</code>. Open the <code>http://localhost:5173/</code> URL in your browser and confirm you see the default Vite + React counter page.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Open the project &amp; explore</h3>
+      <p>In a second terminal tab (leave the server running) or via Finder, open the folder in VS Code (<code>code .</code>). Find and read these files: <code>index.html</code>, <code>src/main.jsx</code>, <code>src/App.jsx</code>. Notice how <code>main.jsx</code> renders <code>&lt;App /&gt;</code> into <code>#root</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Replace <code>App.jsx</code> with your own landing component</h3>
+      <p>Delete the boilerplate inside <code>src/App.jsx</code> and write your own. It should be a single function component that returns JSX containing:</p>
+      <ul>
+        <li>An <code>&lt;h1&gt;</code> with your project name (e.g. <code>🍳 Recipe Box</code>).</li>
+        <li>At least one <code>&lt;p&gt;</code> describing the app.</li>
+        <li>At least one value pulled in with <code>{ }</code> from a JavaScript variable (e.g. store the project name in a <code>const</code> and render <code>{projectName}</code>).</li>
+      </ul>
+      <p>Remember the JSX rules: one root element, <code>className</code> not <code>class</code>, close every tag.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> See HMR in action</h3>
+      <p>With the browser visible next to your editor, change some text in <code>App.jsx</code> and <strong>save</strong>. Watch the page update instantly without a manual refresh. That's Hot Module Replacement.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Tidy up <code>index.html</code></h3>
+      <p>Open <code>index.html</code> and change the <code>&lt;title&gt;</code> to your project name so the browser tab reads "Recipe Box" instead of "Vite + React".</p>
+    </div>
+  </section>
+
+  <section class="deliverable">
+    <h2>✅ Deliverable — acceptance checklist</h2>
+    <ul class="check">
+      <li>A <code>recipe-box/</code> project created with Vite (React + JavaScript).</li>
+      <li><code>npm run dev</code> runs and the app loads at <code>http://localhost:5173/</code> with no console errors.</li>
+      <li><code>src/App.jsx</code> is your own component (boilerplate removed).</li>
+      <li>The landing page shows your project name in an <code>&lt;h1&gt;</code> and at least one <code>{ }</code> JavaScript expression renders correctly.</li>
+      <li>Editing and saving a file updates the browser automatically (HMR works).</li>
+      <li>The browser tab title is your project name.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🚀 Stretch goals (optional)</h2>
+    <ul>
+      <li>Add a second variable (e.g. <code>const tagline = "Find &amp; save recipes"</code>) and render it.</li>
+      <li>Use a Fragment <code>&lt;&gt;...&lt;/&gt;</code> instead of a wrapper <code>&lt;div&gt;</code> as your root element.</li>
+      <li>Edit <code>src/index.css</code> to change the page background color and confirm HMR picks up CSS changes too.</li>
+      <li>Stop the server with <kbd>Ctrl</kbd>+<kbd>C</kbd>, then run <code>npm run build</code> followed by <code>npm run preview</code> to see the production build. (You'll use this for real in Module 9.)</li>
+      <li>Initialize git in the project and make a first commit (<code>git init</code>, <code>git add .</code>, <code>git commit -m "Scaffold recipe-box"</code>). Note the generated <code>.gitignore</code> already excludes <code>node_modules</code>.</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a class="current">🧪 Assignment</a>
+    <a href="solution.html">✅ Solution →</a>
+  </div>
+</footer>
+</body>
+</html>

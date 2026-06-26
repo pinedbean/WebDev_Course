@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 2.5 — Responsive Design &amp; Media Queries</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+  /* live-demo helpers */
+  .demo{border:1px dashed #cbd5e1;border-radius:10px;padding:16px 18px;margin:14px 0;background:#fff;}
+  .demo .demo-label{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#64748b;margin:0 0 10px;font-weight:700;}
+  /* responsive demo box that changes color/text at breakpoints */
+  .rwd{border-radius:10px;padding:22px;color:#fff;font-weight:700;text-align:center;background:#16a34a;}
+  .rwd::after{content:"Wide screen ≥ 700px — background is GREEN";}
+  @media (max-width:700px){ .rwd{background:#d97706;} .rwd::after{content:"Tablet 480–700px — background is ORANGE";} }
+  @media (max-width:480px){ .rwd{background:#2563eb;} .rwd::after{content:"Phone < 480px — background is BLUE";} }
+  /* responsive cards that restack */
+  .rcards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+  .rcards .c{background:#dbeafe;color:#1e3a8a;border-radius:8px;padding:18px;text-align:center;font-weight:600;}
+  @media (max-width:600px){ .rcards{grid-template-columns:1fr;} }
+  .ruler{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:13px;color:#475569;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 2 — CSS &amp; Layout</div>
+    <h1>Chunk 2.5 — Responsive Design &amp; Media Queries</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>What "responsive" means and why <strong>mobile-first</strong> is the sane default.</li>
+      <li>The <strong>viewport meta tag</strong> — the one line that makes phones behave.</li>
+      <li><strong>Media queries</strong>: syntax, common breakpoints, and how to layer them.</li>
+      <li>Making images and layouts <strong>fluid</strong> so they never overflow.</li>
+      <li>Testing in the browser's <strong>device mode</strong> (DevTools).</li>
+    </ul>
+    <p>This is the capstone of Module 2. In the lab you'll make the whole site responsive across three breakpoints — and the 🏁 <strong>Module Checkpoint</strong> turns it into a polished portfolio.</p>
+  </section>
+
+  <section>
+    <h2>1. What "responsive" means</h2>
+    <p>People visit your site on phones, tablets, laptops, and big monitors. <strong>Responsive design</strong> means one set of HTML + CSS that <em>adapts</em> its layout to the screen — three columns on a desktop might become one column on a phone. No separate "mobile site", no app.</p>
+    <p>You've already met responsive behavior: your Flexbox card row (<code>flex-wrap</code>) and your Grid (<code>auto-fit</code>) reflow on their own. Those are great defaults. Media queries give you <em>explicit control</em> for the cases where automatic reflow isn't enough — like collapsing that dashboard sidebar on a phone.</p>
+  </section>
+
+  <section>
+    <h2>2. The viewport meta tag (do this first)</h2>
+    <p>Without this line, phones pretend to be ~980px wide and shrink your whole page to fit — making text tiny. You've had it in every file since Chunk 1.1; now you know what it does:</p>
+    <pre><code>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</code></pre>
+    <ul>
+      <li><code>width=device-width</code> — use the device's real width (e.g. 390px on an iPhone), not a fake 980px.</li>
+      <li><code>initial-scale=1.0</code> — start at 100% zoom.</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ Forget this and nothing else works</div>
+      Media queries won't behave correctly without the viewport tag. It's the foundation. Confirm it's in the <code>&lt;head&gt;</code> of every page.
+    </div>
+  </section>
+
+  <section>
+    <h2>3. Mobile-first thinking</h2>
+    <p>Write your <strong>base CSS for the smallest screen</strong> (a single, simple column), then <em>add</em> complexity for larger screens with <code>min-width</code> media queries. Why start small?</p>
+    <ul>
+      <li>The simplest layout is the most robust — it's hard to break a single column.</li>
+      <li>You progressively <em>enhance</em>: add columns and sidebars only when there's room.</li>
+      <li>It matches how most traffic actually arrives (mobile).</li>
+    </ul>
+    <pre><code>/* base = mobile: everything stacks in one column */
+.cards { display: grid; grid-template-columns: 1fr; gap: 16px; }
+
+/* enhance for tablet and up */
+@media (min-width: 600px) {
+  .cards { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* enhance for desktop and up */
+@media (min-width: 900px) {
+  .cards { grid-template-columns: repeat(3, 1fr); }
+}</code></pre>
+    <div class="callout tip">
+      <div class="label">💡 min-width vs max-width</div>
+      Mobile-first uses <code>min-width</code> ("from this width <em>up</em>"). The opposite, <code>max-width</code> ("up to this width"), is desktop-first. Pick one direction and stay consistent — mixing them is confusing. This course uses mobile-first <code>min-width</code>.
+    </div>
+  </section>
+
+  <section>
+    <h2>4. Media query syntax</h2>
+    <p>A media query is a conditional block: "apply these rules only when the condition is true." The condition is almost always the viewport width:</p>
+    <pre><code>@media (min-width: 600px) {
+  /* normal CSS rules, applied only when viewport ≥ 600px */
+  .sidebar { display: block; }
+  h1 { font-size: 3rem; }
+}</code></pre>
+    <p>You can combine conditions with <code>and</code>:</p>
+    <pre><code>@media (min-width: 600px) and (max-width: 900px) {
+  /* only on tablet-ish widths */
+}</code></pre>
+    <div class="demo">
+      <p class="demo-label">Live demo — resize this window and watch the box change</p>
+      <div class="rwd"></div>
+      <p class="ruler" style="margin:10px 0 0">This box's text &amp; color are driven by real media queries at 480px and 700px. Drag the window narrower to cross the breakpoints.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>5. Choosing breakpoints</h2>
+    <p>Breakpoints are the widths where your layout changes. Don't chase specific phone models — pick a few round numbers where your <em>content</em> starts to look cramped. A common, simple set:</p>
+    <table>
+      <tr><th>Range</th><th>Typical device</th><th>Common breakpoint</th></tr>
+      <tr><td>&lt; 600px</td><td>Phones</td><td>base styles (no query)</td></tr>
+      <tr><td>≥ 600px</td><td>Tablets</td><td><code>@media (min-width: 600px)</code></td></tr>
+      <tr><td>≥ 900px</td><td>Laptops / desktops</td><td><code>@media (min-width: 900px)</code></td></tr>
+    </table>
+    <p>Two or three breakpoints is plenty for most sites. Add one only when something genuinely breaks.</p>
+    <div class="demo">
+      <p class="demo-label">Live demo — 3 columns ≥ 600px, 1 column below</p>
+      <div class="rcards"><div class="c">Card 1</div><div class="c">Card 2</div><div class="c">Card 3</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>6. Fluid images &amp; media</h2>
+    <p>A fixed-size image will blow out of a narrow screen and cause horizontal scrolling. The one-line fix makes images shrink to fit their container while keeping their proportions:</p>
+    <pre><code>img {
+  max-width: 100%;   /* never wider than its container */
+  height: auto;      /* keep the aspect ratio          */
+}</code></pre>
+    <p>You added this in Chunk 2.2 — now you know it's also a responsive essential. Prefer fluid units (<code>%</code>, <code>fr</code>, <code>rem</code>) over fixed <code>px</code> widths for anything that should adapt.</p>
+    <div class="callout note">
+      <div class="label">📝 Avoid fixed widths on containers</div>
+      A rule like <code>width: 800px</code> can't shrink below 800px and will overflow a phone. Use <code>max-width: 800px</code> instead — it caps the width on big screens but still shrinks on small ones.
+    </div>
+  </section>
+
+  <section>
+    <h2>7. Making the dashboard responsive</h2>
+    <p>Remember the cliff-hanger from Chunk 2.4: the 200px sidebar gets cramped on phones. Here's the fix — redraw the grid areas into a single stacked column below the breakpoint, no HTML changes:</p>
+    <pre><code>/* base (Chunk 2.4): sidebar + content side by side */
+.dashboard {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  grid-template-areas:
+    "header  header"
+    "sidebar content"
+    "footer  footer";
+}
+
+/* phones: stack everything in one column */
+@media (max-width: 700px) {
+  .dashboard {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "header"
+      "content"
+      "sidebar"
+      "footer";
+  }
+}</code></pre>
+    <p>The same four elements, rearranged into a phone-friendly stack purely in CSS. This is the superpower of named grid areas.</p>
+    <div class="callout tip">
+      <div class="label">💡 Responsive navbar too</div>
+      On a phone your navbar links may not fit beside the brand. A simple fix without JavaScript: in a narrow media query, switch the header to <code>flex-direction: column</code> (or let the nav links <code>flex-wrap</code>) so they stack neatly. A hamburger menu needs JS — that comes in Module 3.
+    </div>
+  </section>
+
+  <section>
+    <h2>8. Testing: the browser device mode</h2>
+    <p>You don't need a real phone. Every browser has a device-emulation mode:</p>
+    <ul>
+      <li>Open DevTools: <kbd>Cmd</kbd>+<kbd>Option</kbd>+<kbd>I</kbd> (macOS) / <kbd>F12</kbd> (Windows/Linux).</li>
+      <li>Click the <strong>device toolbar</strong> icon (a phone/tablet) — <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd>.</li>
+      <li>Pick a device (iPhone, iPad) or drag the edges to any width. The reported width appears at the top.</li>
+    </ul>
+    <p>Watch your breakpoints trigger as you resize. The quickest sanity check: drag down to ~360px and confirm <strong>nothing overflows</strong> and there's no horizontal scrollbar.</p>
+    <div class="callout warning">
+      <div class="label">⚠️ The #1 responsive bug</div>
+      A horizontal scrollbar on mobile almost always means one element is too wide — a fixed-width container, an image without <code>max-width: 100%</code>, or a <code>pre</code>/long word. Hunt it down with DevTools.
+    </div>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li>Responsive = one codebase that adapts; start <strong>mobile-first</strong> and enhance up with <code>min-width</code> queries.</li>
+      <li>The <strong>viewport meta tag</strong> is mandatory — without it media queries misbehave.</li>
+      <li><code>@media (min-width: 600px) { ... }</code> applies rules only at/above a width; 2–3 breakpoints is plenty.</li>
+      <li>Keep images/containers fluid: <code>img { max-width: 100%; height: auto; }</code> and prefer <code>max-width</code> over fixed <code>width</code>.</li>
+      <li>Redraw <code>grid-template-areas</code> in a query to restack a layout for phones; test in DevTools device mode.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> — make the whole site responsive, then take on the 🏁 Module 2 portfolio checkpoint.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

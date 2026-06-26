@@ -15,9 +15,9 @@ Track the build & learning status of every chunk. Each chunk has three HTML deli
 | Metric | Count |
 |--------|------:|
 | Total chunks | 52 |
-| Modules built | 2 of 11 (Modules 0–1 ✅) |
-| Chunks built | 5 |
-| Chunks remaining | 47 |
+| Modules built | 5 of 11 (Modules 0–4 ✅) |
+| Chunks built | 23 |
+| Chunks remaining | 29 |
 | Chunks learned | 0 |
 
 > Last updated: 2026-06-26
@@ -43,34 +43,34 @@ Track the build & learning status of every chunk. Each chunk has three HTML deli
 
 | Chunk | Title | Lecture | Assignment | Solution | Build | Learned |
 |------|-------|:------:|:----------:|:--------:|:-----:|:-------:|
-| 2.1 | CSS Fundamentals & Selectors | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 2.2 | The Box Model & Typography | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 2.3 | Flexbox Layout | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 2.4 | CSS Grid Layout | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 2.5 | Responsive Design & Media Queries | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 2.1 | CSS Fundamentals & Selectors | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| 2.2 | The Box Model & Typography | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| 2.3 | Flexbox Layout | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| 2.4 | CSS Grid Layout | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| 2.5 | Responsive Design & Media Queries | ✅ | ✅ | ✅ | ✅ | ⬜ |
 
 ## Module 3 — JavaScript Core
 
 | Chunk | Title | Lecture | Assignment | Solution | Build | Learned |
 |------|-------|:------:|:----------:|:--------:|:-----:|:-------:|
-| 3.1 | JavaScript Basics | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 3.2 | Functions, Arrays & Objects | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 3.3 | The DOM & Events | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 3.4 | Async JavaScript & Fetch | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 3.5 | ES Modules & Modern JS Tooling | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 3.6 | Browser Storage & Debugging | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 3.1 | JavaScript Basics | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| 3.2 | Functions, Arrays & Objects | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| 3.3 | The DOM & Events | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| 3.4 | Async JavaScript & Fetch | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| 3.5 | ES Modules & Modern JS Tooling | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| 3.6 | Browser Storage & Debugging | ✅ | ✅ | ✅ | ✅ | ⬜ |
 
 ## Module 4 — React + Vite
 
 | Chunk | Title | Lecture | Assignment | Solution | Build | Learned |
 |------|-------|:------:|:----------:|:--------:|:-----:|:-------:|
-| 4.1 | Vite + React Project Setup | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 4.2 | Components & Props | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 4.3 | State & Events with Hooks | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 4.4 | Side Effects & Data Fetching | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 4.5 | Routing with React Router | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 4.6 | Forms & Shared State | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 4.7 | Reusable Hooks & Project Structure | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 4.1 | Vite + React Project Setup | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| 4.2 | Components & Props | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| 4.3 | State & Events with Hooks | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| 4.4 | Side Effects & Data Fetching | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| 4.5 | Routing with React Router | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| 4.6 | Forms & Shared State | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| 4.7 | Reusable Hooks & Project Structure | ✅ | ✅ | ✅ | ✅ | ⬜ |
 
 ## Module 5 — Backend with FastAPI
 
@@ -145,3 +145,6 @@ Track the build & learning status of every chunk. Each chunk has three HTML deli
 | 2026-06-26 | 0.1 | Built lecture, assignment, and solution HTML files. |
 | 2026-06-26 | 0.2 | Built lecture, assignment, and solution HTML files. **Module 0 complete.** |
 | 2026-06-26 | 1.1–1.3 | Built Module 1 (HTML Foundations): document structure, semantic/lists/tables, forms. Personal-site project threads through; ends with 3-page checkpoint. **Module 1 complete.** |
+| 2026-06-26 | 2.1–2.5 | Built Module 2 (CSS & Layout) via parallel subagent: fundamentals, box model/typography, Flexbox, Grid, responsive + portfolio checkpoint. Styles the Module 1 site into one cumulative `styles.css`. **Module 2 complete.** |
+| 2026-06-26 | 3.1–3.6 | Built Module 3 (JavaScript Core) via parallel subagent: basics, functions/arrays/objects, DOM/events, async/fetch, ES modules+Vite, storage/debugging + expense-tracker checkpoint. To-do app threads through. **Module 3 complete.** |
+| 2026-06-26 | 4.1–4.7 | Built Module 4 (React + Vite) via parallel subagent: setup, components/props, state hooks, effects/data, router, forms/context, custom hooks + Recipe Browser checkpoint. **Module 4 complete.** |

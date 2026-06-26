@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk 4.1 — Vite + React Project Setup</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .full{border:2px solid #16a34a;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 4 — React + Vite</div>
+    <h1>Chunk 4.1 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>Follow the steps to scaffold <code>recipe-box</code> and write your first component. Each step gives the exact command/code and what you should see. The complete <code>App.jsx</code> is at the bottom.</p>
+  </section>
+
+  <section>
+    <div class="step">
+      <h3><span class="num">1</span> Scaffold the project</h3>
+      <p>From your Module 4 folder, run the generator:</p>
+      <pre><code>npm create vite@latest</code></pre>
+      <p>Answer the prompts (use arrow keys + Enter to select):</p>
+      <pre><code>? Project name: › recipe-box
+? Select a framework: › React
+? Select a variant: › JavaScript</code></pre>
+      <div class="callout tip">
+        <div class="label">💡 Shortcut</div>
+        You can skip the questions by passing them as flags: <code>npm create vite@latest recipe-box -- --template react</code>.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Install &amp; run</h3>
+      <p>Vite tells you exactly what to do next:</p>
+      <pre><code>cd recipe-box
+npm install
+npm run dev</code></pre>
+      <p>You should see:</p>
+      <pre><code>  VITE v5.x.x  ready in 312 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  press h + enter to show help</code></pre>
+      <p>Open <code>http://localhost:5173/</code> — the default page shows the Vite + React logos and a counter button.</p>
+      <div class="callout warning">
+        <div class="label">⚠️ Port already in use?</div>
+        If 5173 is taken, Vite automatically picks the next free port (5174, 5175...). Use whatever URL it prints. Leave this terminal running — the server stays alive until you press <kbd>Ctrl</kbd>+<kbd>C</kbd>.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> What got generated</h3>
+      <p>Open the folder in VS Code. The structure you care about:</p>
+      <div class="filetree">recipe-box/
+├── index.html
+├── package.json
+├── vite.config.js
+├── public/
+│   └── vite.svg
+└── src/
+    ├── main.jsx      ← mounts &lt;App /&gt; into #root
+    ├── App.jsx       ← the component you'll edit
+    ├── App.css
+    ├── index.css
+    └── assets/</div>
+      <p>Read <code>src/main.jsx</code> — it's the wiring that puts <code>&lt;App /&gt;</code> on the page.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Write your own <code>App.jsx</code></h3>
+      <p>Open <code>src/App.jsx</code>, select all, delete it, and replace it with your own component. We'll keep the default <code>import './App.css'</code> out for now to stay focused:</p>
+      <pre><code>function App() {
+  const projectName = "Recipe Box";
+  const tagline = "Find and save recipes — built with React.";
+
+  return (
+    &lt;main&gt;
+      &lt;h1&gt;🍳 {projectName}&lt;/h1&gt;
+      &lt;p&gt;{tagline}&lt;/p&gt;
+      &lt;p&gt;This app grows across all of Module 4.&lt;/p&gt;
+    &lt;/main&gt;
+  );
+}
+
+export default App;</code></pre>
+      <div class="callout warning">
+        <div class="label">⚠️ "Adjacent JSX elements must be wrapped"?</div>
+        That error means you returned two sibling elements without one parent. Wrap them in a single <code>&lt;main&gt;</code>/<code>&lt;div&gt;</code> or an empty Fragment <code>&lt;&gt;...&lt;/&gt;</code>.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Confirm HMR</h3>
+      <p>Save the file. The browser updates immediately — no refresh. Change "Recipe Box" to anything and watch it swap in real time. This instant feedback loop is HMR.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Fix the tab title</h3>
+      <p>In <code>index.html</code>, update the title element:</p>
+      <pre><code>&lt;title&gt;Recipe Box&lt;/title&gt;</code></pre>
+      <p>The browser tab now reads "Recipe Box".</p>
+    </div>
+  </section>
+
+  <section class="full">
+    <h2>📄 Complete <code>src/App.jsx</code></h2>
+    <pre><code>function App() {
+  const projectName = "Recipe Box";
+  const tagline = "Find and save recipes — built with React.";
+
+  return (
+    &lt;main&gt;
+      &lt;h1&gt;🍳 {projectName}&lt;/h1&gt;
+      &lt;p&gt;{tagline}&lt;/p&gt;
+      &lt;p&gt;This app grows across all of Module 4.&lt;/p&gt;
+    &lt;/main&gt;
+  );
+}
+
+export default App;</code></pre>
+  </section>
+
+  <section>
+    <h2>🛠 Troubleshooting</h2>
+    <table>
+      <tr><th>Symptom</th><th>Fix</th></tr>
+      <tr><td><code>command not found: npm</code></td><td>Node.js isn't installed or isn't on your PATH. Reinstall Node LTS (Module 0) and reopen the terminal.</td></tr>
+      <tr><td>Blank white page</td><td>Open DevTools → Console. A red error usually means a typo in JSX (unclosed tag, missing root element).</td></tr>
+      <tr><td>Page didn't update on save</td><td>Make sure you saved (<kbd>Cmd</kbd>+<kbd>S</kbd>) and that <code>npm run dev</code> is still running in the terminal.</td></tr>
+      <tr><td><code>npm install</code> is very slow / fails</td><td>Check your internet connection; try again. It downloads into <code>node_modules/</code> once.</td></tr>
+    </table>
+  </section>
+
+  <section class="done">
+    <h2>🎉 You're done</h2>
+    <p>You scaffolded a real React app, ran it with Vite, and replaced the boilerplate with your own component. You now have the project that the rest of Module 4 builds on.</p>
+    <p><strong>Keep <code>recipe-box</code> around</strong> — in Chunk 4.2 you'll break the UI into reusable <code>Card</code> components and render a grid from data.</p>
+    <p><strong>Up next → Chunk 4.2: Components &amp; Props.</strong></p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

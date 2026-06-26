@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk 2.1 — CSS Fundamentals &amp; Selectors</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .full{border:2px solid #16a34a;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 2 — CSS &amp; Layout</div>
+    <h1>Chunk 2.1 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>We'll build <code>styles.css</code> declaration by declaration, link it to all three pages, and explain each result. The complete stylesheet and the one-line HTML change are at the bottom — compare them with yours.</p>
+  </section>
+
+  <section>
+    <div class="step">
+      <h3><span class="num">1</span> Create &amp; link the stylesheet</h3>
+      <p>Make an empty <code>styles.css</code> in the same folder as your pages. Add this line to the <code>&lt;head&gt;</code> of <strong>all three</strong> HTML files:</p>
+      <pre><code>&lt;link rel="stylesheet" href="styles.css"&gt;</code></pre>
+      <p>Test the wiring by adding one rule to <code>styles.css</code>:</p>
+      <pre><code>body { background: #f8fafc; }</code></pre>
+      <p><strong>Expected result:</strong> all three pages get a faint grey-blue background.</p>
+      <div class="callout warning">
+        <div class="label">⚠️ Nothing changed?</div>
+        99% of the time it's the <code>href</code>. The path is relative to the HTML file — if both files are in the same folder, <code>href="styles.css"</code> is right. Check spelling and that you saved both files. Open DevTools → Network tab and reload; a red <code>styles.css</code> means the browser couldn't find it.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Document the palette</h3>
+      <p>A comment at the top keeps you honest. CSS comments use <code>/* ... */</code>:</p>
+      <pre><code>/* Palette
+   brand:   #2563eb   dark:  #1e293b
+   muted:   #64748b   bg:    #f8fafc   border: #e2e8f0 */</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Page-wide defaults on <code>body</code></h3>
+      <pre><code>body {
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: #1e293b;
+  background: #f8fafc;
+  line-height: 1.6;
+  max-width: 760px;
+  margin: 0 auto;     /* top/bottom 0, left/right auto = centered */
+  padding: 0 16px;
+}</code></pre>
+      <p><strong>Expected result:</strong> the page content is now a centered column instead of stretching edge-to-edge, with a consistent font. Every paragraph and list inherits the font and color for free — that's inheritance doing the work.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Heading colors (element + grouping)</h3>
+      <pre><code>h1, h2 { font-family: system-ui, sans-serif; }   /* grouping */
+h1 { color: #1e3a8a; }
+h2 { color: #2563eb; }</code></pre>
+      <p><strong>Expected result:</strong> "Jane Doe" turns deep blue, and section headings (About Me, Skills…) turn a brighter blue across every page.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Nav links (descendant selector)</h3>
+      <pre><code>nav a {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 600;
+  margin-right: 8px;
+}</code></pre>
+      <p><strong>Expected result:</strong> the Home / About / Contact links lose their underline and turn bold blue — but links inside paragraphs (like "get in touch") are untouched, because <code>nav a</code> only matches links <em>inside</em> <code>&lt;nav&gt;</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> A reusable button class</h3>
+      <p>In your HTML, add the class to one link. On the Home page:</p>
+      <pre><code>&lt;a class="button" href="contact.html"&gt;Get in touch&lt;/a&gt;</code></pre>
+      <p>Then style it in CSS:</p>
+      <pre><code>.button {
+  display: inline-block;
+  background: #2563eb;
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+}</code></pre>
+      <p><strong>Expected result:</strong> that one link becomes a solid blue pill. Because it's a class, you can drop <code>class="button"</code> on any element later to reuse the style.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Hover states</h3>
+      <pre><code>nav a:hover   { color: #1e3a8a; }
+.button:hover { background: #1e3a8a; }</code></pre>
+      <p><strong>Expected result:</strong> hovering a nav link or the button darkens it. <code>:hover</code> is a "pseudo-class" — a state the browser tracks for you.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">8</span> Confirm consistency</h3>
+      <p>Click through all three pages. They share one look because they share one stylesheet. If one page looks different, check that its <code>&lt;link&gt;</code> line is present and spelled the same.</p>
+    </div>
+  </section>
+
+  <section class="full">
+    <h2>📄 Complete <code>styles.css</code></h2>
+    <pre><code>/* Palette
+   brand:   #2563eb   dark:  #1e293b
+   muted:   #64748b   bg:    #f8fafc   border: #e2e8f0 */
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: #1e293b;
+  background: #f8fafc;
+  line-height: 1.6;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+h1, h2 { font-family: system-ui, sans-serif; }
+h1 { color: #1e3a8a; }
+h2 { color: #2563eb; }
+
+nav a {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 600;
+  margin-right: 8px;
+}
+nav a:hover { color: #1e3a8a; }
+
+.button {
+  display: inline-block;
+  background: #2563eb;
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+}
+.button:hover { background: #1e3a8a; }
+
+footer p { color: #94a3b8; }</code></pre>
+  </section>
+
+  <section class="full">
+    <h2>📄 The HTML change (every page)</h2>
+    <p>The only required HTML edit is one line in each <code>&lt;head&gt;</code>. Here it is in context on <code>index.html</code>:</p>
+    <pre><code>&lt;head&gt;
+  &lt;meta charset="UTF-8"&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+  &lt;title&gt;Jane Doe — Home&lt;/title&gt;
+  &lt;link rel="stylesheet" href="styles.css"&gt;
+&lt;/head&gt;</code></pre>
+    <p>Plus the optional <code>class="button"</code> on one link for step 6.</p>
+  </section>
+
+  <section>
+    <h2>🌟 Stretch: palette as CSS variables</h2>
+    <p>If you tried the stretch goal, your palette lives in one place and the rest of the file references it. Change a variable and everything updates:</p>
+    <pre><code>:root {
+  --brand: #2563eb;
+  --brand-dark: #1e3a8a;
+  --ink: #1e293b;
+  --bg: #f8fafc;
+  --muted: #94a3b8;
+}
+
+body { color: var(--ink); background: var(--bg); }
+h1   { color: var(--brand-dark); }
+h2   { color: var(--brand); }
+nav a, .button { color: var(--brand); }</code></pre>
+    <div class="callout tip">
+      <div class="label">💡 This is exactly what these lesson files do</div>
+      Look at the very top of this page's <code>&lt;style&gt;</code> block — <code>:root{--accent:#2563eb; ...}</code>. Variables are how real projects stay consistent.
+    </div>
+  </section>
+
+  <section class="done">
+    <h2>🎉 You're done</h2>
+    <p>Your three plain pages now share one external stylesheet and a deliberate palette. You used element, class, and descendant selectors, leaned on inheritance and the cascade, and added hover states — all the fundamentals.</p>
+    <p><strong>Keep <code>styles.css</code></strong> — you'll grow it every chunk this module.</p>
+    <p><strong>Up next → Chunk 2.2: The Box Model &amp; Typography</strong>, where you'll control spacing precisely and add a real web font.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

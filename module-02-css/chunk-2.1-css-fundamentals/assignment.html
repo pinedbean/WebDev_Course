@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment · Chunk 2.1 — CSS Fundamentals &amp; Selectors</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #ede9fe;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:#ede9fe;border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#5b21b6;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--task);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .deliverable{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .deliverable h2{border-color:#a7f3d0;color:#065f46;}
+  .check{list-style:none;padding-left:0;} .check li{padding-left:30px;position:relative;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:18px;color:var(--task);}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 2 — CSS &amp; Layout</div>
+    <h1>Chunk 2.1 — Lab: Give Your Site a Stylesheet</h1>
+    <span class="badge">🧪 ASSIGNMENT</span>
+    <span class="badge">⏱️ 45–75 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 Your mission</h2>
+    <p>Create one external stylesheet, <code>styles.css</code>, link it from all three pages of your Module 1 personal site (<code>index.html</code>, <code>about.html</code>, <code>contact.html</code>), and apply a consistent color palette using element, class, and descendant selectors. By the end, the same CSS file controls the look of your whole site.</p>
+  </section>
+
+  <section>
+    <h2>Before you start</h2>
+    <ul>
+      <li>Open your Module 1 site folder (the one with <code>index.html</code>, <code>about.html</code>, <code>contact.html</code>) in VS Code with <code>code .</code></li>
+      <li>If you don't have it, recreate the three pages from the Chunk 1.3 solution first — Module 2 styles that exact markup.</li>
+      <li>Open one of the pages in your browser and keep it visible. After each change, save and refresh (<kbd>Cmd</kbd>+<kbd>R</kbd>) to watch it update.</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ Try it yourself first</div>
+      Build from the lecture and your own experimentation. Only open <code>solution.html</code> when you're stuck or to compare at the end. Wrestling with selectors is how they stick.
+    </div>
+    <div class="callout tip">
+      <div class="label">💡 No HTML rewrites needed</div>
+      You'll add a single <code>&lt;link&gt;</code> line per page and maybe one or two <code>class</code> attributes. The structure stays the same — CSS hooks onto the semantic HTML you already wrote.
+    </div>
+  </section>
+
+  <section>
+    <h2>Tasks</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Create &amp; link the stylesheet</h3>
+      <p>In the same folder as your HTML pages, create an empty file named <code>styles.css</code>. Then, in the <code>&lt;head&gt;</code> of <strong>each</strong> of the three pages, add a link to it (just below the <code>&lt;title&gt;</code>):</p>
+      <pre><code>&lt;link rel="stylesheet" href="styles.css"&gt;</code></pre>
+      <p>Prove the link works: put <code>body { background: #f8fafc; }</code> in <code>styles.css</code>, save, refresh. If the background changes on all three pages, you're wired up.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Choose a palette (3–5 colors)</h3>
+      <p>Decide on a small, consistent palette and write it at the top of <code>styles.css</code> as a comment so you remember it. Aim for: one brand color, one dark text color, one muted/secondary, one light background, one border color. Example:</p>
+      <pre><code>/* Palette
+   brand:   #2563eb
+   dark:    #1e293b
+   muted:   #64748b
+   bg:      #f8fafc
+   border:  #e2e8f0
+*/</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Set page-wide defaults on <code>body</code></h3>
+      <p>Using an <strong>element selector</strong>, give <code>body</code> your font, text color, background, and center the content. The font and color will <em>inherit</em> down to everything else.</p>
+      <ul>
+        <li>A system font stack (e.g. <code>system-ui, -apple-system, sans-serif</code>).</li>
+        <li>Your dark text color and light background.</li>
+        <li><code>max-width</code> (around <code>760px</code>), <code>margin: 0 auto;</code> to center, and a little side <code>padding</code>.</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Style headings with your palette</h3>
+      <p>Give <code>h1</code> and <code>h2</code> colors from your palette. Use a <strong>grouping selector</strong> if they share properties (e.g. the same font), and individual rules where they differ.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Style the nav links with a descendant selector</h3>
+      <p>Target only the links inside the header nav using <code>nav a</code>. Give them your brand color, remove the underline (<code>text-decoration: none;</code>), and make them bold. Leave links in the body content alone.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Add one reusable class</h3>
+      <p>Create a class — for example <code>.button</code> — and apply it to one link (such as "get in touch" on the Home page or the form's submit button area). Style it with a background color, white text, and some padding so it looks like a button. This proves you can use <strong>class selectors</strong>, the reusable workhorse.</p>
+      <pre><code>&lt;a class="button" href="contact.html"&gt;Get in touch&lt;/a&gt;</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Add a hover effect</h3>
+      <p>Make links react to the mouse. Add a rule using the <code>:hover</code> state so nav links (or your button) change color when hovered:</p>
+      <pre><code>nav a:hover { color: #1e3a8a; }</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">8</span> Verify consistency across all three pages</h3>
+      <p>Open <code>index.html</code>, <code>about.html</code>, and <code>contact.html</code> in turn. They should all share the same colors, font, and centered layout — because they all load the same <code>styles.css</code>. Fix anything that looks off.</p>
+    </div>
+  </section>
+
+  <section class="deliverable">
+    <h2>✅ Deliverable — acceptance checklist</h2>
+    <ul class="check">
+      <li><code>styles.css</code> exists and is linked from all three pages via <code>&lt;link rel="stylesheet"&gt;</code>.</li>
+      <li>A palette comment documents 3–5 chosen colors.</li>
+      <li><code>body</code> sets font, text color, background, and centers the content with <code>max-width</code> + <code>margin: 0 auto</code>.</li>
+      <li><code>h1</code> and <code>h2</code> use palette colors.</li>
+      <li>A <strong>descendant selector</strong> (<code>nav a</code>) styles the nav links without affecting other links.</li>
+      <li>At least one reusable <strong>class</strong> (e.g. <code>.button</code>) is defined and applied.</li>
+      <li>At least one <code>:hover</code> effect works.</li>
+      <li>All three pages look visually consistent.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🚀 Stretch goals (optional)</h2>
+    <ul>
+      <li>Define your palette once with <strong>CSS custom properties</strong> (variables) on <code>:root</code>, e.g. <code>--brand: #2563eb;</code>, then use <code>color: var(--brand);</code> throughout. (Peek at the top of this very page's <code>&lt;style&gt;</code> for the pattern.)</li>
+      <li>Style the experience <code>&lt;table&gt;</code> on the About page: add <code>border-collapse: collapse;</code> and padding on <code>th, td</code>.</li>
+      <li>Give the form inputs on the Contact page a subtle border and padding.</li>
+      <li>Add a <code>:visited</code> color for links, and try an <code>a:hover</code> underline.</li>
+      <li>Commit your work: <code>git add . &amp;&amp; git commit -m "Add external stylesheet and palette"</code>.</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a class="current">🧪 Assignment</a>
+    <a href="solution.html">✅ Solution →</a>
+  </div>
+</footer>
+</body>
+</html>

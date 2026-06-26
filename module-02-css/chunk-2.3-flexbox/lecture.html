@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 2.3 — Flexbox Layout</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+  /* live-demo helpers */
+  .demo{border:1px dashed #cbd5e1;border-radius:10px;padding:16px 18px;margin:14px 0;background:#fff;}
+  .demo .demo-label{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#64748b;margin:0 0 10px;font-weight:700;}
+  .flex{display:flex;gap:10px;background:#eef2ff;border-radius:8px;padding:10px;}
+  .flex .item{background:#2563eb;color:#fff;padding:12px 16px;border-radius:6px;font-weight:600;font-size:14px;}
+  .flex.col{flex-direction:column;}
+  .jc-start{justify-content:flex-start;} .jc-center{justify-content:center;}
+  .jc-between{justify-content:space-between;} .jc-around{justify-content:space-around;} .jc-end{justify-content:flex-end;}
+  .ai-stretch{align-items:stretch;min-height:90px;} .ai-center{align-items:center;min-height:90px;}
+  .ai-start{align-items:flex-start;min-height:90px;} .ai-end{align-items:flex-end;min-height:90px;}
+  .tall{padding-top:26px;padding-bottom:26px;}
+  .wrapdemo{flex-wrap:wrap;} .wrapdemo .item{width:150px;}
+  /* mock navbar */
+  .navbar{display:flex;align-items:center;justify-content:space-between;background:#1e293b;border-radius:10px;padding:12px 18px;}
+  .navbar .brand{color:#fff;font-weight:700;font-size:18px;}
+  .navbar .links{display:flex;gap:18px;}
+  .navbar .links a{color:#cbd5e1;text-decoration:none;font-weight:600;font-size:15px;}
+  .navbar .links a:hover{color:#fff;}
+  /* card row */
+  .card-row{display:flex;gap:16px;flex-wrap:wrap;}
+  .pcard{flex:1;min-width:180px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px;box-shadow:0 4px 14px rgba(2,6,23,.05);}
+  .pcard h4{margin:0 0 6px;color:#1e3a8a;}
+  .pcard p{margin:0;color:#475569;font-size:14px;}
+  .axis{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:13px;color:#475569;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 2 — CSS &amp; Layout</div>
+    <h1>Chunk 2.3 — Flexbox Layout</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>What <strong>Flexbox</strong> is and when to reach for it (one-dimensional layouts: a row <em>or</em> a column).</li>
+      <li>The container/item relationship and the <strong>main axis</strong> vs <strong>cross axis</strong>.</li>
+      <li>The everyday properties: <code>justify-content</code>, <code>align-items</code>, <code>gap</code>, <code>flex-wrap</code>, <code>flex-direction</code>.</li>
+      <li>How <code>flex</code> on items controls growing, shrinking, and base size.</li>
+      <li>Building a real <strong>navbar</strong> and a wrapping <strong>card row</strong>.</li>
+    </ul>
+    <p>In the lab you'll convert Jane's pipe-separated nav into a proper navbar and add a row of cards.</p>
+  </section>
+
+  <section>
+    <h2>1. Why Flexbox exists</h2>
+    <p>Up to now, your elements have stacked vertically — that's the browser's default "block" flow. But real layouts need things <em>side by side</em>: a logo on the left and links on the right, three cards in a row, a centered button. Before Flexbox, doing this meant hacks (floats, inline-block, tables). <strong>Flexbox</strong> made it sane.</p>
+    <p>The rule of thumb: <strong>Flexbox handles one dimension at a time</strong> — you're arranging items along a single line (a row or a column). For full two-dimensional grids (rows <em>and</em> columns together), you'll use CSS Grid in the next chunk.</p>
+  </section>
+
+  <section>
+    <h2>2. Container &amp; items</h2>
+    <p>Flexbox always involves two roles. You set <code>display: flex</code> on a <strong>container</strong> (the parent), and its <em>direct children</em> become flexible <strong>items</strong>:</p>
+    <pre><code>&lt;div class="flex"&gt;          &lt;!-- the flex CONTAINER --&gt;
+  &lt;div class="item"&gt;A&lt;/div&gt;  &lt;!-- flex ITEM --&gt;
+  &lt;div class="item"&gt;B&lt;/div&gt;  &lt;!-- flex ITEM --&gt;
+  &lt;div class="item"&gt;C&lt;/div&gt;  &lt;!-- flex ITEM --&gt;
+&lt;/div&gt;</code></pre>
+    <pre><code>.flex { display: flex; gap: 10px; }</code></pre>
+    <div class="demo">
+      <p class="demo-label">Live demo — display:flex lays children in a row</p>
+      <div class="flex">
+        <div class="item">A</div>
+        <div class="item">B</div>
+        <div class="item">C</div>
+      </div>
+    </div>
+    <p>That one line did it: the three boxes now sit in a row instead of stacking. Everything else in Flexbox is about <em>distributing and aligning</em> those items.</p>
+  </section>
+
+  <section>
+    <h2>3. The two axes (the key mental model)</h2>
+    <p>A flex container has two axes, and which is which depends on <code>flex-direction</code>:</p>
+    <ul>
+      <li><strong>Main axis</strong> — the direction items flow. With the default <code>flex-direction: row</code>, the main axis runs <span class="axis">left → right</span>.</li>
+      <li><strong>Cross axis</strong> — perpendicular to it (<span class="axis">top → bottom</span> for a row).</li>
+    </ul>
+    <p>This matters because the two big alignment properties each control one axis:</p>
+    <table>
+      <tr><th>Property</th><th>Controls</th><th>For a row, that's…</th></tr>
+      <tr><td><code>justify-content</code></td><td>The <strong>main</strong> axis</td><td>horizontal position</td></tr>
+      <tr><td><code>align-items</code></td><td>The <strong>cross</strong> axis</td><td>vertical position</td></tr>
+    </table>
+    <div class="callout tip">
+      <div class="label">💡 Remember it</div>
+      <strong>justify = main</strong> (the way items flow). <strong>align = cross</strong> (the other way). If you flip <code>flex-direction</code> to <code>column</code>, the axes swap — and so does which property does what.
+    </div>
+  </section>
+
+  <section>
+    <h2>4. <code>justify-content</code> — along the main axis</h2>
+    <p>Distributes items horizontally (in a row). The common values:</p>
+    <div class="demo">
+      <p class="demo-label">justify-content: flex-start (default)</p>
+      <div class="flex jc-start"><div class="item">A</div><div class="item">B</div><div class="item">C</div></div>
+    </div>
+    <div class="demo">
+      <p class="demo-label">justify-content: center</p>
+      <div class="flex jc-center"><div class="item">A</div><div class="item">B</div><div class="item">C</div></div>
+    </div>
+    <div class="demo">
+      <p class="demo-label">justify-content: space-between</p>
+      <div class="flex jc-between"><div class="item">A</div><div class="item">B</div><div class="item">C</div></div>
+    </div>
+    <div class="demo">
+      <p class="demo-label">justify-content: space-around</p>
+      <div class="flex jc-around"><div class="item">A</div><div class="item">B</div><div class="item">C</div></div>
+    </div>
+    <pre><code>.flex { display: flex; justify-content: space-between; }</code></pre>
+    <p><code>space-between</code> is the classic navbar trick: it pushes the first item to the far left and the last to the far right, putting all the empty space <em>between</em> them.</p>
+  </section>
+
+  <section>
+    <h2>5. <code>align-items</code> — along the cross axis</h2>
+    <p>Positions items vertically within the container's height (in a row). The default is <code>stretch</code> (items fill the height). Use <code>center</code> constantly to vertically center things:</p>
+    <div class="demo">
+      <p class="demo-label">align-items: flex-start</p>
+      <div class="flex ai-start"><div class="item">A</div><div class="item tall">B taller</div><div class="item">C</div></div>
+    </div>
+    <div class="demo">
+      <p class="demo-label">align-items: center — vertically centered</p>
+      <div class="flex ai-center"><div class="item">A</div><div class="item tall">B taller</div><div class="item">C</div></div>
+    </div>
+    <div class="demo">
+      <p class="demo-label">align-items: flex-end</p>
+      <div class="flex ai-end"><div class="item">A</div><div class="item tall">B taller</div><div class="item">C</div></div>
+    </div>
+    <div class="callout note">
+      <div class="label">📝 The famous centering trick</div>
+      To center something perfectly (both directions), combine the two: <code>display:flex; justify-content:center; align-items:center;</code>. This finally solved "how do I vertically center a div", a problem that haunted developers for a decade.
+    </div>
+  </section>
+
+  <section>
+    <h2>6. <code>gap</code> &amp; <code>flex-wrap</code></h2>
+    <h3><code>gap</code> — spacing between items</h3>
+    <p>Adds consistent space between flex items without fiddling with margins. You've already used it (the footer nav on these pages is <code>display:flex; gap:12px</code>):</p>
+    <pre><code>.flex { display: flex; gap: 16px; }</code></pre>
+
+    <h3><code>flex-wrap</code> — let items drop to the next line</h3>
+    <p>By default, flex items try to stay on one line and shrink to fit. <code>flex-wrap: wrap</code> lets them wrap onto new lines when there's no room — essential for responsive card grids. Resize this window and watch the cards below wrap:</p>
+    <div class="demo">
+      <p class="demo-label">Live demo — flex-wrap: wrap (try narrowing the window)</p>
+      <div class="flex wrapdemo">
+        <div class="item">One</div><div class="item">Two</div><div class="item">Three</div>
+        <div class="item">Four</div><div class="item">Five</div>
+      </div>
+    </div>
+    <pre><code>.row { display: flex; flex-wrap: wrap; gap: 16px; }</code></pre>
+  </section>
+
+  <section>
+    <h2>7. Flexible items: the <code>flex</code> shorthand</h2>
+    <p>So far we positioned items. Now make them <em>resize</em>. Put <code>flex</code> on the items themselves:</p>
+    <pre><code>.item { flex: 1; }   /* every item grows to share space equally */</code></pre>
+    <p><code>flex: 1</code> is shorthand for "grow to fill available space, sharing it equally with siblings". Combine with <code>min-width</code> so items don't get too narrow before wrapping. That's exactly how a responsive card row works:</p>
+    <pre><code>.card { flex: 1; min-width: 180px; }</code></pre>
+    <div class="demo">
+      <p class="demo-label">Live demo — responsive card row (flex:1; min-width:180px; flex-wrap:wrap)</p>
+      <div class="card-row">
+        <div class="pcard"><h4>HTML</h4><p>Structure &amp; semantics — Module 1.</p></div>
+        <div class="pcard"><h4>CSS</h4><p>Styling &amp; layout — you are here.</p></div>
+        <div class="pcard"><h4>JavaScript</h4><p>Interactivity — Module 3.</p></div>
+      </div>
+    </div>
+    <table>
+      <tr><th>On the item</th><th>Meaning</th></tr>
+      <tr><td><code>flex: 1</code></td><td>Grow to fill, share space equally.</td></tr>
+      <tr><td><code>flex: 0 0 200px</code></td><td>Don't grow, don't shrink, stay 200px wide.</td></tr>
+      <tr><td><code>flex-grow: 2</code></td><td>Take twice as much extra space as a <code>flex-grow:1</code> sibling.</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>8. Building a navbar (the lab's centerpiece)</h2>
+    <p>A navbar is just a flex container with <code>space-between</code> (brand left, links right) and <code>align-items: center</code> (everything vertically centered). The links themselves are another little flex container with a <code>gap</code>:</p>
+    <pre><code>.navbar {
+  display: flex;
+  justify-content: space-between;  /* brand left, links right */
+  align-items: center;             /* vertically centered     */
+  background: #1e293b;
+  padding: 12px 18px;
+}
+.navbar .links { display: flex; gap: 18px; }
+.navbar .links a { color: #cbd5e1; text-decoration: none; }</code></pre>
+    <div class="demo">
+      <p class="demo-label">Live demo — the navbar you'll build</p>
+      <div class="navbar">
+        <span class="brand">Jane Doe</span>
+        <span class="links">
+          <a href="#">Home</a><a href="#">About</a><a href="#">Contact</a>
+        </span>
+      </div>
+    </div>
+    <p>For Jane's site, you'll wrap her existing <code>&lt;nav&gt;</code> links and the <code>&lt;h1&gt;</code> in a header and flex them apart — replacing those temporary <code>|</code> separators from Module 1 for good.</p>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li><code>display: flex</code> on a container lays its children in a row (or column) — Flexbox is for <strong>one dimension</strong>.</li>
+      <li><strong>justify-content</strong> aligns along the <strong>main</strong> axis; <strong>align-items</strong> aligns along the <strong>cross</strong> axis.</li>
+      <li><code>gap</code> spaces items; <code>flex-wrap: wrap</code> lets them flow onto new lines.</li>
+      <li><code>flex: 1</code> on items makes them grow to share space; pair with <code>min-width</code> for responsive rows.</li>
+      <li>Navbar pattern = <code>justify-content: space-between; align-items: center;</code></li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and build a real navbar + card row for your site.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

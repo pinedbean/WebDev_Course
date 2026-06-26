@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk 4.7 — Reusable Hooks &amp; Project Structure</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .checkpoint{background:#fffbeb;border:2px solid #f59e0b;}
+  .checkpoint h2{border-color:#fde68a;color:#92400e;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .full{border:2px solid #16a34a;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 4 — React + Vite</div>
+    <h1>Chunk 4.7 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>Part A refactors your app; Part B assembles the 🏁 Checkpoint Recipe Browser. Here's the finished structure both parts produce:</p>
+    <div class="filetree">recipe-box/
+├── .env                          VITE_API_BASE=...
+├── index.html
+└── src/
+    ├── main.jsx                  router + favorites provider
+    ├── App.jsx                   routes
+    ├── api/
+    │   └── recipes.js            URL builders (env-based)
+    ├── hooks/
+    │   └── useFetch.js           reusable fetch lifecycle
+    ├── context/
+    │   └── FavoritesContext.jsx  shared favorites state
+    ├── components/
+    │   ├── Layout.jsx            navbar + Outlet + fav count
+    │   ├── RecipeCard.jsx
+    │   └── FavoriteButton.jsx
+    ├── pages/
+    │   ├── Home.jsx
+    │   ├── Recipes.jsx
+    │   ├── RecipeDetail.jsx
+    │   ├── Favorites.jsx
+    │   └── NotFound.jsx
+    └── index.css</div>
+  </section>
+
+  <!-- ===================== PART A ===================== -->
+  <section>
+    <h2>Part A — Refactor &amp; Structure</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> The <code>useFetch</code> hook</h3>
+      <pre><code>// src/hooks/useFetch.js
+import { useState, useEffect } from "react";
+
+export function useFetch(url) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() =&gt; {
+    if (!url) return;            // skip when there's no url
+    let active = true;
+    async function load() {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        if (active) setData(json);
+      } catch (err) {
+        if (active) setError(err.message);
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+    load();
+    return () =&gt; { active = false; };
+  }, [url]);
+
+  return { data, loading, error };
+}</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Centralized API + env config</h3>
+      <pre><code># .env  (project root)
+VITE_API_BASE=https://www.themealdb.com/api/json/v1/1</code></pre>
+      <pre><code>// src/api/recipes.js
+const BASE = import.meta.env.VITE_API_BASE;
+
+export function searchUrl(query) {
+  return `${BASE}/search.php?s=${encodeURIComponent(query)}`;
+}
+export function lookupUrl(id) {
+  return `${BASE}/lookup.php?i=${id}`;
+}</code></pre>
+      <div class="callout warning">
+        <div class="label">⚠️ Restart after editing <code>.env</code></div>
+        Vite reads env files at startup. Stop (<kbd>Ctrl</kbd>+<kbd>C</kbd>) and re-run <code>npm run dev</code> so <code>import.meta.env.VITE_API_BASE</code> is defined. If it's <code>undefined</code>, check the <code>VITE_</code> prefix and that you restarted.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Pages shrink to almost nothing</h3>
+      <p>Both list and detail now compose the hook + the api helper. See the full files in Part B below.</p>
+    </div>
+  </section>
+
+  <!-- ===================== PART B / CHECKPOINT ===================== -->
+  <section class="checkpoint">
+    <h2>🏁 Part B — Module 4 Checkpoint: Recipe Browser (complete code)</h2>
+    <p>Below is every file of the finished app. It composes all of Module 4. Create the files exactly, run <code>npm install react-router-dom</code> if you haven't, then <code>npm run dev</code>.</p>
+  </section>
+
+  <section class="full">
+    <h2>📄 <code>src/main.jsx</code></h2>
+    <pre><code>import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
+import { FavoritesProvider } from "./context/FavoritesContext";
+import App from "./App.jsx";
+import "./index.css";
+
+ReactDOM.createRoot(document.getElementById("root")).render(
+  &lt;React.StrictMode&gt;
+    &lt;BrowserRouter&gt;
+      &lt;FavoritesProvider&gt;
+        &lt;App /&gt;
+      &lt;/FavoritesProvider&gt;
+    &lt;/BrowserRouter&gt;
+  &lt;/React.StrictMode&gt;
+);</code></pre>
+
+    <h2>📄 <code>src/App.jsx</code></h2>
+    <pre><code>import { Routes, Route } from "react-router-dom";
+import Layout from "./components/Layout";
+import Home from "./pages/Home";
+import Recipes from "./pages/Recipes";
+import RecipeDetail from "./pages/RecipeDetail";
+import Favorites from "./pages/Favorites";
+import NotFound from "./pages/NotFound";
+
+function App() {
+  return (
+    &lt;Routes&gt;
+      &lt;Route element={&lt;Layout /&gt;}&gt;
+        &lt;Route path="/" element={&lt;Home /&gt;} /&gt;
+        &lt;Route path="/recipes" element={&lt;Recipes /&gt;} /&gt;
+        &lt;Route path="/recipes/:id" element={&lt;RecipeDetail /&gt;} /&gt;
+        &lt;Route path="/favorites" element={&lt;Favorites /&gt;} /&gt;
+        &lt;Route path="*" element={&lt;NotFound /&gt;} /&gt;
+      &lt;/Route&gt;
+    &lt;/Routes&gt;
+  );
+}
+
+export default App;</code></pre>
+
+    <h2>📄 <code>src/context/FavoritesContext.jsx</code></h2>
+    <pre><code>import { createContext, useContext, useState } from "react";
+
+const FavoritesContext = createContext(null);
+
+export function FavoritesProvider({ children }) {
+  const [favorites, setFavorites] = useState([]);
+
+  function addFavorite(recipe) {
+    setFavorites((prev) =&gt;
+      prev.some((r) =&gt; r.id === recipe.id) ? prev : [...prev, recipe]
+    );
+  }
+  function removeFavorite(id) {
+    setFavorites((prev) =&gt; prev.filter((r) =&gt; r.id !== id));
+  }
+  function isFavorite(id) {
+    return favorites.some((r) =&gt; r.id === id);
+  }
+
+  return (
+    &lt;FavoritesContext.Provider
+      value={{ favorites, addFavorite, removeFavorite, isFavorite }}
+    &gt;
+      {children}
+    &lt;/FavoritesContext.Provider&gt;
+  );
+}
+
+export function useFavorites() {
+  const ctx = useContext(FavoritesContext);
+  if (!ctx) throw new Error("useFavorites must be used inside FavoritesProvider");
+  return ctx;
+}</code></pre>
+
+    <h2>📄 <code>src/components/Layout.jsx</code></h2>
+    <pre><code>import { NavLink, Outlet } from "react-router-dom";
+import { useFavorites } from "../context/FavoritesContext";
+
+const cls = ({ isActive }) =&gt; (isActive ? "tab active" : "tab");
+
+function Layout() {
+  const { favorites } = useFavorites();
+  return (
+    &lt;&gt;
+      &lt;header className="nav"&gt;
+        &lt;NavLink to="/" className={cls} end&gt;🍳 Home&lt;/NavLink&gt;
+        &lt;NavLink to="/recipes" className={cls}&gt;Recipes&lt;/NavLink&gt;
+        &lt;NavLink to="/favorites" className={cls}&gt;⭐ Favorites ({favorites.length})&lt;/NavLink&gt;
+      &lt;/header&gt;
+      &lt;main className="container"&gt;&lt;Outlet /&gt;&lt;/main&gt;
+    &lt;/&gt;
+  );
+}
+
+export default Layout;</code></pre>
+
+    <h2>📄 <code>src/components/RecipeCard.jsx</code></h2>
+    <pre><code>import { Link } from "react-router-dom";
+import FavoriteButton from "./FavoriteButton";
+
+function RecipeCard({ recipe }) {
+  return (
+    &lt;article className="card"&gt;
+      &lt;Link to={`/recipes/${recipe.id}`} className="card-link"&gt;
+        &lt;img src={recipe.image} alt={recipe.title} /&gt;
+        &lt;h3&gt;{recipe.title}&lt;/h3&gt;
+        &lt;p className="meta"&gt;{recipe.area} · {recipe.category}&lt;/p&gt;
+      &lt;/Link&gt;
+      &lt;FavoriteButton recipe={recipe} /&gt;
+    &lt;/article&gt;
+  );
+}
+
+export default RecipeCard;</code></pre>
+
+    <h2>📄 <code>src/components/FavoriteButton.jsx</code></h2>
+    <pre><code>import { useFavorites } from "../context/FavoritesContext";
+
+function FavoriteButton({ recipe }) {
+  const { isFavorite, addFavorite, removeFavorite } = useFavorites();
+  const fav = isFavorite(recipe.id);
+
+  function toggle(e) {
+    e.preventDefault();
+    fav ? removeFavorite(recipe.id) : addFavorite(recipe);
+  }
+
+  return (
+    &lt;button className="fav-btn" onClick={toggle} aria-pressed={fav}&gt;
+      {fav ? "⭐ Saved" : "☆ Save"}
+    &lt;/button&gt;
+  );
+}
+
+export default FavoriteButton;</code></pre>
+
+    <h2>📄 <code>src/pages/Home.jsx</code></h2>
+    <pre><code>import { Link } from "react-router-dom";
+
+function Home() {
+  return (
+    &lt;section&gt;
+      &lt;h1&gt;Welcome to Recipe Box 🍳&lt;/h1&gt;
+      &lt;p&gt;Search thousands of recipes and save your favorites.&lt;/p&gt;
+      &lt;Link to="/recipes" className="btn"&gt;Start browsing →&lt;/Link&gt;
+    &lt;/section&gt;
+  );
+}
+
+export default Home;</code></pre>
+
+    <h2>📄 <code>src/pages/Recipes.jsx</code></h2>
+    <pre><code>import { useState } from "react";
+import { useFetch } from "../hooks/useFetch";
+import { searchUrl } from "../api/recipes";
+import RecipeCard from "../components/RecipeCard";
+
+function toRecipe(m) {
+  return {
+    id: m.idMeal,
+    title: m.strMeal,
+    area: m.strArea,
+    category: m.strCategory,
+    image: m.strMealThumb,
+  };
+}
+
+function Recipes() {
+  const [query, setQuery] = useState("chicken");
+  const { data, loading, error } = useFetch(searchUrl(query));
+  const meals = data?.meals ?? [];
+
+  return (
+    &lt;section&gt;
+      &lt;h1&gt;Recipes&lt;/h1&gt;
+      &lt;input
+        className="search"
+        value={query}
+        onChange={(e) =&gt; setQuery(e.target.value)}
+        placeholder="Search recipes…"
+      /&gt;
+      {loading &amp;&amp; &lt;p className="status"&gt;⏳ Loading…&lt;/p&gt;}
+      {error &amp;&amp; &lt;p className="status error"&gt;😕 {error}&lt;/p&gt;}
+      {!loading &amp;&amp; !error &amp;&amp; meals.length === 0 &amp;&amp; (
+        &lt;p className="status"&gt;No recipes found for “{query}”.&lt;/p&gt;
+      )}
+      &lt;div className="grid"&gt;
+        {meals.map((m) =&gt; (
+          &lt;RecipeCard key={m.idMeal} recipe={toRecipe(m)} /&gt;
+        ))}
+      &lt;/div&gt;
+    &lt;/section&gt;
+  );
+}
+
+export default Recipes;</code></pre>
+
+    <h2>📄 <code>src/pages/RecipeDetail.jsx</code></h2>
+    <pre><code>import { useParams, useNavigate } from "react-router-dom";
+import { useFetch } from "../hooks/useFetch";
+import { lookupUrl } from "../api/recipes";
+import FavoriteButton from "../components/FavoriteButton";
+
+function RecipeDetail() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { data, loading, error } = useFetch(lookupUrl(id));
+
+  if (loading) return &lt;p className="status"&gt;⏳ Loading…&lt;/p&gt;;
+  if (error)   return &lt;p className="status error"&gt;😕 {error}&lt;/p&gt;;
+
+  const meal = data?.meals ? data.meals[0] : null;
+  if (!meal) return &lt;p className="status"&gt;Recipe not found.&lt;/p&gt;;
+
+  const recipe = {
+    id: meal.idMeal,
+    title: meal.strMeal,
+    area: meal.strArea,
+    category: meal.strCategory,
+    image: meal.strMealThumb,
+  };
+
+  return (
+    &lt;section&gt;
+      &lt;button onClick={() =&gt; navigate(-1)}&gt;← Back&lt;/button&gt;
+      &lt;h1&gt;{meal.strMeal}&lt;/h1&gt;
+      &lt;p className="meta"&gt;{meal.strArea} · {meal.strCategory}&lt;/p&gt;
+      &lt;FavoriteButton recipe={recipe} /&gt;
+      &lt;img src={meal.strMealThumb} alt={meal.strMeal} width="320" /&gt;
+      &lt;h2&gt;Instructions&lt;/h2&gt;
+      &lt;p&gt;{meal.strInstructions}&lt;/p&gt;
+    &lt;/section&gt;
+  );
+}
+
+export default RecipeDetail;</code></pre>
+
+    <h2>📄 <code>src/pages/Favorites.jsx</code></h2>
+    <pre><code>import { useState } from "react";
+import { useFavorites } from "../context/FavoritesContext";
+
+function Favorites() {
+  const { favorites, addFavorite, removeFavorite } = useFavorites();
+  const [form, setForm] = useState({ title: "", area: "", minutes: "" });
+  const [errors, setErrors] = useState({});
+
+  function handleChange(e) {
+    const { name, value } = e.target;
+    setForm((prev) =&gt; ({ ...prev, [name]: value }));
+  }
+  function validate(v) {
+    const next = {};
+    if (!v.title.trim()) next.title = "Title is required";
+    if (!(Number(v.minutes) &gt; 0)) next.minutes = "Minutes must be positive";
+    return next;
+  }
+  function handleSubmit(e) {
+    e.preventDefault();
+    const found = validate(form);
+    setErrors(found);
+    if (Object.keys(found).length &gt; 0) return;
+    addFavorite({
+      id: crypto.randomUUID(),
+      title: form.title.trim(),
+      area: form.area.trim() || "Custom",
+      category: "Custom",
+      image: "https://placehold.co/300x200?text=My+Recipe",
+    });
+    setForm({ title: "", area: "", minutes: "" });
+  }
+
+  return (
+    &lt;section&gt;
+      &lt;h1&gt;⭐ Favorites&lt;/h1&gt;
+      {favorites.length === 0 ? (
+        &lt;p className="status"&gt;No favorites yet — save some recipes!&lt;/p&gt;
+      ) : (
+        &lt;ul className="fav-list"&gt;
+          {favorites.map((r) =&gt; (
+            &lt;li key={r.id}&gt;
+              {r.title} &lt;span className="meta"&gt;({r.area})&lt;/span&gt;
+              &lt;button onClick={() =&gt; removeFavorite(r.id)}&gt;Remove&lt;/button&gt;
+            &lt;/li&gt;
+          ))}
+        &lt;/ul&gt;
+      )}
+
+      &lt;h2&gt;Add your own&lt;/h2&gt;
+      &lt;form onSubmit={handleSubmit} noValidate className="recipe-form"&gt;
+        &lt;div&gt;
+          &lt;input name="title" value={form.title} onChange={handleChange} placeholder="Title" /&gt;
+          {errors.title &amp;&amp; &lt;span className="field-error"&gt;{errors.title}&lt;/span&gt;}
+        &lt;/div&gt;
+        &lt;div&gt;
+          &lt;input name="area" value={form.area} onChange={handleChange} placeholder="Cuisine" /&gt;
+        &lt;/div&gt;
+        &lt;div&gt;
+          &lt;input name="minutes" type="number" value={form.minutes} onChange={handleChange} placeholder="Minutes" /&gt;
+          {errors.minutes &amp;&amp; &lt;span className="field-error"&gt;{errors.minutes}&lt;/span&gt;}
+        &lt;/div&gt;
+        &lt;button type="submit"&gt;Add to favorites&lt;/button&gt;
+      &lt;/form&gt;
+    &lt;/section&gt;
+  );
+}
+
+export default Favorites;</code></pre>
+
+    <h2>📄 <code>src/pages/NotFound.jsx</code></h2>
+    <pre><code>import { Link } from "react-router-dom";
+
+function NotFound() {
+  return (
+    &lt;section&gt;
+      &lt;h1&gt;404 — Page not found&lt;/h1&gt;
+      &lt;Link to="/"&gt;← Back home&lt;/Link&gt;
+    &lt;/section&gt;
+  );
+}
+
+export default NotFound;</code></pre>
+
+    <h2>📄 <code>src/index.css</code></h2>
+    <pre><code>* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #f1f5f9;
+  color: #1e293b;
+}
+.container { max-width: 900px; margin: 0 auto; padding: 24px; }
+.nav { display: flex; gap: 16px; padding: 12px 24px; background: #fff; border-bottom: 1px solid #e2e8f0; }
+.tab { text-decoration: none; color: #2563eb; font-weight: 600; }
+.tab.active { color: #1e293b; border-bottom: 2px solid #2563eb; }
+.search { padding: 8px 12px; width: 100%; max-width: 320px; margin: 12px 0; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+.card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; }
+.card img { width: 100%; border-radius: 8px; display: block; }
+.card-link { text-decoration: none; color: inherit; }
+.meta { color: #64748b; font-size: 14px; }
+.fav-btn { margin-top: 8px; }
+.status { color: #475569; }
+.status.error { color: #b91c1c; }
+.field-error { color: #b91c1c; font-size: 13px; display: block; }
+.fav-list { list-style: none; padding: 0; }
+.fav-list li { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
+.fav-list li button { margin-left: auto; }
+.recipe-form &gt; div { margin-bottom: 10px; }
+.btn { display: inline-block; margin-top: 8px; }</code></pre>
+  </section>
+
+  <section>
+    <h2>🛠 Troubleshooting</h2>
+    <table>
+      <tr><th>Symptom</th><th>Fix</th></tr>
+      <tr><td><code>import.meta.env.VITE_API_BASE</code> is undefined</td><td>Check the <code>VITE_</code> prefix, that <code>.env</code> is in the project root (not <code>src/</code>), and that you restarted <code>npm run dev</code>.</td></tr>
+      <tr><td>Hook ESLint warning: "missing dependency"</td><td>The dependency array of <code>useFetch</code> should be <code>[url]</code>. Build the URL outside the hook (in the api helper) so it's a plain string.</td></tr>
+      <tr><td>"Invalid hook call"</td><td>You called a hook conditionally or outside a component/hook. Move it to the top level of a component or custom hook.</td></tr>
+      <tr><td>Detail fetch fires with no id</td><td>Our <code>useFetch</code> bails when <code>url</code> is falsy; make sure <code>lookupUrl(id)</code> returns a real URL once <code>id</code> exists.</td></tr>
+      <tr><td>Imports break after moving files</td><td>Update relative paths (<code>../</code> vs <code>./</code>). VS Code can auto-update imports on move — accept the prompt.</td></tr>
+    </table>
+  </section>
+
+  <section class="done">
+    <h2>🎉 Module 4 complete!</h2>
+    <p>You built a complete, multi-page React app from scratch: scaffolded with Vite, composed from reusable components and props, made interactive with <code>useState</code>, connected to a live API with <code>useEffect</code>/<code>useFetch</code>, routed with React Router, and given app-wide shared state via Context — all in a clean, environment-configured project structure.</p>
+    <p>Across Module 4 you can now:</p>
+    <ul>
+      <li>Scaffold and run React apps with Vite, and write JSX confidently.</li>
+      <li>Build component trees with props, composition, conditional rendering, and keyed lists.</li>
+      <li>Manage state and events with hooks, and fetch data with loading/error handling.</li>
+      <li>Add client-side routing, shared state with Context, and forms with validation.</li>
+      <li>Extract custom hooks and organize a real-world project.</li>
+    </ul>
+    <p><strong>Up next → Module 5: Backend with FastAPI.</strong> You'll build the API that this frontend will eventually talk to — and in Chunk 5.5 you'll connect your React app to it. Your Recipe Browser is your proof that the frontend half is solid.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

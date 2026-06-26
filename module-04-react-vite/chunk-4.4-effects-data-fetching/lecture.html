@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 4.4 — Side Effects &amp; Data Fetching</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 4 — React + Vite</div>
+    <h1>Chunk 4.4 — Side Effects &amp; Data Fetching (useEffect)</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>What a <strong>side effect</strong> is, and why fetching data is one.</li>
+      <li>The <strong><code>useEffect</code></strong> hook and its <strong>dependency array</strong>.</li>
+      <li>How to fetch data <strong>on mount</strong> with <code>fetch</code> + <code>async/await</code> (from Chunk 3.4).</li>
+      <li>Managing the three states of any request: <strong>loading</strong>, <strong>error</strong>, and <strong>success</strong>.</li>
+      <li>Cleanup, and why effects sometimes run twice in development.</li>
+    </ul>
+    <p>In the lab you'll replace your hardcoded recipe data with live recipes from a public API.</p>
+  </section>
+
+  <section>
+    <h2>1. What is a "side effect"?</h2>
+    <p>A component's main job is pure: take props + state, return JSX. But real apps need to reach outside that calculation — fetch from an API, set a timer, read <code>localStorage</code>, change the document title. Anything that touches the world <em>outside</em> rendering is a <strong>side effect</strong>.</p>
+    <p>You can't just fetch inside the component body, because that runs on <em>every</em> render — you'd fire endless requests, each triggering a state update, triggering another render... an infinite loop. React gives you a controlled place to run effects: the <strong><code>useEffect</code></strong> hook.</p>
+  </section>
+
+  <section>
+    <h2>2. The <code>useEffect</code> hook</h2>
+    <p><code>useEffect</code> runs a function <em>after</em> the component renders. Its shape:</p>
+    <pre><code>import { useEffect } from "react";
+
+useEffect(() =&gt; {
+  // effect code runs after render
+}, [/* dependency array */]);</code></pre>
+    <p>The second argument — the <strong>dependency array</strong> — controls <em>when</em> the effect re-runs. This is the single most important thing to understand:</p>
+    <table>
+      <tr><th>Dependency array</th><th>When the effect runs</th></tr>
+      <tr><td><code>[]</code> (empty)</td><td>Once, after the first render ("on mount"). Perfect for fetching initial data.</td></tr>
+      <tr><td><code>[query]</code></td><td>On mount, and again whenever <code>query</code> changes.</td></tr>
+      <tr><td>omitted</td><td>After <em>every</em> render — almost always a mistake (loops!).</td></tr>
+    </table>
+    <pre><code>// runs once, when the component first appears
+useEffect(() =&gt; {
+  console.log("mounted!");
+}, []);</code></pre>
+    <div class="callout warning">
+      <div class="label">⚠️ The dependency array is not optional</div>
+      Forgetting <code>[]</code> is the classic beginner bug. With no array, the effect runs after every render; if the effect sets state, that render triggers the effect again — an infinite fetch loop. List the values your effect depends on, and only those.
+    </div>
+  </section>
+
+  <section>
+    <h2>3. Fetching data on mount</h2>
+    <p>You already know <code>fetch</code> and <code>async/await</code> from Chunk 3.4. The new part is wrapping them in <code>useEffect</code> and storing the result in state so React renders it.</p>
+    <p>A subtle rule: the effect function itself can't be <code>async</code> (it must return either nothing or a cleanup function, not a Promise). So define an <code>async</code> function <em>inside</em> the effect and call it:</p>
+    <pre><code>import { useState, useEffect } from "react";
+
+function Recipes() {
+  const [meals, setMeals] = useState([]);
+
+  useEffect(() =&gt; {
+    async function load() {
+      const res = await fetch(
+        "https://www.themealdb.com/api/json/v1/1/search.php?s=chicken"
+      );
+      const data = await res.json();
+      setMeals(data.meals);   // store result → triggers a re-render
+    }
+    load();
+  }, []);   // [] = fetch once on mount
+
+  return (
+    &lt;ul&gt;
+      {meals.map((m) =&gt; &lt;li key={m.idMeal}&gt;{m.strMeal}&lt;/li&gt;)}
+    &lt;/ul&gt;
+  );
+}</code></pre>
+    <div class="callout tip">
+      <div class="label">💡 TheMealDB — a free, no-key API</div>
+      <code>themealdb.com</code> returns JSON like <code>{ "meals": [ ... ] }</code>. No API key, no signup — ideal for practice. A search with no matches returns <code>{ "meals": null }</code>, so guard for that.
+    </div>
+  </section>
+
+  <section>
+    <h2>4. The three states of every request</h2>
+    <p>A network request is never instant and can fail. A polished UI tracks <strong>three</strong> things, each in its own state variable:</p>
+    <ul>
+      <li><strong>loading</strong> — is the request in flight? (show a spinner/skeleton)</li>
+      <li><strong>error</strong> — did it fail? (show a message)</li>
+      <li><strong>data</strong> — the successful result (render it)</li>
+    </ul>
+    <pre><code>function Recipes({ query }) {
+  const [meals, setMeals] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() =&gt; {
+    async function load() {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(
+          `https://www.themealdb.com/api/json/v1/1/search.php?s=${query}`
+        );
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        setMeals(data.meals ?? []);   // null → empty array
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);            // always stop loading
+      }
+    }
+    load();
+  }, [query]);   // re-fetch whenever query changes
+
+  if (loading) return &lt;p&gt;Loading…&lt;/p&gt;;
+  if (error)   return &lt;p&gt;😕 Something went wrong: {error}&lt;/p&gt;;
+  if (meals.length === 0) return &lt;p&gt;No recipes found.&lt;/p&gt;;
+
+  return (
+    &lt;ul&gt;
+      {meals.map((m) =&gt; &lt;li key={m.idMeal}&gt;{m.strMeal}&lt;/li&gt;)}
+    &lt;/ul&gt;
+  );
+}</code></pre>
+    <p>Read the bottom: a clear ladder of early returns for loading, error, empty, then the happy path. This loading/error/empty/success pattern is everywhere in real apps — internalize it.</p>
+    <div class="callout note">
+      <div class="label">📝 <code>fetch</code> and errors</div>
+      <code>fetch</code> only rejects on network failure, not on HTTP errors like 404 or 500. That's why we check <code>if (!res.ok) throw ...</code> ourselves — exactly as you learned in Chunk 3.4.
+    </div>
+  </section>
+
+  <section>
+    <h2>5. Re-fetching when inputs change</h2>
+    <p>Putting <code>query</code> in the dependency array means: whenever the user changes the search term (which lives in state from a controlled input), the effect re-runs and fetches fresh results. You don't wire up any "search button" logic — React reacts to the dependency changing.</p>
+    <pre><code>function App() {
+  const [query, setQuery] = useState("chicken");
+  return (
+    &lt;&gt;
+      &lt;input value={query} onChange={(e) =&gt; setQuery(e.target.value)} /&gt;
+      &lt;Recipes query={query} /&gt;
+    &lt;/&gt;
+  );
+}</code></pre>
+    <p>Change the box → <code>query</code> changes → <code>Recipes</code> re-renders with a new prop → its effect's dependency changed → it re-fetches. Beautifully automatic.</p>
+  </section>
+
+  <section>
+    <h2>6. Cleanup &amp; the "double run" in dev</h2>
+    <p>If your effect starts something ongoing (a timer, a subscription, an in-flight request you want to cancel), return a <strong>cleanup function</strong>. React runs it before the effect re-runs and when the component unmounts:</p>
+    <pre><code>useEffect(() =&gt; {
+  const id = setInterval(() =&gt; tick(), 1000);
+  return () =&gt; clearInterval(id);   // cleanup
+}, []);</code></pre>
+    <p>You may also notice effects running <strong>twice</strong> on mount during development. That's <code>&lt;React.StrictMode&gt;</code> intentionally mounting, unmounting, and remounting your component to help you catch missing cleanup. It only happens in dev, never in the production build — don't try to "fix" it by removing StrictMode.</p>
+    <div class="callout tip">
+      <div class="label">💡 Avoiding race conditions</div>
+      For a search that re-fetches, a request can resolve after a newer one. A simple guard: a boolean flag in cleanup. <code>let active = true;</code> ... <code>if (active) setMeals(...)</code> ... <code>return () =&gt; { active = false; };</code>. You'll formalize this when you extract a <code>useFetch</code> hook in Chunk 4.7.
+    </div>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li>A <strong>side effect</strong> reaches outside rendering (fetching, timers, storage). Run it in <code>useEffect</code>, never in the render body.</li>
+      <li>The <strong>dependency array</strong> controls timing: <code>[]</code> = once on mount; <code>[x]</code> = on mount + whenever <code>x</code> changes; omitted = every render (avoid).</li>
+      <li>Define an <code>async</code> function inside the effect and call it; the effect itself isn't async.</li>
+      <li>Track <strong>loading</strong>, <strong>error</strong>, and <strong>data</strong> states; render a clear ladder of early returns.</li>
+      <li>Check <code>res.ok</code> yourself; <code>fetch</code> won't throw on 404/500.</li>
+      <li>Return a <strong>cleanup</strong> function for ongoing work; effects double-run in dev under StrictMode (harmless).</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and build a live, data-driven recipe page.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

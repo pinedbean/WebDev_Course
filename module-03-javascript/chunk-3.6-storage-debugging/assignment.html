@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment · Chunk 3.6 — Browser Storage &amp; Debugging</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #ede9fe;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .objective{background:#ede9fe;border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#5b21b6;}
+  .checkpoint{background:#fef3c7;border:1px solid #fcd34d;}
+  .checkpoint h2{border-color:#fcd34d;color:#92400e;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--task);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .deliverable{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .deliverable h2{border-color:#a7f3d0;color:#065f46;}
+  .check{list-style:none;padding-left:0;} .check li{padding-left:30px;position:relative;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:18px;color:var(--task);}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 3 — JavaScript Core</div>
+    <h1>Chunk 3.6 — Lab: Persist &amp; the Module Checkpoint</h1>
+    <span class="badge">🧪 ASSIGNMENT</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 Your mission</h2>
+    <p>Two parts. <strong>Part A:</strong> make your to-do app remember tasks across reloads with <code>localStorage</code>, and practice DevTools debugging. <strong>Part B — the 🏁 Module 3 Checkpoint:</strong> build a fresh <strong>expense tracker</strong> widget that pulls together everything you learned this module.</p>
+  </section>
+
+  <section>
+    <h2>Before you start</h2>
+    <ul>
+      <li>Use your Vite to-do project from Chunk 3.5 for Part A (or the Chunk 3.3 plain version if you skipped Vite).</li>
+      <li>For Part B, make a new folder, e.g. <code>module-03-javascript/expense-tracker/</code>.</li>
+      <li>Keep DevTools open (Console + Application/Storage tabs) the whole time.</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ Try it yourself first</div>
+      Use the load/save pattern and the array methods from earlier chunks. Only open <code>solution.html</code> when stuck or to compare.
+    </div>
+  </section>
+
+  <section>
+    <h2>Part A — Persist the To-Do App</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Add load &amp; save helpers</h3>
+      <p>In your <code>store.js</code> (or top of <code>todo.js</code>), add <code>loadTasks()</code> and <code>saveTasks(tasks)</code> using <code>JSON.parse</code>/<code>JSON.stringify</code>. Initialize the tasks array from <code>loadTasks()</code>, with <code>[]</code> as the fallback when nothing is saved.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Save on every change</h3>
+      <p>Call <code>saveTasks(tasks)</code> at the end of <code>addTask</code>, <code>toggleTask</code>, and <code>removeTask</code> so storage always matches the current list.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Prove it persists</h3>
+      <p>Add a few tasks, mark one done, then <strong>reload the page</strong>. They should all reappear exactly as you left them, including completed state.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Inspect &amp; debug with DevTools</h3>
+      <p>Open the <em>Application/Storage</em> tab and find your key — confirm the JSON value updates as you add/remove tasks. Then set a <strong>breakpoint</strong> inside <code>addTask</code> (or add a <code>debugger;</code> line), add a task, and step through to watch the array change.</p>
+    </div>
+  </section>
+
+  <section class="checkpoint">
+    <h2>🏁 Part B — Module 3 Checkpoint: Expense Tracker</h2>
+    <p>Build a small but complete <strong>expense tracker</strong> from scratch — a single page (<code>expenses.html</code> + <code>expenses.js</code>, or a Vite project if you prefer). It records what you spend, shows a running total, and remembers everything across reloads.</p>
+
+    <div class="step">
+      <h3><span class="num">5</span> Build the form &amp; layout</h3>
+      <p>Create a form with a <strong>description</strong> text input, an <strong>amount</strong> number input, and an "Add expense" button. Below it: a big <strong>total</strong> display and a <code>&lt;ul&gt;</code> list of expenses.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Add expenses (array of objects)</h3>
+      <p>On submit, validate the inputs (non-empty description, amount is a positive number with <code>Number(...)</code>), then push an expense object <code>{ id, description, amount }</code> into an array. Clear the form afterward.</p>
+      <div class="callout tip">
+        <div class="label">💡 Convert &amp; validate the amount</div>
+        Number inputs still give you a <em>string</em>. Use <code>Number(amountInput.value)</code> and reject it if <code>isNaN(amount)</code> or <code>amount &lt;= 0</code>.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Render the list &amp; compute the total</h3>
+      <p>Render each expense as a list item showing its description, formatted amount, and a delete button. Use <code>reduce</code> to sum all amounts and show the total (formatted to 2 decimals, e.g. <code>$142.50</code>).</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">8</span> Delete expenses</h3>
+      <p>Each item's delete button removes that expense (by <code>id</code>) and re-renders, updating the total.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">9</span> Persist with localStorage</h3>
+      <p>Save the expenses array to <code>localStorage</code> after every add/delete, and load it on startup. Reload the page — your expenses and total must survive.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">10</span> Polish</h3>
+      <p>Show a friendly empty state ("No expenses yet"), and handle the total being <code>$0.00</code> when the list is empty. Make sure there are no Console errors.</p>
+    </div>
+  </section>
+
+  <section class="deliverable">
+    <h2>✅ Deliverable — acceptance checklist</h2>
+    <p><strong>Part A — Persistent to-do:</strong></p>
+    <ul class="check">
+      <li>Tasks (and their done state) survive a page reload via <code>localStorage</code>.</li>
+      <li>Storage is updated on add, toggle, and delete.</li>
+      <li>You inspected the stored JSON in DevTools and used a breakpoint or <code>debugger;</code>.</li>
+    </ul>
+    <p><strong>Part B — Expense tracker (Checkpoint):</strong></p>
+    <ul class="check">
+      <li>A form adds an expense (description + positive numeric amount); invalid input is rejected.</li>
+      <li>Expenses are stored as an array of objects and rendered as a list.</li>
+      <li>A running total is computed with <code>reduce</code> and formatted to 2 decimals.</li>
+      <li>Each expense can be deleted, updating the total.</li>
+      <li>Expenses persist across reloads via <code>localStorage</code> (JSON serialized).</li>
+      <li>Sensible empty state and no Console errors.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🚀 Stretch goals (optional)</h2>
+    <ul>
+      <li>Add a <strong>category</strong> dropdown and show a per-category breakdown (group with <code>reduce</code>).</li>
+      <li>Add income vs expense (signed amounts) and show a <strong>balance</strong> that goes red when negative.</li>
+      <li>Show each expense's date (<code>new Date().toLocaleDateString()</code>).</li>
+      <li>Build it as a Vite project split into <code>store.js</code> / <code>ui.js</code> / <code>main.js</code> like Chunk 3.5.</li>
+      <li>Add a "Clear all" button that empties the list and storage (with a confirm dialog).</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a class="current">🧪 Assignment</a>
+    <a href="solution.html">✅ Solution →</a>
+  </div>
+</footer>
+</body>
+</html>

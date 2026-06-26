@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 4.6 — Forms &amp; Shared State (useContext)</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 4 — React + Vite</div>
+    <h1>Chunk 4.6 — Forms &amp; Shared State (useContext)</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>Handling <strong>multi-field forms</strong> cleanly with a single state object.</li>
+      <li>Adding <strong>validation</strong> and showing field errors.</li>
+      <li>The <strong>prop-drilling</strong> problem and why it gets painful.</li>
+      <li><strong><code>useContext</code></strong> — sharing state across the whole app without threading props.</li>
+      <li>When Context is enough, and when to reach for a dedicated state library.</li>
+    </ul>
+    <p>In the lab you'll build a form that adds items to a <strong>shared favorites list</strong> accessible from any page via Context.</p>
+  </section>
+
+  <section>
+    <h2>1. Multi-field forms with one state object</h2>
+    <p>In 4.3 you controlled a single input. Real forms have many fields. You <em>could</em> write a <code>useState</code> for each, but it's cleaner to hold the whole form in one object and update it with a single handler:</p>
+    <pre><code>import { useState } from "react";
+
+function RecipeForm() {
+  const [form, setForm] = useState({ title: "", area: "", minutes: "" });
+
+  function handleChange(e) {
+    const { name, value } = e.target;
+    setForm((prev) =&gt; ({ ...prev, [name]: value }));   // update one field
+  }
+
+  return (
+    &lt;form&gt;
+      &lt;input name="title"   value={form.title}   onChange={handleChange} /&gt;
+      &lt;input name="area"    value={form.area}    onChange={handleChange} /&gt;
+      &lt;input name="minutes" value={form.minutes} onChange={handleChange} /&gt;
+    &lt;/form&gt;
+  );
+}</code></pre>
+    <p>Two things power this: each input has a <code>name</code> matching a key in <code>form</code>, and the <strong>computed property</strong> <code>[name]: value</code> updates just that key. One handler covers every field.</p>
+    <div class="callout tip">
+      <div class="label">💡 The updater function form</div>
+      <code>setForm((prev) =&gt; ({ ...prev, [name]: value }))</code> uses the "functional update" form. When your new state is built from the previous state, passing a function guarantees you're working from the latest value — safer than reading <code>form</code> directly.
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Validation</h2>
+    <p>Before accepting a submit, check the fields and collect any errors into state, then render them next to the inputs:</p>
+    <pre><code>const [errors, setErrors] = useState({});
+
+function validate(values) {
+  const next = {};
+  if (!values.title.trim()) next.title = "Title is required";
+  if (Number(values.minutes) &lt;= 0) next.minutes = "Minutes must be positive";
+  return next;
+}
+
+function handleSubmit(e) {
+  e.preventDefault();
+  const found = validate(form);
+  setErrors(found);
+  if (Object.keys(found).length &gt; 0) return;   // stop if invalid
+  // ...all good: use the data
+}</code></pre>
+    <pre><code>&lt;input name="title" value={form.title} onChange={handleChange} /&gt;
+{errors.title &amp;&amp; &lt;span className="field-error"&gt;{errors.title}&lt;/span&gt;}</code></pre>
+    <div class="callout note">
+      <div class="label">📝 Native validation still helps</div>
+      HTML attributes like <code>required</code>, <code>type="number"</code>, <code>min</code>, and <code>maxLength</code> (from Module 1) give you free, built-in checks. Use them <em>and</em> JS validation — native for quick feedback, JS for rules the browser can't express.
+    </div>
+  </section>
+
+  <section>
+    <h2>3. The prop-drilling problem</h2>
+    <p>Imagine a "favorites" feature. The favorites list is needed on the <code>Recipes</code> page (to show a ⭐ toggle), on the <code>RecipeDetail</code> page (a "Save" button), and on a new <code>Favorites</code> page (to list them). The count even shows in the navbar.</p>
+    <p>With what you know, the state would live high up (in <code>App</code>) and you'd pass <code>favorites</code> and <code>toggleFavorite</code> down through every layer — through <code>Layout</code>, into the navbar, into each page, into each card — even through components that don't use them, just to reach the ones that do. That tedious passing-through is called <strong>prop drilling</strong>, and it makes refactoring miserable.</p>
+    <div class="callout warning">
+      <div class="label">⚠️ The smell</div>
+      If you're passing a prop through three or more layers just so a deep child can use it, prop drilling is the smell — and Context is the cure.
+    </div>
+  </section>
+
+  <section>
+    <h2>4. <code>useContext</code> — state that any component can read</h2>
+    <p><strong>Context</strong> lets you put a value in one place and read it from <em>any</em> descendant component, no matter how deep, without passing props. There are three parts:</p>
+    <ol>
+      <li><strong>Create</strong> a context object with <code>createContext()</code>.</li>
+      <li><strong>Provide</strong> a value by wrapping part of the tree in <code>&lt;MyContext.Provider value={...}&gt;</code>.</li>
+      <li><strong>Consume</strong> it anywhere inside with <code>useContext(MyContext)</code>.</li>
+    </ol>
+
+    <h3>Create + provide</h3>
+    <p>A clean pattern is a dedicated provider component that owns the state and exposes it:</p>
+    <pre><code>// src/context/FavoritesContext.jsx
+import { createContext, useContext, useState } from "react";
+
+const FavoritesContext = createContext(null);
+
+export function FavoritesProvider({ children }) {
+  const [favorites, setFavorites] = useState([]);
+
+  function addFavorite(recipe) {
+    setFavorites((prev) =&gt;
+      prev.some((r) =&gt; r.id === recipe.id) ? prev : [...prev, recipe]
+    );
+  }
+  function removeFavorite(id) {
+    setFavorites((prev) =&gt; prev.filter((r) =&gt; r.id !== id));
+  }
+
+  const value = { favorites, addFavorite, removeFavorite };
+  return (
+    &lt;FavoritesContext.Provider value={value}&gt;
+      {children}
+    &lt;/FavoritesContext.Provider&gt;
+  );
+}
+
+// a small custom hook so components import one thing
+export function useFavorites() {
+  return useContext(FavoritesContext);
+}</code></pre>
+
+    <h3>Wrap the app</h3>
+    <pre><code>// src/main.jsx
+&lt;BrowserRouter&gt;
+  &lt;FavoritesProvider&gt;
+    &lt;App /&gt;
+  &lt;/FavoritesProvider&gt;
+&lt;/BrowserRouter&gt;</code></pre>
+
+    <h3>Consume anywhere</h3>
+    <pre><code>// in ANY component inside the provider — no props needed
+import { useFavorites } from "../context/FavoritesContext";
+
+function NavbarCount() {
+  const { favorites } = useFavorites();
+  return &lt;span&gt;⭐ {favorites.length}&lt;/span&gt;;
+}
+
+function SaveButton({ recipe }) {
+  const { addFavorite } = useFavorites();
+  return &lt;button onClick={() =&gt; addFavorite(recipe)}&gt;Save&lt;/button&gt;;
+}</code></pre>
+    <p>The navbar and a deeply nested button both reach the same state directly. No drilling. Change a favorite anywhere and every consumer re-renders with the new value.</p>
+    <div class="callout tip">
+      <div class="label">💡 The custom-hook wrapper</div>
+      Exposing <code>useFavorites()</code> instead of making components call <code>useContext(FavoritesContext)</code> keeps imports tidy and lets you add a helpful error if it's used outside the provider. You'll formalize custom hooks in Chunk 4.7.
+    </div>
+  </section>
+
+  <section>
+    <h2>5. How forms + Context work together</h2>
+    <p>Your form doesn't need to own the shared list. It collects and validates input, then calls a function from Context to add the item:</p>
+    <pre><code>function AddFavoriteForm() {
+  const { addFavorite } = useFavorites();
+  const [form, setForm] = useState({ title: "", area: "" });
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    if (!form.title.trim()) return;
+    addFavorite({ id: crypto.randomUUID(), ...form });   // into shared state
+    setForm({ title: "", area: "" });
+  }
+  // ...inputs + submit
+}</code></pre>
+    <p>This is "lifting state up" (4.3) taken to the app level: the form reports up to Context, and any page that reads Context instantly reflects the change.</p>
+  </section>
+
+  <section>
+    <h2>6. When is Context enough — and when isn't it?</h2>
+    <p>Context is perfect for low-frequency, app-wide data: the current user, theme, language, a favorites/cart list. It ships with React — no extra dependency.</p>
+    <p>It has limits. Every consumer re-renders when the context value changes, so Context is a poor fit for very large or rapidly-changing state. When an app's shared state grows complex (many slices, frequent updates, async flows), teams reach for a dedicated <strong>state-management library</strong>:</p>
+    <table>
+      <tr><th>Tool</th><th>Use it when…</th></tr>
+      <tr><td><code>useState</code> + props</td><td>State is local to one component or a small subtree.</td></tr>
+      <tr><td><strong>Context</strong></td><td>A few pieces of app-wide state read in many places (auth, theme, favorites).</td></tr>
+      <tr><td><strong>Zustand / Redux Toolkit</strong></td><td>Large, complex, frequently-updated global state; you want devtools and structure.</td></tr>
+    </table>
+    <div class="callout note">
+      <div class="label">📝 Don't over-reach</div>
+      Start with <code>useState</code>, lift it up when sharing is needed, and add Context when prop drilling hurts. Reach for a library only when Context genuinely strains — not by default. For this course, <code>useState</code> + Context covers everything.
+    </div>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li>Hold multi-field forms in <strong>one state object</strong>; update with <code>[name]: value</code> and one <code>onChange</code> handler.</li>
+      <li><strong>Validate</strong> on submit, store errors in state, render them by field; use native HTML validation too.</li>
+      <li><strong>Prop drilling</strong> (passing props through layers that don't use them) is the pain Context removes.</li>
+      <li><strong>Context</strong>: <code>createContext</code> → wrap in a <code>Provider value</code> → read with <code>useContext</code> anywhere inside.</li>
+      <li>A form can call a Context function (e.g. <code>addFavorite</code>) to update app-wide shared state.</li>
+      <li>Use Context for app-wide, low-frequency state; reach for a library only when it grows truly complex.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and build a favorites feature with shared state.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

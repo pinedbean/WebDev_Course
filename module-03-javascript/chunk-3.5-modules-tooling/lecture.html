@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 3.5 — ES Modules &amp; Modern JS Tooling</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 3 — JavaScript Core</div>
+    <h1>Chunk 3.5 — ES Modules &amp; Modern JS Tooling</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>Why we split code into <strong>modules</strong>, and how <code>import</code> / <code>export</code> work.</li>
+      <li>The difference between a plain script and an ES module.</li>
+      <li>What <strong>npm</strong> and <code>package.json</code> are and why every project has them.</li>
+      <li>What a <strong>bundler/dev server</strong> does, and how to start one with <strong>Vite</strong>.</li>
+    </ul>
+    <p>In the lab you'll refactor the to-do app from Chunk 3.3 into clean modules and run it under a Vite dev server with hot reload.</p>
+  </section>
+
+  <section>
+    <h2>1. Why modules?</h2>
+    <p>So far your scripts have been single files where every variable is global. That works for tiny apps, but it breaks down fast:</p>
+    <ul>
+      <li><strong>Name clashes</strong> — two files both define <code>count</code> and silently overwrite each other.</li>
+      <li><strong>No clear structure</strong> — one giant file is hard to navigate and reuse.</li>
+      <li><strong>Hidden dependencies</strong> — you can't tell what relies on what.</li>
+    </ul>
+    <p><strong>ES Modules</strong> fix this: each <code>.js</code> file is its own private scope, and you explicitly say what it shares (<code>export</code>) and what it needs (<code>import</code>). Nothing leaks globally unless you opt in.</p>
+  </section>
+
+  <section>
+    <h2>2. export &amp; import</h2>
+    <p>A module <strong>exports</strong> the values it wants to share. Another module <strong>imports</strong> them by name. There are two flavors:</p>
+    <h3>Named exports (use for most things)</h3>
+    <pre><code>// file: math.js
+export function add(a, b) {
+  return a + b;
+}
+export const PI = 3.14159;</code></pre>
+    <pre><code>// file: main.js
+import { add, PI } from "./math.js";
+console.log(add(2, 3));   // 5
+console.log(PI);          // 3.14159</code></pre>
+    <h3>Default export (one "main" thing per file)</h3>
+    <pre><code>// file: greet.js
+export default function greet(name) {
+  return `Hello, ${name}!`;
+}</code></pre>
+    <pre><code>// file: main.js
+import greet from "./greet.js";   // no braces; you choose the name
+console.log(greet("Jane"));</code></pre>
+    <table>
+      <tr><th>Style</th><th>Export</th><th>Import</th></tr>
+      <tr><td>Named</td><td><code>export const x</code></td><td><code>import { x } from "..."</code></td></tr>
+      <tr><td>Default</td><td><code>export default ...</code></td><td><code>import anyName from "..."</code></td></tr>
+    </table>
+    <div class="callout note">
+      <div class="label">📝 The path matters</div>
+      Relative imports start with <code>./</code> or <code>../</code> and (in the browser) need the file extension: <code>"./math.js"</code>. Imports of installed packages use just the name: <code>import { thing } from "some-package"</code>.
+    </div>
+  </section>
+
+  <section>
+    <h2>3. Modules vs plain scripts</h2>
+    <p>A regular <code>&lt;script src="app.js"&gt;</code> runs in the global scope and can't use <code>import</code>. To turn a script into a module in the browser, add <code>type="module"</code>:</p>
+    <pre><code>&lt;script type="module" src="main.js"&gt;&lt;/script&gt;</code></pre>
+    <table>
+      <tr><th></th><th>Plain script</th><th>Module (<code>type="module"</code>)</th></tr>
+      <tr><td>Scope</td><td>Global (variables leak)</td><td>Private to the file</td></tr>
+      <tr><td><code>import</code>/<code>export</code></td><td>❌ Not allowed</td><td>✅ Yes</td></tr>
+      <tr><td>Runs</td><td>Immediately, in order</td><td>Deferred until HTML parsed</td></tr>
+      <tr><td>Strict mode</td><td>Off by default</td><td>On automatically</td></tr>
+    </table>
+    <div class="callout warning">
+      <div class="label">⚠️ Modules need a server</div>
+      Because of browser security rules, opening an HTML file that uses <code>type="module"</code> by <em>double-clicking</em> (the <code>file://</code> protocol) often fails with a CORS error. Modules must be served over <code>http://</code> — which is exactly the problem a dev server like Vite solves.
+    </div>
+  </section>
+
+  <section>
+    <h2>4. npm &amp; package.json</h2>
+    <p><strong>npm</strong> (Node Package Manager) ships with Node.js. It does two jobs: it installs <strong>packages</strong> (reusable code other people wrote, like Vite or React), and it runs project <strong>scripts</strong>. Every npm project has a <code>package.json</code> — the project's ID card and recipe book:</p>
+    <pre><code>{
+  "name": "todo-app",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+}</code></pre>
+    <table>
+      <tr><th>Field</th><th>What it's for</th></tr>
+      <tr><td><code>name</code> / <code>version</code></td><td>Identify the project.</td></tr>
+      <tr><td><code>scripts</code></td><td>Named commands you run with <code>npm run &lt;name&gt;</code>.</td></tr>
+      <tr><td><code>dependencies</code></td><td>Packages your app needs to run.</td></tr>
+      <tr><td><code>devDependencies</code></td><td>Packages only needed while developing (Vite, test tools).</td></tr>
+    </table>
+    <h3>Key commands</h3>
+    <pre><code>npm init -y          # create a package.json with defaults
+npm install vite     # add a package (also written: npm i)
+npm install          # install everything package.json lists
+npm run dev          # run the "dev" script</code></pre>
+    <div class="callout note">
+      <div class="label">📝 node_modules &amp; the lockfile</div>
+      Installing creates a <code>node_modules/</code> folder (the actual package code — don't commit it; <code>.gitignore</code> it) and a <code>package-lock.json</code> (exact versions, so teammates get identical installs — do commit it).
+    </div>
+  </section>
+
+  <section>
+    <h2>5. What a bundler/dev server does</h2>
+    <p>Browsers can load modules natively, but for a real project that's slow and limited. Tools like <strong>Vite</strong> give you:</p>
+    <ul>
+      <li><strong>A dev server</strong> over <code>http://localhost</code> so modules load correctly.</li>
+      <li><strong>Hot Module Replacement (HMR)</strong> — save a file and the page updates instantly, no manual reload.</li>
+      <li><strong>A production build</strong> — bundling and minifying all your files into a few small, optimized assets for deployment.</li>
+      <li>Support for importing CSS, images, and installed packages with a single <code>import</code>.</li>
+    </ul>
+    <p>Think of the dev server as a fast, smart helper that serves your code while you build, then packages it tidily when you ship.</p>
+  </section>
+
+  <section>
+    <h2>6. Starting a Vite project</h2>
+    <p>The fastest way is Vite's scaffolding tool. In your terminal (macOS/zsh):</p>
+    <pre><code>npm create vite@latest todo-app -- --template vanilla
+cd todo-app
+npm install
+npm run dev</code></pre>
+    <p>Vite prints a local URL like <code>http://localhost:5173/</code>. Open it and you'll see the starter page; edits to the source files appear instantly.</p>
+    <table>
+      <tr><th>Command</th><th>What it does</th></tr>
+      <tr><td><code>npm create vite@latest</code></td><td>Scaffolds a new project (pick a template).</td></tr>
+      <tr><td><code>npm install</code></td><td>Downloads the dependencies it listed.</td></tr>
+      <tr><td><code>npm run dev</code></td><td>Starts the dev server with hot reload.</td></tr>
+      <tr><td><code>npm run build</code></td><td>Builds optimized files into <code>dist/</code> for production.</td></tr>
+    </table>
+    <div class="callout note">
+      <div class="label">📝 Windows / Linux</div>
+      The commands are identical across platforms. On Windows use PowerShell or the Git Bash terminal; the <code>--</code> before <code>--template</code> is required so npm passes the flag through to Vite.
+    </div>
+    <p>A vanilla Vite project's key files: <code>index.html</code> (the entry page, which loads <code>/src/main.js</code> as a module), <code>src/</code> (your code), and <code>package.json</code>. You'll drop your refactored to-do modules into <code>src/</code>.</p>
+  </section>
+
+  <section>
+    <h2>7. Planning the to-do refactor</h2>
+    <p>Your Chunk 3.3 to-do is one <code>todo.js</code>. We'll split it by responsibility — a classic, scalable structure:</p>
+    <table>
+      <tr><th>Module</th><th>Responsibility</th><th>Exports</th></tr>
+      <tr><td><code>store.js</code></td><td>Hold the task data &amp; logic (add/toggle/remove)</td><td><code>addTask</code>, <code>removeTask</code>, <code>toggleTask</code>, <code>getTasks</code></td></tr>
+      <tr><td><code>ui.js</code></td><td>Render the list into the DOM</td><td><code>renderTasks</code></td></tr>
+      <tr><td><code>main.js</code></td><td>Wire events to the store and UI (entry point)</td><td>—</td></tr>
+    </table>
+    <p>This separation — <strong>data</strong> vs <strong>view</strong> vs <strong>glue</strong> — is the same idea behind React components and the backend structure you'll build later. Learning it here pays off all course long.</p>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li><strong>Modules</strong> give each file its own scope; share with <code>export</code>, pull in with <code>import</code>.</li>
+      <li>Browser modules need <code>type="module"</code> and must be served over <code>http://</code> — hence a dev server.</li>
+      <li><strong>npm</strong> installs packages and runs scripts; <code>package.json</code> records both.</li>
+      <li><strong>Vite</strong> provides a dev server with hot reload and a production build.</li>
+      <li>Scaffold with <code>npm create vite@latest</code>, then <code>npm install</code> and <code>npm run dev</code>.</li>
+      <li>Split apps by responsibility: data (<code>store</code>), view (<code>ui</code>), glue (<code>main</code>).</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and move the to-do app into Vite + modules.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

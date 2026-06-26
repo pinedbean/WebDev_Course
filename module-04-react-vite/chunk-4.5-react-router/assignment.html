@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment · Chunk 4.5 — Routing with React Router</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #ede9fe;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .objective{background:#ede9fe;border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#5b21b6;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--task);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .deliverable{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .deliverable h2{border-color:#a7f3d0;color:#065f46;}
+  .check{list-style:none;padding-left:0;} .check li{padding-left:30px;position:relative;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:18px;color:var(--task);}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 4 — React + Vite</div>
+    <h1>Chunk 4.5 — Lab: A Multi-Page Recipe App</h1>
+    <span class="badge">🧪 ASSIGNMENT</span>
+    <span class="badge">⏱️ 45–75 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 Your mission</h2>
+    <p>Turn <code>recipe-box</code> into a real multi-page app with React Router: a <strong>Home</strong> page, a <strong>Recipes</strong> list (your fetch from 4.4), and a <strong>Recipe detail</strong> page reached by clicking a card. All wrapped in a shared navbar layout, with a 404 page for unknown URLs.</p>
+  </section>
+
+  <section>
+    <h2>Before you start</h2>
+    <ul>
+      <li>Open <code>recipe-box</code> and run <code>npm run dev</code>.</li>
+      <li>You'll reuse the fetch logic from 4.4. Detail endpoint: <code>https://www.themealdb.com/api/json/v1/1/lookup.php?i=ID</code>.</li>
+      <li>Plan a <code>src/pages/</code> folder for screen components and a <code>src/components/Layout.jsx</code>.</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ Try it yourself first</div>
+      Use the lecture as your map. Only open the solution when stuck or to compare.
+    </div>
+  </section>
+
+  <section>
+    <h2>Tasks</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Install &amp; wrap</h3>
+      <p>Run <code>npm install react-router-dom</code>. In <code>main.jsx</code>, wrap <code>&lt;App /&gt;</code> in <code>&lt;BrowserRouter&gt;</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Build the pages</h3>
+      <p>Create <code>src/pages/Home.jsx</code> (a welcome screen with a link to Recipes), <code>src/pages/Recipes.jsx</code> (the search + grid from 4.4), <code>src/pages/RecipeDetail.jsx</code> (one recipe), and <code>src/pages/NotFound.jsx</code> (a friendly 404).</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Define routes in <code>App</code></h3>
+      <p>Use <code>&lt;Routes&gt;</code>/<code>&lt;Route&gt;</code> to map: <code>/</code> → Home, <code>/recipes</code> → Recipes, <code>/recipes/:id</code> → RecipeDetail, <code>*</code> → NotFound.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Add a shared layout with a navbar</h3>
+      <p>Create <code>Layout.jsx</code> with a navbar of <code>&lt;NavLink&gt;</code>s and an <code>&lt;Outlet /&gt;</code>. Nest all your routes inside a layout route so the navbar shows on every page. Style the active link.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Make cards link to detail</h3>
+      <p>Wrap each <code>RecipeCard</code> in (or give it) a <code>&lt;Link to={`/recipes/${idMeal}`}&gt;</code> so clicking a card navigates to its detail page — with no full reload.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Fetch one recipe in detail</h3>
+      <p>In <code>RecipeDetail</code>, read the <code>id</code> with <code>useParams()</code>, fetch that single recipe (lookup endpoint) with the loading/error pattern from 4.4, and show its image, title, category, area, and instructions. Add a "← Back" button using <code>useNavigate(-1)</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Verify routing behavior</h3>
+      <p>Click around: the URL changes, no white flash, the Back button works, and visiting a bad URL (e.g. <code>/nope</code>) shows your 404. Refreshing <code>/recipes</code> still loads it.</p>
+    </div>
+  </section>
+
+  <section class="deliverable">
+    <h2>✅ Deliverable — acceptance checklist</h2>
+    <ul class="check">
+      <li><code>react-router-dom</code> installed; app wrapped in <code>&lt;BrowserRouter&gt;</code>.</li>
+      <li>Four routes work: Home <code>/</code>, Recipes <code>/recipes</code>, Detail <code>/recipes/:id</code>, and a <code>*</code> 404.</li>
+      <li>A shared navbar (from a layout + <code>&lt;Outlet /&gt;</code>) appears on every page, with the active link styled.</li>
+      <li>Clicking a recipe card navigates to its detail page using <code>Link</code> (no page reload).</li>
+      <li>The detail page reads <code>:id</code> with <code>useParams</code> and fetches that one recipe with loading/error handling.</li>
+      <li>A working "Back" button uses <code>useNavigate</code>.</li>
+      <li>The browser Back/Forward buttons and an unknown URL all behave correctly.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🚀 Stretch goals (optional)</h2>
+    <ul>
+      <li>Add an <strong>About</strong> page and link to it from the navbar.</li>
+      <li>On the detail page, render the ingredient list (TheMealDB stores them as <code>strIngredient1..20</code>).</li>
+      <li>Show a loading skeleton on the detail page instead of plain "Loading…".</li>
+      <li>Use a <strong>query string</strong> for the search term (e.g. <code>/recipes?q=beef</code>) with <code>useSearchParams</code> so searches are shareable.</li>
+      <li>Highlight the active nav tab with an underline animation.</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a class="current">🧪 Assignment</a>
+    <a href="solution.html">✅ Solution →</a>
+  </div>
+</footer>
+</body>
+</html>

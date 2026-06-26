@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 4.2 — Components &amp; Props</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 4 — React + Vite</div>
+    <h1>Chunk 4.2 — Components &amp; Props</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>How to split a UI into <strong>reusable components</strong>, each in its own file.</li>
+      <li><strong>Props</strong> — passing data into a component, like attributes/arguments.</li>
+      <li><strong>Composition</strong> — building big components out of small ones (and the <code>children</code> prop).</li>
+      <li><strong>Conditional rendering</strong> — showing UI only when it should appear.</li>
+      <li><strong>Rendering lists</strong> with <code>.map()</code> and why every item needs a <code>key</code>.</li>
+    </ul>
+    <p>In the lab you'll build a <code>RecipeCard</code> component and render a grid of cards from a data array.</p>
+  </section>
+
+  <section>
+    <h2>1. Why components?</h2>
+    <p>In Chunk 4.1 your whole app was one <code>App</code> component. Real UIs repeat: a feed of posts, a list of products, a grid of recipe cards. You don't want to copy-paste the same markup ten times. Instead you write the markup <strong>once</strong> as a component and reuse it, feeding each copy different data.</p>
+    <p>Think of a component like a function that returns UI, and <strong>props</strong> as its arguments. Same shape, different inputs, different output.</p>
+    <div class="callout note">
+      <div class="label">📝 The mental model</div>
+      A page is a tree of components: <code>&lt;App&gt;</code> contains a <code>&lt;RecipeGrid&gt;</code> which contains many <code>&lt;RecipeCard&gt;</code>. Each one is a small, focused, reusable function.
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Props — passing data in</h2>
+    <p>You pass data to a component using attribute-like syntax, and the component receives them as a single <code>props</code> object:</p>
+    <pre><code>function Greeting(props) {
+  return &lt;h2&gt;Hello, {props.name}!&lt;/h2&gt;;
+}
+
+// Using it — pass data with attributes:
+&lt;Greeting name="Jane" /&gt;
+&lt;Greeting name="Sam" /&gt;</code></pre>
+    <p>The first renders "Hello, Jane!", the second "Hello, Sam!". Same component, different props.</p>
+
+    <h3>Destructuring props (the common style)</h3>
+    <p>Reading <code>props.name</code>, <code>props.title</code> everywhere is noisy. Destructure the props object right in the function signature:</p>
+    <pre><code>function Greeting({ name }) {
+  return &lt;h2&gt;Hello, {name}!&lt;/h2&gt;;
+}</code></pre>
+    <p>You used destructuring on objects back in Chunk 3.2 — this is the same trick. You'll see this style in nearly all React code.</p>
+
+    <h3>Props can be any type</h3>
+    <p>Strings use quotes; everything else (numbers, booleans, arrays, objects, functions) goes inside <code>{ }</code>:</p>
+    <pre><code>&lt;RecipeCard
+  title="Pad Thai"
+  minutes={25}
+  isFavorite={true}
+  tags={["thai", "noodles"]}
+/&gt;</code></pre>
+    <div class="callout warning">
+      <div class="label">⚠️ Props are read-only</div>
+      A component must <strong>never</strong> change its own props — treat them as read-only inputs from the parent. (Data a component owns and changes is "state", coming in Chunk 4.3.)
+    </div>
+  </section>
+
+  <section>
+    <h2>3. A component in its own file</h2>
+    <p>Each component usually lives in its own file under <code>src/components/</code>, and is <code>export</code>ed/<code>import</code>ed using the ES modules you learned in Chunk 3.5. Here's a <code>RecipeCard</code>:</p>
+    <pre><code>// src/components/RecipeCard.jsx
+function RecipeCard({ title, area, minutes }) {
+  return (
+    &lt;article className="card"&gt;
+      &lt;h3&gt;{title}&lt;/h3&gt;
+      &lt;p&gt;{area} cuisine · {minutes} min&lt;/p&gt;
+    &lt;/article&gt;
+  );
+}
+
+export default RecipeCard;</code></pre>
+    <p>And using it from <code>App.jsx</code>:</p>
+    <pre><code>// src/App.jsx
+import RecipeCard from "./components/RecipeCard";
+
+function App() {
+  return (
+    &lt;main&gt;
+      &lt;h1&gt;🍳 Recipe Box&lt;/h1&gt;
+      &lt;RecipeCard title="Pad Thai" area="Thai" minutes={25} /&gt;
+      &lt;RecipeCard title="Carbonara" area="Italian" minutes={20} /&gt;
+    &lt;/main&gt;
+  );
+}
+
+export default App;</code></pre>
+    <div class="callout tip">
+      <div class="label">💡 Capitalize component names</div>
+      Component names must start with a <strong>capital letter</strong> (<code>RecipeCard</code>, not <code>recipeCard</code>). React treats lowercase tags as plain HTML elements and capitalized ones as your components.
+    </div>
+  </section>
+
+  <section>
+    <h2>4. Composition &amp; the <code>children</code> prop</h2>
+    <p>Components nest inside other components — that's <strong>composition</strong>. Sometimes you want a wrapper component that can hold <em>any</em> content. React passes whatever you put between the tags as a special prop called <code>children</code>:</p>
+    <pre><code>function Panel({ children }) {
+  return &lt;div className="panel"&gt;{children}&lt;/div&gt;;
+}
+
+// Anything between the tags becomes `children`:
+&lt;Panel&gt;
+  &lt;h3&gt;Featured&lt;/h3&gt;
+  &lt;p&gt;Today's top recipe.&lt;/p&gt;
+&lt;/Panel&gt;</code></pre>
+    <p>This is how you build reusable layout shells (cards, modals, sidebars) that wrap arbitrary content.</p>
+  </section>
+
+  <section>
+    <h2>5. Conditional rendering</h2>
+    <p>Often a piece of UI should appear only sometimes — a "Favorite ⭐" badge, an "out of stock" label. Because JSX is JavaScript, you use normal JS to decide.</p>
+
+    <h3>The <code>&amp;&amp;</code> pattern (show or nothing)</h3>
+    <pre><code>function RecipeCard({ title, isFavorite }) {
+  return (
+    &lt;article className="card"&gt;
+      &lt;h3&gt;{title}&lt;/h3&gt;
+      {isFavorite &amp;&amp; &lt;span&gt;⭐ Favorite&lt;/span&gt;}
+    &lt;/article&gt;
+  );
+}</code></pre>
+    <p><code>condition &amp;&amp; element</code> renders the element only when the condition is true; otherwise it renders nothing.</p>
+
+    <h3>The ternary <code>? :</code> pattern (this or that)</h3>
+    <pre><code>{minutes &lt; 30 ? &lt;span&gt;Quick&lt;/span&gt; : &lt;span&gt;Takes a while&lt;/span&gt;}</code></pre>
+    <div class="callout warning">
+      <div class="label">⚠️ Watch out for <code>0</code></div>
+      With <code>&amp;&amp;</code>, a left side of <code>0</code> renders the number <code>0</code> on screen (because <code>0</code> is falsy but still a renderable value). If a count might be zero, prefer a ternary or write <code>count &gt; 0 &amp;&amp; ...</code>.
+    </div>
+  </section>
+
+  <section>
+    <h2>6. Rendering lists with <code>.map()</code></h2>
+    <p>You rarely hardcode ten cards. Instead you keep data in an array and transform it into JSX with <code>.map()</code> — the same array method from Chunk 3.2, but now it returns elements:</p>
+    <pre><code>const recipes = [
+  { id: 1, title: "Pad Thai", area: "Thai", minutes: 25 },
+  { id: 2, title: "Carbonara", area: "Italian", minutes: 20 },
+  { id: 3, title: "Tacos", area: "Mexican", minutes: 30 },
+];
+
+function App() {
+  return (
+    &lt;main&gt;
+      &lt;h1&gt;🍳 Recipe Box&lt;/h1&gt;
+      &lt;div className="grid"&gt;
+        {recipes.map((recipe) =&gt; (
+          &lt;RecipeCard
+            key={recipe.id}
+            title={recipe.title}
+            area={recipe.area}
+            minutes={recipe.minutes}
+          /&gt;
+        ))}
+      &lt;/div&gt;
+    &lt;/main&gt;
+  );
+}</code></pre>
+    <p>You loop over the data and return one <code>&lt;RecipeCard /&gt;</code> per item. React renders the whole array.</p>
+
+    <h3>Why <code>key</code> matters</h3>
+    <p>Notice <code>key={recipe.id}</code>. React needs a stable, unique <code>key</code> on each list item so it can track which item is which when the list changes (items added, removed, reordered). Without it, React warns in the console and may update the wrong rows.</p>
+    <div class="callout tip">
+      <div class="label">💡 Good keys</div>
+      Use a stable unique id from your data (<code>recipe.id</code>). Avoid using the array index as a key when the list can reorder or items can be inserted/removed — it leads to subtle bugs.
+    </div>
+  </section>
+
+  <section>
+    <h2>7. Putting it together: spreading props</h2>
+    <p>Passing <code>title={recipe.title} area={recipe.area} ...</code> for every field gets tedious. If the prop names match the object keys, you can spread the object:</p>
+    <pre><code>{recipes.map((recipe) =&gt; (
+  &lt;RecipeCard key={recipe.id} {...recipe} /&gt;
+))}</code></pre>
+    <p><code>{...recipe}</code> passes every property of <code>recipe</code> as a prop. Still give an explicit <code>key</code> (it isn't a regular prop). This is a clean, common pattern for list rendering.</p>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li><strong>Components</strong> are reusable functions that return JSX; capitalize their names.</li>
+      <li><strong>Props</strong> pass data in (like arguments). Destructure them: <code>function Card({ title }) {...}</code>. Props are read-only.</li>
+      <li><strong>Composition</strong> nests components; the <code>children</code> prop holds whatever sits between a component's tags.</li>
+      <li><strong>Conditional rendering</strong>: <code>cond &amp;&amp; element</code> for show/hide, <code>cond ? a : b</code> for either/or.</li>
+      <li><strong>Lists</strong>: <code>data.map(...)</code> returns elements; every item needs a stable unique <code>key</code>.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and build a reusable card grid.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

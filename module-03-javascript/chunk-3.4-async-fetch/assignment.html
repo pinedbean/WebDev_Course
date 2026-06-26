@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment · Chunk 3.4 — Async JavaScript &amp; Fetch</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #ede9fe;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .objective{background:#ede9fe;border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#5b21b6;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--task);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .deliverable{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .deliverable h2{border-color:#a7f3d0;color:#065f46;}
+  .check{list-style:none;padding-left:0;} .check li{padding-left:30px;position:relative;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:18px;color:var(--task);}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 3 — JavaScript Core</div>
+    <h1>Chunk 3.4 — Lab: A Live Quote Machine</h1>
+    <span class="badge">🧪 ASSIGNMENT</span>
+    <span class="badge">⏱️ 45–75 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 Your mission</h2>
+    <p>Build a page that fetches a <strong>random quote</strong> from a public API and displays it on screen, with a button to load a new one — and proper <strong>loading</strong> and <strong>error</strong> states. You'll use <code>async/await</code>, <code>fetch</code>, and JSON.</p>
+  </section>
+
+  <section>
+    <h2>Before you start</h2>
+    <ul>
+      <li>Make a folder, e.g. <code>~/Desktop/webdev-course/module-03-javascript/quote-machine/</code>.</li>
+      <li>Create <code>quotes.html</code> and <code>quotes.js</code>.</li>
+      <li>We'll use a free, no-signup API that needs no key:</li>
+    </ul>
+    <pre><code>https://dummyjson.com/quotes/random</code></pre>
+    <p>It returns JSON shaped like this:</p>
+    <pre><code>{
+  "id": 42,
+  "quote": "Life is what happens when you're busy making other plans.",
+  "author": "John Lennon"
+}</code></pre>
+    <div class="callout tip">
+      <div class="label">💡 Inspect the API first</div>
+      Open that URL directly in a browser tab and refresh a few times. Seeing the raw JSON tells you exactly which property names (<code>quote</code>, <code>author</code>) to read in your code.
+    </div>
+    <div class="callout warning">
+      <div class="label">⚠️ Try it yourself first</div>
+      Use the lecture's loading → success → error pattern. Only open <code>solution.html</code> when stuck.
+    </div>
+  </section>
+
+  <section>
+    <h2>Tasks</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Build the page shell</h3>
+      <p>In <code>quotes.html</code>: a heading, a <code>&lt;blockquote id="quote"&gt;</code> (or any element) to hold the text, a <code>&lt;p id="author"&gt;</code>, and a "New quote" <code>&lt;button id="new-btn"&gt;</code>. Load <code>quotes.js</code> before <code>&lt;/body&gt;</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Write an async fetch function</h3>
+      <p>Write <code>async function loadQuote()</code> that fetches the URL, checks <code>response.ok</code>, parses JSON with <code>await response.json()</code>, and returns the data.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Show a loading state</h3>
+      <p>Before awaiting the fetch, set the quote element's text to <code>"Loading…"</code> and disable the button so it can't be clicked twice mid-request. Re-enable it when done.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Render the quote</h3>
+      <p>On success, put the quote text in the quote element and <code>— author</code> in the author element. Use a template literal.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Handle errors</h3>
+      <p>Wrap the fetch in <code>try/catch</code>. On failure, show a friendly message like <em>"Couldn't load a quote — check your connection and try again."</em> instead of crashing.</p>
+      <div class="callout tip">
+        <div class="label">💡 Test your error path</div>
+        Temporarily change the URL to a broken one (e.g. add <code>xyz</code>) and reload to confirm your error message appears. Then fix the URL.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Wire up the button &amp; first load</h3>
+      <p>Add a <code>click</code> listener on the button that calls your render function. Also call it once on page load so a quote appears immediately.</p>
+    </div>
+  </section>
+
+  <section class="deliverable">
+    <h2>✅ Deliverable — acceptance checklist</h2>
+    <ul class="check">
+      <li><code>quotes.html</code> loads a quote automatically when opened.</li>
+      <li>A brief <em>"Loading…"</em> state shows while fetching.</li>
+      <li>The quote text and author render from the live API response.</li>
+      <li>Clicking "New quote" fetches and shows a different quote.</li>
+      <li>The fetch uses <code>async/await</code> and checks <code>response.ok</code>.</li>
+      <li>A broken URL / offline shows a friendly error message, not a crash.</li>
+      <li>No uncaught errors in the Console.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🚀 Stretch goals (optional)</h2>
+    <ul>
+      <li>Add a "Copy" button that copies the current quote to the clipboard (<code>navigator.clipboard.writeText(...)</code>).</li>
+      <li>Fetch <strong>several</strong> quotes at once from <code>https://dummyjson.com/quotes?limit=5</code> and render them as a list (the data lives under <code>data.quotes</code>).</li>
+      <li>Add a fade-in animation by toggling a CSS class when a new quote arrives.</li>
+      <li>Swap in a different public API (e.g. <code>https://catfact.ninja/fact</code>) and adapt the property names — a great test of reading JSON shapes.</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a class="current">🧪 Assignment</a>
+    <a href="solution.html">✅ Solution →</a>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment · Chunk 2.3 — Flexbox Layout</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #ede9fe;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .objective{background:#ede9fe;border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#5b21b6;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--task);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .deliverable{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .deliverable h2{border-color:#a7f3d0;color:#065f46;}
+  .check{list-style:none;padding-left:0;} .check li{padding-left:30px;position:relative;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:18px;color:var(--task);}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 2 — CSS &amp; Layout</div>
+    <h1>Chunk 2.3 — Lab: Navbar &amp; Card Row with Flexbox</h1>
+    <span class="badge">🧪 ASSIGNMENT</span>
+    <span class="badge">⏱️ 45–75 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 Your mission</h2>
+    <p>Use Flexbox to (1) turn your header into a real navbar — brand on the left, links on the right — replacing Module 1's <code>|</code> separators, and (2) add a row of three "highlight" cards on the Home page that sit side-by-side and wrap gracefully on narrow screens. The navbar becomes a reusable component you'll keep using.</p>
+  </section>
+
+  <section>
+    <h2>Before you start</h2>
+    <ul>
+      <li>You have <code>styles.css</code> with the box-model + typography work from Chunk 2.2.</li>
+      <li>Recall your header markup from Module 1:</li>
+    </ul>
+    <pre><code>&lt;header&gt;
+  &lt;h1&gt;Jane Doe&lt;/h1&gt;
+  &lt;nav&gt;
+    &lt;a href="index.html"&gt;Home&lt;/a&gt; |
+    &lt;a href="about.html"&gt;About&lt;/a&gt; |
+    &lt;a href="contact.html"&gt;Contact&lt;/a&gt;
+  &lt;/nav&gt;
+&lt;/header&gt;</code></pre>
+    <div class="callout warning">
+      <div class="label">⚠️ Try it yourself first</div>
+      Reach for the lecture's navbar pattern and the live demos. Only check the solution when stuck.
+    </div>
+  </section>
+
+  <section>
+    <h2>Tasks</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Clean up the nav markup</h3>
+      <p>In all three pages, remove the temporary <code>|</code> separators between the nav links. Flexbox <code>gap</code> will provide the spacing now. (Optional: mark the current page's link with <code>class="active"</code>.)</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Flex the header into a navbar</h3>
+      <p>Make the <code>&lt;header&gt;</code> a flex container that pushes the <code>&lt;h1&gt;</code> (brand) to the left and the <code>&lt;nav&gt;</code> to the right, vertically centered:</p>
+      <ul>
+        <li><code>display: flex</code></li>
+        <li><code>justify-content: space-between</code></li>
+        <li><code>align-items: center</code></li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Flex the nav links</h3>
+      <p>Make <code>&lt;nav&gt;</code> its own flex container with a <code>gap</code> so the links sit in an evenly-spaced row. Remove underlines and apply your brand color (you may already have <code>nav a</code> styles from earlier — adjust them).</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Style the navbar to look like a bar</h3>
+      <p>Give the header a background color (e.g. your dark color), padding, white brand text, and light link text that brightens on <code>:hover</code>. This is your reusable navbar component.</p>
+      <div class="callout tip">
+        <div class="label">💡 Make it consistent</div>
+        Because the same header markup is on all three pages and styled by one stylesheet, your navbar instantly appears identically site-wide. That's the "reusable component" deliverable.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Add a card row to the Home page</h3>
+      <p>On <code>index.html</code>, add a new section with three cards. Use a wrapper element with a class like <code>.card-row</code> and three child <code>.card</code> elements. For example:</p>
+      <pre><code>&lt;section&gt;
+  &lt;h2&gt;What I Do&lt;/h2&gt;
+  &lt;div class="card-row"&gt;
+    &lt;div class="card"&gt;&lt;h3&gt;Frontend&lt;/h3&gt;&lt;p&gt;HTML, CSS, JavaScript.&lt;/p&gt;&lt;/div&gt;
+    &lt;div class="card"&gt;&lt;h3&gt;Backend&lt;/h3&gt;&lt;p&gt;FastAPI &amp; databases.&lt;/p&gt;&lt;/div&gt;
+    &lt;div class="card"&gt;&lt;h3&gt;Learning&lt;/h3&gt;&lt;p&gt;Building real projects.&lt;/p&gt;&lt;/div&gt;
+  &lt;/div&gt;
+&lt;/section&gt;</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Make the cards flex &amp; wrap</h3>
+      <p>Style <code>.card-row</code> as a flex container with a <code>gap</code> and <code>flex-wrap: wrap</code>. Give each <code>.card</code> <code>flex: 1</code> and a <code>min-width</code> (~180px) so the three sit side-by-side on wide screens but stack/wrap on narrow ones. Give cards a background, border, radius, and padding.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Test the wrap behavior</h3>
+      <p>Drag your browser window narrow and watch the cards wrap from a 3-across row to fewer-across, then to a single column. That graceful reflow is the whole point of <code>flex-wrap</code> + <code>min-width</code>.</p>
+    </div>
+  </section>
+
+  <section class="deliverable">
+    <h2>✅ Deliverable — acceptance checklist</h2>
+    <ul class="check">
+      <li>The <code>|</code> separators are gone from the nav on all pages.</li>
+      <li>The header is a flex navbar: brand left, links right, vertically centered.</li>
+      <li>Nav links sit in a row with <code>gap</code> spacing (no underlines, brand-colored, hover effect).</li>
+      <li>The navbar has a background, padding, and looks like a real bar — identical on all three pages.</li>
+      <li>The Home page has a <code>.card-row</code> with three cards.</li>
+      <li>Cards use <code>display:flex</code> + <code>gap</code> + <code>flex-wrap:wrap</code>, with <code>flex:1</code> and a <code>min-width</code> on each card.</li>
+      <li>Narrowing the window makes the cards wrap instead of overflow.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🚀 Stretch goals (optional)</h2>
+    <ul>
+      <li>Style the <code>.active</code> nav link differently (e.g. a brighter color or an underline) so visitors know which page they're on.</li>
+      <li>Make the card heights match no matter the text length — they already do with <code>align-items: stretch</code> (the default). Add an icon or emoji to each card's heading.</li>
+      <li>On the Contact page, use Flexbox to lay the form label and input side-by-side on wide screens.</li>
+      <li>Center the footer content with <code>display:flex; justify-content:center;</code>.</li>
+      <li>Commit: <code>git add . &amp;&amp; git commit -m "Flexbox navbar + card row"</code>.</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a class="current">🧪 Assignment</a>
+    <a href="solution.html">✅ Solution →</a>
+  </div>
+</footer>
+</body>
+</html>

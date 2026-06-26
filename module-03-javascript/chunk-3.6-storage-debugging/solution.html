@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk 3.6 — Browser Storage &amp; Debugging</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .checkpoint{background:#fef3c7;border:1px solid #fcd34d;}
+  .checkpoint h2{border-color:#fcd34d;color:#92400e;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .full{border:2px solid #16a34a;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 3 — JavaScript Core</div>
+    <h1>Chunk 3.6 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>Part A persists the to-do app; Part B builds the checkpoint expense tracker with complete, copy-pasteable code. Compare with your own work.</p>
+  </section>
+
+  <section>
+    <h2>Part A — Persist the To-Do App</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> + <span class="num">2</span> Load &amp; save in <code>store.js</code></h3>
+      <p>Add the two helpers and call them from your existing operations. Here's the updated <code>store.js</code> from Chunk 3.5 — the new lines are the <code>KEY</code>, <code>loadTasks</code>, <code>saveTasks</code>, and the <code>saveTasks(tasks)</code> calls:</p>
+      <pre><code>const KEY = "todo-tasks";
+
+function loadTasks() {
+  const raw = localStorage.getItem(KEY);
+  return raw ? JSON.parse(raw) : [];     // [] when nothing saved
+}
+
+function saveTasks(tasks) {
+  localStorage.setItem(KEY, JSON.stringify(tasks));
+}
+
+let tasks = loadTasks();                  // initialize FROM storage
+
+export function getTasks() {
+  return tasks;
+}
+
+export function addTask(text) {
+  tasks.push({ id: crypto.randomUUID(), text, done: false });
+  saveTasks(tasks);
+}
+
+export function toggleTask(id) {
+  tasks = tasks.map(t =&gt; (t.id === id ? { ...t, done: !t.done } : t));
+  saveTasks(tasks);
+}
+
+export function removeTask(id) {
+  tasks = tasks.filter(t =&gt; t.id !== id);
+  saveTasks(tasks);
+}</code></pre>
+      <div class="callout tip">
+        <div class="label">💡 Nothing else changes</div>
+        Because <code>ui.js</code> and <code>main.js</code> only ever ask the store for tasks, they're untouched. That's the payoff of putting all storage in one module.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Prove it persists</h3>
+      <p><strong>Expected:</strong> add tasks, mark one done, reload — everything returns exactly as left. If not, see the next step.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Debug with DevTools</h3>
+      <p>Open <em>Application → Local Storage</em> and watch the <code>todo-tasks</code> value change as you edit. To step through code, add a breakpoint or a line:</p>
+      <pre><code>export function addTask(text) {
+  debugger;     // execution pauses here when DevTools is open
+  tasks.push({ id: crypto.randomUUID(), text, done: false });
+  saveTasks(tasks);
+}</code></pre>
+      <div class="callout warning">
+        <div class="label">⚠️ "Unexpected token in JSON"</div>
+        If a parse error appears, your stored value is corrupt (e.g. you saved a non-JSON string earlier). Clear it: in the Console run <code>localStorage.removeItem("todo-tasks")</code> and reload.
+      </div>
+    </div>
+  </section>
+
+  <section class="checkpoint">
+    <h2>🏁 Part B — Module 3 Checkpoint: Expense Tracker</h2>
+    <p>A complete single-file build (HTML + inline JS). It uses functions, an array of objects, <code>reduce</code>, the DOM/events, and <code>localStorage</code> — the whole module in one widget. Steps below explain the key pieces; the full file follows.</p>
+
+    <div class="step">
+      <h3><span class="num">5</span> + <span class="num">6</span> Form &amp; add (with validation)</h3>
+      <pre><code>form.addEventListener("submit", (event) =&gt; {
+  event.preventDefault();
+  const description = descInput.value.trim();
+  const amount = Number(amountInput.value);
+
+  if (description === "" || isNaN(amount) || amount &lt;= 0) {
+    alert("Enter a description and a positive amount.");
+    return;
+  }
+
+  expenses.push({ id: crypto.randomUUID(), description, amount });
+  save();
+  render();
+  form.reset();
+  descInput.focus();
+});</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Render &amp; total with <code>reduce</code></h3>
+      <pre><code>function render() {
+  list.innerHTML = "";
+  if (expenses.length === 0) {
+    list.innerHTML = "&lt;li class='empty'&gt;No expenses yet&lt;/li&gt;";
+  } else {
+    expenses.forEach(exp =&gt; {
+      const li = document.createElement("li");
+      li.dataset.id = exp.id;
+      li.innerHTML =
+        `&lt;span&gt;${exp.description}&lt;/span&gt;` +
+        `&lt;span&gt;$${exp.amount.toFixed(2)} ` +
+        `&lt;button class="delete-btn"&gt;✕&lt;/button&gt;&lt;/span&gt;`;
+      list.appendChild(li);
+    });
+  }
+  const total = expenses.reduce((sum, e) =&gt; sum + e.amount, 0);
+  totalEl.textContent = `$${total.toFixed(2)}`;
+}</code></pre>
+      <div class="callout note">
+        <div class="label">📝 innerHTML here is safe-ish</div>
+        We use <code>innerHTML</code> for brevity. It's acceptable here because the values are short and local, but remember from Chunk 3.3: for untrusted user input prefer <code>textContent</code> / <code>createElement</code> to avoid injection.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">8</span> Delete (event delegation)</h3>
+      <pre><code>list.addEventListener("click", (event) =&gt; {
+  if (event.target.matches(".delete-btn")) {
+    const id = event.target.closest("li").dataset.id;
+    expenses = expenses.filter(e =&gt; e.id !== id);
+    save();
+    render();
+  }
+});</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">9</span> Persist with localStorage</h3>
+      <pre><code>const KEY = "expenses";
+function load() {
+  const raw = localStorage.getItem(KEY);
+  return raw ? JSON.parse(raw) : [];
+}
+function save() {
+  localStorage.setItem(KEY, JSON.stringify(expenses));
+}
+let expenses = load();   // restore on startup</code></pre>
+      <p><strong>Expected:</strong> add a few expenses, reload — the list and total are still there.</p>
+    </div>
+  </section>
+
+  <section class="full">
+    <h2>📄 Complete <code>expenses.html</code> (self-contained)</h2>
+    <pre><code>&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+  &lt;meta charset="UTF-8"&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+  &lt;title&gt;Expense Tracker&lt;/title&gt;
+  &lt;style&gt;
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+         max-width:520px;margin:40px auto;padding:0 16px;color:#1e293b;}
+    h1{font-size:24px;}
+    form{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+    input{padding:10px;border:1px solid #cbd5e1;border-radius:8px;font-size:16px;}
+    #desc{flex:1;min-width:180px;}
+    #amount{width:120px;}
+    button{cursor:pointer;border:none;border-radius:8px;padding:10px 14px;
+           background:#2563eb;color:#fff;font-size:15px;}
+    .total{font-size:28px;font-weight:700;margin:8px 0 16px;}
+    ul{list-style:none;padding:0;}
+    li{display:flex;justify-content:space-between;align-items:center;
+       padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;margin:6px 0;}
+    li span:last-child{display:flex;align-items:center;gap:10px;font-variant-numeric:tabular-nums;}
+    .delete-btn{background:#ef4444;padding:4px 10px;}
+    .empty{justify-content:center;color:#94a3b8;border-style:dashed;}
+  &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;h1&gt;💸 Expense Tracker&lt;/h1&gt;
+  &lt;form id="expense-form"&gt;
+    &lt;input id="desc" type="text" placeholder="Description" autocomplete="off"&gt;
+    &lt;input id="amount" type="number" placeholder="Amount" step="0.01" min="0"&gt;
+    &lt;button type="submit"&gt;Add expense&lt;/button&gt;
+  &lt;/form&gt;
+  &lt;div&gt;Total: &lt;span class="total" id="total"&gt;$0.00&lt;/span&gt;&lt;/div&gt;
+  &lt;ul id="expense-list"&gt;&lt;/ul&gt;
+
+  &lt;script&gt;
+    const KEY = "expenses";
+    const form = document.querySelector("#expense-form");
+    const descInput = document.querySelector("#desc");
+    const amountInput = document.querySelector("#amount");
+    const list = document.querySelector("#expense-list");
+    const totalEl = document.querySelector("#total");
+
+    function load() {
+      const raw = localStorage.getItem(KEY);
+      return raw ? JSON.parse(raw) : [];
+    }
+    function save() {
+      localStorage.setItem(KEY, JSON.stringify(expenses));
+    }
+
+    let expenses = load();
+
+    function render() {
+      list.innerHTML = "";
+      if (expenses.length === 0) {
+        list.innerHTML = "&lt;li class='empty'&gt;No expenses yet&lt;/li&gt;";
+      } else {
+        expenses.forEach(exp =&gt; {
+          const li = document.createElement("li");
+          li.dataset.id = exp.id;
+          li.innerHTML =
+            `&lt;span&gt;${exp.description}&lt;/span&gt;` +
+            `&lt;span&gt;$${exp.amount.toFixed(2)} ` +
+            `&lt;button class="delete-btn"&gt;✕&lt;/button&gt;&lt;/span&gt;`;
+          list.appendChild(li);
+        });
+      }
+      const total = expenses.reduce((sum, e) =&gt; sum + e.amount, 0);
+      totalEl.textContent = `$${total.toFixed(2)}`;
+    }
+
+    form.addEventListener("submit", (event) =&gt; {
+      event.preventDefault();
+      const description = descInput.value.trim();
+      const amount = Number(amountInput.value);
+      if (description === "" || isNaN(amount) || amount &lt;= 0) {
+        alert("Enter a description and a positive amount.");
+        return;
+      }
+      expenses.push({ id: crypto.randomUUID(), description, amount });
+      save();
+      render();
+      form.reset();
+      descInput.focus();
+    });
+
+    list.addEventListener("click", (event) =&gt; {
+      if (event.target.matches(".delete-btn")) {
+        const id = event.target.closest("li").dataset.id;
+        expenses = expenses.filter(e =&gt; e.id !== id);
+        save();
+        render();
+      }
+    });
+
+    render();
+  &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+    <div class="callout tip">
+      <div class="label">💡 Want the modular version?</div>
+      To match Chunk 3.5, split this into a Vite project: <code>store.js</code> (the <code>expenses</code> array + <code>load</code>/<code>save</code>/<code>add</code>/<code>remove</code>/<code>getTotal</code>), <code>ui.js</code> (<code>renderExpenses</code>), and <code>main.js</code> (the glue). Same logic, cleaner structure.
+    </div>
+  </section>
+
+  <section>
+    <h2>🧰 Troubleshooting</h2>
+    <ul>
+      <li><strong>Total shows <code>NaN</code>.</strong> An amount was stored as a string. Always <code>Number(amountInput.value)</code> before pushing, and reject <code>isNaN</code>.</li>
+      <li><strong>Expenses don't survive reload.</strong> You forgot to call <code>save()</code> after a change, or you're reading with the wrong <code>KEY</code>. Check <em>Application → Local Storage</em>.</li>
+      <li><strong>Delete removes the wrong item.</strong> Confirm each <code>&lt;li&gt;</code> has a unique <code>data-id</code> and you filter by that exact id.</li>
+      <li><strong>Everything broke after editing storage manually.</strong> Run <code>localStorage.clear()</code> in the Console and reload to start fresh.</li>
+    </ul>
+  </section>
+
+  <section class="done">
+    <h2>🎉 Module 3 complete!</h2>
+    <p>You've gone from <code>console.log("Hello")</code> to a persistent, modular, network-aware set of interactive apps. In this module you learned:</p>
+    <ul>
+      <li><strong>3.1–3.2</strong> — the JavaScript language: variables, control flow, functions, and transforming data with <code>map</code>/<code>filter</code>/<code>reduce</code>.</li>
+      <li><strong>3.3</strong> — the DOM &amp; events: building an interactive to-do app by hand.</li>
+      <li><strong>3.4</strong> — async/await &amp; fetch: loading live data with loading/error states.</li>
+      <li><strong>3.5</strong> — ES modules, npm, and Vite: structuring real projects.</li>
+      <li><strong>3.6</strong> — localStorage &amp; debugging: persistence and DevTools — capped by your expense tracker checkpoint.</li>
+    </ul>
+    <p><strong>Up next → Module 4: React + Vite.</strong> Everything you just did by hand — state, events, rendering lists — React makes declarative and reusable. You're ready.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

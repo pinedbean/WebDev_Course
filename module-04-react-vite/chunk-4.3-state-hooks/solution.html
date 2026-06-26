@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk 4.3 — State &amp; Events with Hooks</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .full{border:2px solid #16a34a;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 4 — React + Vite</div>
+    <h1>Chunk 4.3 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>We'll build a three-component to-do app. State lives in <code>TodoApp</code>; <code>TodoForm</code> and <code>TodoList</code> receive props. Full files are at the bottom. Target structure:</p>
+    <div class="filetree">recipe-box/
+└── src/
+    ├── App.jsx
+    └── components/
+        ├── TodoApp.jsx
+        ├── TodoForm.jsx
+        └── TodoList.jsx</div>
+  </section>
+
+  <section>
+    <div class="step">
+      <h3><span class="num">1</span> State in the parent</h3>
+      <p>In <code>TodoApp.jsx</code>, hold the list and the handlers. Each todo is <code>{ id, text, done }</code>.</p>
+      <pre><code>import { useState } from "react";
+import TodoForm from "./TodoForm";
+import TodoList from "./TodoList";
+
+function TodoApp() {
+  const [todos, setTodos] = useState([]);
+
+  function addTodo(text) {
+    const newTodo = { id: crypto.randomUUID(), text, done: false };
+    setTodos([...todos, newTodo]);
+  }
+
+  function toggleTodo(id) {
+    setTodos(todos.map((t) =&gt;
+      t.id === id ? { ...t, done: !t.done } : t
+    ));
+  }
+
+  function deleteTodo(id) {
+    setTodos(todos.filter((t) =&gt; t.id !== id));
+  }
+
+  const doneCount = todos.filter((t) =&gt; t.done).length;
+
+  return (
+    &lt;section className="todo"&gt;
+      &lt;h2&gt;✅ My Tasks&lt;/h2&gt;
+      &lt;TodoForm onAdd={addTodo} /&gt;
+      &lt;p&gt;{doneCount} of {todos.length} done&lt;/p&gt;
+      &lt;TodoList items={todos} onToggle={toggleTodo} onDelete={deleteTodo} /&gt;
+    &lt;/section&gt;
+  );
+}
+
+export default TodoApp;</code></pre>
+      <p>Notice <code>doneCount</code> is <strong>derived</strong> from state each render — no separate counter to keep in sync.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> The controlled form</h3>
+      <p><code>TodoForm.jsx</code> owns only the input's text; it reports new todos up via <code>onAdd</code>.</p>
+      <pre><code>import { useState } from "react";
+
+function TodoForm({ onAdd }) {
+  const [text, setText] = useState("");
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    const trimmed = text.trim();
+    if (!trimmed) return;        // ignore empty input
+    onAdd(trimmed);
+    setText("");                 // clear the field
+  }
+
+  return (
+    &lt;form onSubmit={handleSubmit}&gt;
+      &lt;input
+        value={text}
+        onChange={(e) =&gt; setText(e.target.value)}
+        placeholder="Add a task..."
+      /&gt;
+      &lt;button type="submit" disabled={!text.trim()}&gt;Add&lt;/button&gt;
+    &lt;/form&gt;
+  );
+}
+
+export default TodoForm;</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> The list &amp; items</h3>
+      <p><code>TodoList.jsx</code> maps the items and wires each row's buttons to the handlers from props.</p>
+      <pre><code>function TodoList({ items, onToggle, onDelete }) {
+  if (items.length === 0) {
+    return &lt;p className="empty"&gt;No tasks yet — add one above.&lt;/p&gt;;
+  }
+
+  return (
+    &lt;ul className="list"&gt;
+      {items.map((todo) =&gt; (
+        &lt;li key={todo.id}&gt;
+          &lt;label className={todo.done ? "done" : ""}&gt;
+            &lt;input
+              type="checkbox"
+              checked={todo.done}
+              onChange={() =&gt; onToggle(todo.id)}
+            /&gt;
+            {todo.text}
+          &lt;/label&gt;
+          &lt;button onClick={() =&gt; onDelete(todo.id)} aria-label="Delete"&gt;✕&lt;/button&gt;
+        &lt;/li&gt;
+      ))}
+    &lt;/ul&gt;
+  );
+}
+
+export default TodoList;</code></pre>
+      <div class="callout tip">
+        <div class="label">💡 Empty state</div>
+        Returning early with a friendly message when the list is empty is a small touch that makes the app feel finished.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Wire it into <code>App</code></h3>
+      <pre><code>import TodoApp from "./components/TodoApp";
+import "./index.css";
+
+function App() {
+  return (
+    &lt;main&gt;
+      &lt;h1&gt;🍳 Recipe Box&lt;/h1&gt;
+      &lt;TodoApp /&gt;
+    &lt;/main&gt;
+  );
+}
+
+export default App;</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> A little CSS</h3>
+      <p>Add to <code>src/index.css</code> for the strikethrough and layout:</p>
+      <pre><code>.todo { max-width: 480px; }
+.list { list-style: none; padding: 0; }
+.list li { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
+.list li button { margin-left: auto; }
+.done { text-decoration: line-through; color: #94a3b8; }
+.empty { color: #94a3b8; }</code></pre>
+    </div>
+  </section>
+
+  <section class="full">
+    <h2>📄 Complete <code>src/components/TodoApp.jsx</code></h2>
+    <pre><code>import { useState } from "react";
+import TodoForm from "./TodoForm";
+import TodoList from "./TodoList";
+
+function TodoApp() {
+  const [todos, setTodos] = useState([]);
+
+  function addTodo(text) {
+    setTodos([...todos, { id: crypto.randomUUID(), text, done: false }]);
+  }
+  function toggleTodo(id) {
+    setTodos(todos.map((t) =&gt; (t.id === id ? { ...t, done: !t.done } : t)));
+  }
+  function deleteTodo(id) {
+    setTodos(todos.filter((t) =&gt; t.id !== id));
+  }
+
+  const doneCount = todos.filter((t) =&gt; t.done).length;
+
+  return (
+    &lt;section className="todo"&gt;
+      &lt;h2&gt;✅ My Tasks&lt;/h2&gt;
+      &lt;TodoForm onAdd={addTodo} /&gt;
+      &lt;p&gt;{doneCount} of {todos.length} done&lt;/p&gt;
+      &lt;TodoList items={todos} onToggle={toggleTodo} onDelete={deleteTodo} /&gt;
+    &lt;/section&gt;
+  );
+}
+
+export default TodoApp;</code></pre>
+  </section>
+
+  <section>
+    <h2>🛠 Troubleshooting</h2>
+    <table>
+      <tr><th>Symptom</th><th>Fix</th></tr>
+      <tr><td>Typing in the input does nothing</td><td>The input is controlled but missing <code>onChange</code>. Add <code>onChange={(e) =&gt; setText(e.target.value)}</code>.</td></tr>
+      <tr><td>Page reloads when I submit</td><td>You forgot <code>e.preventDefault()</code> in the submit handler.</td></tr>
+      <tr><td>List doesn't update after adding</td><td>You mutated state (<code>todos.push(...)</code>). Use <code>setTodos([...todos, item])</code>.</td></tr>
+      <tr><td>"A component is changing an uncontrolled input..."</td><td>Initialize the input's state to <code>""</code>, not <code>undefined</code>.</td></tr>
+      <tr><td>Checkbox warning in console</td><td>A controlled checkbox needs both <code>checked</code> and <code>onChange</code>.</td></tr>
+    </table>
+  </section>
+
+  <section class="done">
+    <h2>🎉 You're done</h2>
+    <p>Compare this to your Module 3 to-do app: no <code>querySelector</code>, no <code>createElement</code>, no manual DOM syncing. You changed state and React redrew the screen. That's the payoff.</p>
+    <p><strong>Up next → Chunk 4.4: Side Effects &amp; Data Fetching</strong> — you'll use <code>useEffect</code> to load real recipes from a public API with proper loading and error states.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

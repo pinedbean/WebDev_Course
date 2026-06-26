@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk 3.5 — ES Modules &amp; Modern JS Tooling</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .full{border:2px solid #16a34a;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 3 — JavaScript Core</div>
+    <h1>Chunk 3.5 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>We'll scaffold Vite, then write four files: <code>index.html</code>, <code>src/store.js</code>, <code>src/ui.js</code>, and <code>src/main.js</code>. Each step has the exact code and what to expect. Final files are at the bottom.</p>
+  </section>
+
+  <section>
+    <div class="step">
+      <h3><span class="num">1</span> Scaffold &amp; run Vite</h3>
+      <pre><code>npm create vite@latest todo-vite -- --template vanilla
+cd todo-vite
+npm install
+npm run dev</code></pre>
+      <p><strong>Expected:</strong> Vite prints something like:</p>
+      <pre><code>  VITE v5.x.x  ready in 320 ms
+
+  ➜  Local:   http://localhost:5173/</code></pre>
+      <p>Open that URL — you'll see Vite's starter page. Leave <code>npm run dev</code> running in the terminal while you work.</p>
+      <div class="callout warning">
+        <div class="label">⚠️ "command not found" or old Node?</div>
+        If <code>npm create vite</code> fails, check <code>node -v</code> is 20 or newer. The <code>--</code> before <code>--template</code> is required so npm forwards the flag to Vite, not to npm itself.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Replace <code>index.html</code></h3>
+      <p>The scaffold's <code>index.html</code> sits at the project root. Swap its body for the to-do markup, keeping the module script tag Vite expects.</p>
+      <pre><code>&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+  &lt;meta charset="UTF-8"&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+  &lt;title&gt;To-Do (Vite)&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;h1&gt;My To-Do&lt;/h1&gt;
+  &lt;form id="todo-form"&gt;
+    &lt;input id="todo-input" type="text" placeholder="What needs doing?" autocomplete="off"&gt;
+    &lt;button type="submit"&gt;Add&lt;/button&gt;
+  &lt;/form&gt;
+  &lt;p id="count"&gt;&lt;/p&gt;
+  &lt;ul id="todo-list"&gt;&lt;/ul&gt;
+
+  &lt;script type="module" src="/src/main.js"&gt;&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> <code>src/store.js</code> — the data</h3>
+      <p>Owns the tasks array and the operations on it. Notice: <strong>zero DOM code</strong>. It just manages state and hands back the current list.</p>
+      <pre><code>let tasks = [];
+
+export function getTasks() {
+  return tasks;
+}
+
+export function addTask(text) {
+  tasks.push({ id: crypto.randomUUID(), text, done: false });
+}
+
+export function toggleTask(id) {
+  tasks = tasks.map(t =&gt;
+    t.id === id ? { ...t, done: !t.done } : t
+  );
+}
+
+export function removeTask(id) {
+  tasks = tasks.filter(t =&gt; t.id !== id);
+}</code></pre>
+      <div class="callout tip">
+        <div class="label">💡 Recognize the array methods?</div>
+        <code>map</code> and <code>filter</code> from Chunk 3.2 are doing the real work here. Toggling returns a new array with one task flipped; removing returns a new array without the matching id.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> <code>src/ui.js</code> — the view</h3>
+      <p>Turns data into DOM. It rebuilds the whole list from the tasks array each render — simpler and more reliable than surgically patching nodes, and it sets us up perfectly for persistence in 3.6.</p>
+      <pre><code>export function renderTasks(tasks, listEl) {
+  listEl.innerHTML = "";                 // clear, then rebuild
+  tasks.forEach(task =&gt; {
+    const li = document.createElement("li");
+    li.dataset.id = task.id;             // remember which task this is
+    if (task.done) li.classList.add("done");
+
+    const span = document.createElement("span");
+    span.textContent = task.text;
+    span.classList.add("task-text");
+
+    const del = document.createElement("button");
+    del.textContent = "✕";
+    del.classList.add("delete-btn");
+
+    li.appendChild(span);
+    li.appendChild(del);
+    listEl.appendChild(li);
+  });
+}
+
+export function updateCount(tasks, countEl) {
+  const remaining = tasks.filter(t =&gt; !t.done).length;
+  countEl.textContent = `${remaining} task(s) left`;
+}</code></pre>
+      <div class="callout note">
+        <div class="label">📝 data-id is the link</div>
+        Storing <code>li.dataset.id = task.id</code> writes a <code>data-id</code> attribute on the element. When the user clicks, <code>main.js</code> reads it back to know which task in the store to toggle or remove.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> <code>src/main.js</code> — the glue</h3>
+      <p>Imports both modules, selects the elements, and wires events. A single <code>render()</code> redraws everything from the current store after any change.</p>
+      <pre><code>import { getTasks, addTask, toggleTask, removeTask } from "./store.js";
+import { renderTasks, updateCount } from "./ui.js";
+
+const form = document.querySelector("#todo-form");
+const input = document.querySelector("#todo-input");
+const list = document.querySelector("#todo-list");
+const count = document.querySelector("#count");
+
+function render() {
+  const tasks = getTasks();
+  renderTasks(tasks, list);
+  updateCount(tasks, count);
+}
+
+form.addEventListener("submit", (event) =&gt; {
+  event.preventDefault();
+  const text = input.value.trim();
+  if (text === "") return;
+  addTask(text);
+  input.value = "";
+  input.focus();
+  render();
+});
+
+list.addEventListener("click", (event) =&gt; {
+  const li = event.target.closest("li");
+  if (!li) return;
+  const id = li.dataset.id;
+  if (event.target.matches(".delete-btn")) {
+    removeTask(id);
+  } else if (event.target.matches(".task-text")) {
+    toggleTask(id);
+  }
+  render();
+});
+
+render();   // initial paint</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Verify hot reload &amp; build</h3>
+      <p>With the dev server running, edit the count text in <code>ui.js</code> (e.g. <code>"${remaining} to go"</code>) and save. <strong>Expected:</strong> the page updates instantly — no reload. Then:</p>
+      <pre><code>npm run build      # creates dist/
+npm run preview    # serves the production build locally</code></pre>
+      <p><strong>Expected:</strong> <code>build</code> finishes with a summary of generated files and no errors.</p>
+    </div>
+  </section>
+
+  <section class="full">
+    <h2>📄 Final project structure</h2>
+    <pre><code>todo-vite/
+├── index.html
+├── package.json
+├── src/
+│   ├── main.js     ← glue / entry point
+│   ├── store.js    ← data &amp; logic
+│   └── ui.js       ← DOM rendering
+└── (node_modules/, gitignored)</code></pre>
+    <div class="callout tip">
+      <div class="label">💡 Optional CSS</div>
+      To style it, create <code>src/style.css</code> with the same rules from Chunk 3.3, then add <code>import "./style.css";</code> at the top of <code>main.js</code>. Vite bundles it automatically — no <code>&lt;link&gt;</code> needed.
+    </div>
+  </section>
+
+  <section>
+    <h2>🧰 Troubleshooting</h2>
+    <ul>
+      <li><strong>Blank page, "Failed to resolve module specifier".</strong> Check your import paths start with <code>./</code> and end in <code>.js</code>.</li>
+      <li><strong>Edits don't show.</strong> Make sure <code>npm run dev</code> is still running and you're viewing the <code>localhost</code> URL, not a double-clicked file.</li>
+      <li><strong><code>crypto.randomUUID is not a function</code>.</strong> Very old browser — update it, or use <code>Date.now() + Math.random()</code> for ids.</li>
+      <li><strong>Clicks do nothing.</strong> Confirm each <code>&lt;li&gt;</code> gets a <code>data-id</code> and that <code>main.js</code> reads <code>li.dataset.id</code>.</li>
+    </ul>
+  </section>
+
+  <section class="done">
+    <h2>🎉 You're done</h2>
+    <p>Your to-do app now runs on the same professional toolchain real teams use: npm, ES modules, and a Vite dev server with hot reload. The data/view/glue split you built is exactly the mental model you'll carry into React in Module 4.</p>
+    <p><strong>Up next → Chunk 3.6: Browser Storage &amp; Debugging</strong> — you'll make this app remember tasks across reloads with <code>localStorage</code>, learn to debug with DevTools, and then build the Module 3 checkpoint widget.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk 3.1 — JavaScript Basics</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .full{border:2px solid #16a34a;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 3 — JavaScript Core</div>
+    <h1>Chunk 3.1 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>Work through each problem and compare with your own. Each step shows the code, the <strong>expected Console output</strong>, and notes on common mistakes. The complete <code>basics.js</code> is at the bottom.</p>
+  </section>
+
+  <section>
+    <div class="step">
+      <h3><span class="num">1</span> Greeting with a template literal</h3>
+      <pre><code>const name = "Jane";
+const age = 28;
+console.log(`Hi, I'm ${name} and I'm ${age} years old.`);</code></pre>
+      <p><strong>Expected output:</strong> <code>Hi, I'm Jane and I'm 28 years old.</code></p>
+      <div class="callout warning">
+        <div class="label">⚠️ Common mistake</div>
+        Using straight quotes <code>"..."</code> instead of backticks <code>`...`</code>. Only backticks enable <code>${...}</code>. The backtick key is above <kbd>Tab</kbd> on most keyboards.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Temperature converter</h3>
+      <pre><code>const celsius = 25;
+const fahrenheit = celsius * 9 / 5 + 32;
+console.log(`${celsius}°C is ${fahrenheit}°F.`);</code></pre>
+      <p><strong>Expected output:</strong> <code>25°C is 77°F.</code> Change <code>celsius</code> to <code>0</code> and reload → <code>0°C is 32°F.</code></p>
+      <div class="callout note">
+        <div class="label">📝 Why it works</div>
+        Multiplication and division happen before addition, so <code>celsius * 9 / 5 + 32</code> is read as <code>((celsius * 9) / 5) + 32</code>. When in doubt, add parentheses to make the order explicit.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Even or odd</h3>
+      <pre><code>const number = 7;
+if (number % 2 === 0) {
+  console.log(`${number} is even`);
+} else {
+  console.log(`${number} is odd`);
+}</code></pre>
+      <p><strong>Expected output:</strong> <code>7 is odd</code>. A number is even when dividing by 2 leaves no remainder, i.e. <code>number % 2 === 0</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> FizzBuzz (1 to 20)</h3>
+      <pre><code>for (let i = 1; i &lt;= 20; i++) {
+  if (i % 3 === 0 &amp;&amp; i % 5 === 0) {
+    console.log("FizzBuzz");
+  } else if (i % 3 === 0) {
+    console.log("Fizz");
+  } else if (i % 5 === 0) {
+    console.log("Buzz");
+  } else {
+    console.log(i);
+  }
+}</code></pre>
+      <p><strong>Expected output (first lines):</strong> <code>1, 2, Fizz, 4, Buzz, Fizz, 7, 8, Fizz, Buzz, 11, Fizz, 13, 14, FizzBuzz, …</code></p>
+      <div class="callout warning">
+        <div class="label">⚠️ Order matters</div>
+        Test "divisible by both" <em>first</em>. If you check <code>i % 3 === 0</code> before the combined case, 15 prints "Fizz" and never reaches "FizzBuzz".
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Sum &amp; calculator logic</h3>
+      <pre><code>const a = 7;
+const b = 3;
+console.log(`${a} + ${b} = ${a + b}`);
+console.log(`${a} - ${b} = ${a - b}`);
+console.log(`${a} * ${b} = ${a * b}`);
+console.log(`${a} / ${b} = ${a / b}`);
+
+// Running total from 1 to b
+let total = 0;
+for (let i = 1; i &lt;= b; i++) {
+  total = total + i;          // or: total += i;
+  console.log(`running total after ${i}: ${total}`);
+}</code></pre>
+      <p><strong>Expected output:</strong></p>
+      <pre><code>7 + 3 = 10
+7 - 3 = 4
+7 * 3 = 21
+7 / 3 = 2.3333333333333335
+running total after 1: 1
+running total after 2: 3
+running total after 3: 6</code></pre>
+      <div class="callout tip">
+        <div class="label">💡 Shorthand</div>
+        <code>total += i</code> means <code>total = total + i</code>. There's also <code>-=</code>, <code>*=</code>, and <code>/=</code>.
+      </div>
+    </div>
+  </section>
+
+  <section class="full">
+    <h2>📄 Complete <code>basics.js</code></h2>
+    <pre><code>// ===== Problem 1: Greeting =====
+const name = "Jane";
+const age = 28;
+console.log(`Hi, I'm ${name} and I'm ${age} years old.`);
+
+// ===== Problem 2: Temperature converter =====
+const celsius = 25;
+const fahrenheit = celsius * 9 / 5 + 32;
+console.log(`${celsius}°C is ${fahrenheit}°F.`);
+
+// ===== Problem 3: Even or odd =====
+const number = 7;
+if (number % 2 === 0) {
+  console.log(`${number} is even`);
+} else {
+  console.log(`${number} is odd`);
+}
+
+// ===== Problem 4: FizzBuzz =====
+for (let i = 1; i &lt;= 20; i++) {
+  if (i % 3 === 0 &amp;&amp; i % 5 === 0) {
+    console.log("FizzBuzz");
+  } else if (i % 3 === 0) {
+    console.log("Fizz");
+  } else if (i % 5 === 0) {
+    console.log("Buzz");
+  } else {
+    console.log(i);
+  }
+}
+
+// ===== Problem 5: Calculator + running total =====
+const a = 7;
+const b = 3;
+console.log(`${a} + ${b} = ${a + b}`);
+console.log(`${a} - ${b} = ${a - b}`);
+console.log(`${a} * ${b} = ${a * b}`);
+console.log(`${a} / ${b} = ${a / b}`);
+
+let total = 0;
+for (let i = 1; i &lt;= b; i++) {
+  total += i;
+  console.log(`running total after ${i}: ${total}`);
+}</code></pre>
+  </section>
+
+  <section class="done">
+    <h2>🎉 You're done</h2>
+    <p>You wrote real JavaScript: variables, types, operators, template literals, conditionals, and loops. These are the building blocks of <em>every</em> program you'll write from here on.</p>
+    <p><strong>Up next → Chunk 3.2: Functions, Arrays &amp; Objects</strong> — where you'll package logic into reusable functions and start transforming lists of data, the way real apps handle their content.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

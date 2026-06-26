@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment · Chunk 3.3 — The DOM &amp; Events</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #ede9fe;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .objective{background:#ede9fe;border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#5b21b6;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--task);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .deliverable{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .deliverable h2{border-color:#a7f3d0;color:#065f46;}
+  .check{list-style:none;padding-left:0;} .check li{padding-left:30px;position:relative;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:18px;color:var(--task);}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 3 — JavaScript Core</div>
+    <h1>Chunk 3.3 — Lab: Build a To-Do App</h1>
+    <span class="badge">🧪 ASSIGNMENT</span>
+    <span class="badge">⏱️ 45–75 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 Your mission</h2>
+    <p>Build an interactive to-do list in <strong>vanilla JavaScript</strong>: a text box to add tasks, the ability to mark a task <strong>complete</strong> by clicking it, and a button to <strong>remove</strong> each task. This <code>todo.html</code> + <code>todo.js</code> is the project we'll refactor (3.5) and persist (3.6) for the rest of Module 3 — so build it cleanly.</p>
+  </section>
+
+  <section>
+    <h2>Before you start</h2>
+    <ul>
+      <li>Make a folder, e.g. <code>~/Desktop/webdev-course/module-03-javascript/todo-app/</code>.</li>
+      <li>Create <code>todo.html</code> and <code>todo.js</code> in it.</li>
+      <li>You may add a little CSS in a <code>&lt;style&gt;</code> block — enough to make completed items look "done" (e.g. strikethrough).</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ Try it yourself first</div>
+      Use the lecture's patterns (select → create → append → listen). Only open <code>solution.html</code> when stuck or to compare.
+    </div>
+  </section>
+
+  <section>
+    <h2>Tasks</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Build the HTML structure</h3>
+      <p>In <code>todo.html</code>, create: a heading, a <code>&lt;form&gt;</code> containing a text <code>&lt;input&gt;</code> and an "Add" submit button, and an empty <code>&lt;ul&gt;</code> where tasks will appear. Give the form, input, and list <code>id</code>s so you can select them. Load <code>todo.js</code> with a <code>&lt;script&gt;</code> before <code>&lt;/body&gt;</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Select your elements</h3>
+      <p>At the top of <code>todo.js</code>, grab the form, the input, and the <code>&lt;ul&gt;</code> with <code>querySelector</code> and store them in <code>const</code>s.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Add a task on submit</h3>
+      <p>Listen for the form's <code>submit</code> event. Call <code>preventDefault()</code>. Read and <code>.trim()</code> the input value; if it's empty, do nothing. Otherwise create an <code>&lt;li&gt;</code> containing the task text and a delete button, append it to the list, and clear the input.</p>
+      <div class="callout tip">
+        <div class="label">💡 Structure each item</div>
+        Put the text in a <code>&lt;span&gt;</code> and add a <code>&lt;button&gt;</code> with a class like <code>delete-btn</code>. That makes it easy to tell "complete" clicks from "delete" clicks later.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Mark complete by clicking</h3>
+      <p>Using <strong>event delegation</strong> on the <code>&lt;ul&gt;</code>, when the task text is clicked, toggle a <code>done</code> class on that <code>&lt;li&gt;</code>. Style <code>.done</code> in your CSS (e.g. <code>text-decoration: line-through; opacity:.6;</code>).</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Remove a task</h3>
+      <p>In the same delegated click handler, if the clicked element is a delete button, remove its containing <code>&lt;li&gt;</code>. Use <code>event.target.matches(".delete-btn")</code> and <code>closest("li")</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Show a live count</h3>
+      <p>Display how many tasks remain (not completed). Add a small element (e.g. a <code>&lt;p id="count"&gt;</code>) and write a <code>updateCount()</code> function that counts <code>&lt;li&gt;</code> items without the <code>done</code> class, calling it whenever tasks change.</p>
+    </div>
+  </section>
+
+  <section class="deliverable">
+    <h2>✅ Deliverable — acceptance checklist</h2>
+    <ul class="check">
+      <li><code>todo.html</code> opens in the browser and loads <code>todo.js</code> with no Console errors.</li>
+      <li>Typing a task and pressing Enter (or clicking Add) appends it to the list and clears the box.</li>
+      <li>Empty/whitespace-only input is ignored.</li>
+      <li>Clicking a task's text toggles a completed (strikethrough) look via a <code>done</code> class.</li>
+      <li>Each task has a working delete button that removes only that task.</li>
+      <li>A live counter shows the number of remaining (incomplete) tasks.</li>
+      <li>Delete/complete work for tasks added after page load (event delegation).</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🚀 Stretch goals (optional)</h2>
+    <ul>
+      <li>Add a "Clear completed" button that removes all <code>.done</code> items at once.</li>
+      <li>Prevent duplicate tasks (ignore a task whose text already exists).</li>
+      <li>Add a checkbox to each item instead of clicking the text, and toggle <code>done</code> from its <code>change</code> event.</li>
+      <li>Show a friendly "No tasks yet" message when the list is empty.</li>
+    </ul>
+    <div class="callout note">
+      <div class="label">📝 Keep this folder</div>
+      Don't delete <code>todo-app/</code> when you finish — Chunk 3.5 refactors this exact app into ES modules under Vite, and Chunk 3.6 makes it remember your tasks with <code>localStorage</code>.
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a class="current">🧪 Assignment</a>
+    <a href="solution.html">✅ Solution →</a>
+  </div>
+</footer>
+</body>
+</html>

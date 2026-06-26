@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment · Chunk 4.7 — Reusable Hooks &amp; Project Structure</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #ede9fe;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .objective{background:#ede9fe;border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#5b21b6;}
+  .checkpoint{background:#fffbeb;border:2px solid #f59e0b;}
+  .checkpoint h2{border-color:#fde68a;color:#92400e;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--task);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .deliverable{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .deliverable h2{border-color:#a7f3d0;color:#065f46;}
+  .check{list-style:none;padding-left:0;} .check li{padding-left:30px;position:relative;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:18px;color:var(--task);}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 4 — React + Vite</div>
+    <h1>Chunk 4.7 — Lab: Refactor + 🏁 Module 4 Checkpoint</h1>
+    <span class="badge">🧪 ASSIGNMENT</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 Your mission</h2>
+    <p>This lab has two parts. <strong>Part A:</strong> refactor <code>recipe-box</code> — extract a reusable <code>useFetch</code> hook, centralize API calls, move to environment-based config, and reorganize the folders. <strong>Part B (🏁 Checkpoint):</strong> pull the whole module together into a polished <strong>Recipe Browser</strong> app consuming a public API.</p>
+  </section>
+
+  <section>
+    <h2>Before you start</h2>
+    <ul>
+      <li>Open <code>recipe-box</code> (with everything from 4.1–4.6). Run <code>npm run dev</code>.</li>
+      <li>This is the capstone of Module 4 — budget the full session.</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ Try it yourself first</div>
+      You've built every piece already; this is about composing and cleaning. Reach for the solution only when stuck.
+    </div>
+  </section>
+
+  <section>
+    <h2>Part A — Refactor &amp; Structure</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Extract <code>useFetch</code></h3>
+      <p>Create <code>src/hooks/useFetch.js</code> that takes a <code>url</code> and returns <code>{ data, loading, error }</code> (the lifecycle from 4.4, including the <code>active</code> cleanup flag and <code>res.ok</code> check).</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Use it everywhere</h3>
+      <p>Replace the hand-written fetch code in your <code>Recipes</code> and <code>RecipeDetail</code> pages with <code>useFetch</code>. Confirm both pages still work and are now much shorter.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Centralize API calls</h3>
+      <p>Create <code>src/api/recipes.js</code> with helpers that build URLs: <code>searchUrl(query)</code> and <code>lookupUrl(id)</code> (or full fetch functions). Use them from your pages so no raw URL strings live in components.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Environment config</h3>
+      <p>Add a <code>.env</code> with <code>VITE_API_BASE=https://www.themealdb.com/api/json/v1/1</code>. Read it via <code>import.meta.env.VITE_API_BASE</code> in <code>api/recipes.js</code>. Restart the dev server and confirm everything still loads. Add <code>.env.local</code> to <code>.gitignore</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Reorganize folders</h3>
+      <p>Arrange <code>src/</code> into <code>api/</code>, <code>components/</code>, <code>pages/</code>, <code>hooks/</code>, <code>context/</code>. Fix imports. The app should run with no console errors after the move.</p>
+    </div>
+  </section>
+
+  <section class="checkpoint">
+    <h2>🏁 Part B — Module 4 Checkpoint: Recipe Browser</h2>
+    <p>Build (or finish polishing) a small, self-contained <strong>Recipe Browser</strong> that consumes the public TheMealDB API and uses <em>everything</em> from Module 4. If your <code>recipe-box</code> already has these pieces, your job is to tie them into a coherent, finished app. The checkpoint app must demonstrate:</p>
+    <ul>
+      <li><strong>Components &amp; props (4.2):</strong> a reusable <code>RecipeCard</code> in a responsive grid.</li>
+      <li><strong>State &amp; events (4.3):</strong> a controlled search input.</li>
+      <li><strong>Data fetching (4.4) via your <code>useFetch</code> (4.7):</strong> live results with loading, error, and empty states.</li>
+      <li><strong>Routing (4.5):</strong> Home, a Browse/list page, and a Recipe detail page (<code>/recipes/:id</code>) with a working Back button and a 404 route.</li>
+      <li><strong>Forms &amp; Context (4.6):</strong> a Favorites feature shared across pages, with a live count in the navbar and a dedicated Favorites page.</li>
+      <li><strong>Structure (4.7):</strong> clean <code>api/components/pages/hooks/context</code> folders and env-based config.</li>
+    </ul>
+    <div class="callout tip">
+      <div class="label">💡 Prefer a different theme?</div>
+      A movie browser works just as well. TheMealDB has a sibling, <strong>TheCocktailDB</strong> (same no-key style), and there are open APIs for books, Pokémon, and more. If you want movies specifically, TMDB/OMDb need a free API key — fine to use, just keep the key in <code>.env</code> and remember frontend env vars aren't truly secret.
+    </div>
+  </section>
+
+  <section class="deliverable">
+    <h2>✅ Deliverable — acceptance checklist</h2>
+    <ul class="check">
+      <li>A reusable <code>useFetch</code> hook in <code>src/hooks/</code> powers all data fetching.</li>
+      <li>No raw API URL strings in components — they come from <code>src/api/</code>.</li>
+      <li>The API base URL comes from a <code>VITE_</code> environment variable via <code>import.meta.env</code>.</li>
+      <li><code>src/</code> is organized into <code>api / components / pages / hooks / context</code> with working imports.</li>
+      <li><strong>Checkpoint:</strong> the Recipe Browser runs with no console errors and demonstrates components, state, fetching, routing, and Context.</li>
+      <li><strong>Checkpoint:</strong> search, loading/error/empty states, list → detail navigation, and shared favorites all work end to end.</li>
+      <li>(Recommended) A short <code>README.md</code> describing the app and how to run it (<code>npm install</code> &amp;&amp; <code>npm run dev</code>).</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🚀 Stretch goals (optional)</h2>
+    <ul>
+      <li>Persist favorites to <code>localStorage</code> so they survive refreshes.</li>
+      <li>Add filtering by category (TheMealDB <code>/filter.php?c=Seafood</code>) as a second route or dropdown.</li>
+      <li>Generalize <code>useFetch</code> to skip the request when <code>url</code> is falsy (so a detail page doesn't fetch with no id).</li>
+      <li>Add a loading skeleton component and a nicer error UI.</li>
+      <li>Run <code>npm run build</code> and <code>npm run preview</code> to confirm the production build works (sets you up for Module 9).</li>
+      <li>Deploy the build to a static host (e.g. Netlify/GitHub Pages) and share the link.</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a class="current">🧪 Assignment</a>
+    <a href="solution.html">✅ Solution →</a>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk 2.5 — Responsive Design + Module 2 Checkpoint</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .checkpoint{background:#fffbeb;border:2px solid #f59e0b;}
+  .checkpoint h2{border-color:#fde68a;color:#92400e;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .full{border:2px solid #16a34a;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 2 — CSS &amp; Layout</div>
+    <h1>Chunk 2.5 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+    <span class="badge">🏁 + Module 2 Checkpoint</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>Part A makes the site responsive; Part B is the portfolio checkpoint. The complete, final <code>styles.css</code> and the redesigned <code>index.html</code> are at the bottom — they bring together every technique from Module 2.</p>
+  </section>
+
+  <section>
+    <h2>Part A — Responsive, step by step</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Audit &amp; fluid images</h3>
+      <p>After auditing at 360px, the first guaranteed fix is fluid images (you likely have this already):</p>
+      <pre><code>img { max-width: 100%; height: auto; }</code></pre>
+      <p><strong>Expected result:</strong> the profile photo shrinks to fit instead of forcing the page wider than the screen.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Navbar stacks on phones</h3>
+      <pre><code>@media (max-width: 600px) {
+  header { flex-direction: column; align-items: flex-start; gap: 10px; }
+  nav { flex-wrap: wrap; gap: 12px; }
+}</code></pre>
+      <p><strong>Expected result:</strong> below 600px the brand sits on its own line with the links wrapping beneath — no collision, no overflow.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Restack the dashboard grid</h3>
+      <pre><code>@media (max-width: 700px) {
+  .dashboard {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "header"
+      "content"
+      "sidebar"
+      "footer";
+  }
+}</code></pre>
+      <p><strong>Expected result:</strong> the projects page becomes a clean single column — header, then projects, then the filter sidebar, then footer. Same HTML, redrawn areas.</p>
+      <div class="callout warning">
+        <div class="label">⚠️ Still two columns on mobile?</div>
+        Make sure this query comes <em>after</em> the base <code>.dashboard</code> rule in your file, and that the width condition actually matches (check the reported width in DevTools).
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Responsive typography</h3>
+      <pre><code>h1 { font-size: 1.8rem; }
+@media (min-width: 600px) { h1 { font-size: 2.2rem; } }
+@media (min-width: 900px) { h1 { font-size: 2.8rem; } }</code></pre>
+      <p><strong>Expected result:</strong> headings are comfortable on a phone and grow gracefully on bigger screens. That's three breakpoints already (600 max for nav, 700 max for grid, 600/900 min for type).</p>
+    </div>
+  </section>
+
+  <section class="checkpoint">
+    <h2>🏁 Part B — Portfolio checkpoint, step by step</h2>
+
+    <div class="step">
+      <h3><span class="num">5</span> The hero section (Home)</h3>
+      <p>Replace the plain "Welcome" section on <code>index.html</code> with a hero:</p>
+      <pre><code>&lt;section class="hero"&gt;
+  &lt;h1&gt;Hi, I'm Jane 👋&lt;/h1&gt;
+  &lt;p class="tagline"&gt;Aspiring full-stack developer building for the web.&lt;/p&gt;
+  &lt;a class="button" href="projects.html"&gt;View my work&lt;/a&gt;
+&lt;/section&gt;</code></pre>
+      <pre><code>.hero { text-align: center; padding: 64px 20px; }
+.hero .tagline { font-size: 1.25rem; color: var(--muted); margin-bottom: 24px; }</code></pre>
+      <p><strong>Expected result:</strong> a confident, centered opening with a clear call-to-action button.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Card hover polish</h3>
+      <pre><code>.card { transition: transform .15s ease, box-shadow .15s ease; }
+.card:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(2,6,23,.10); }</code></pre>
+      <p><strong>Expected result:</strong> cards lift slightly and gain a shadow on hover — a small touch that reads as "polished".</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Unify with CSS variables</h3>
+      <p>Hoist your palette, fonts, and radius into <code>:root</code> and reference them everywhere. Now a single edit re-themes the whole site (see the full file below).</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">8</span> Final QA</h3>
+      <p>Walk every page at 360 / 768 / 1200px. <strong>Expected result:</strong> consistent palette and type, even spacing, working hover states, and zero overflow at any width.</p>
+    </div>
+  </section>
+
+  <section class="full">
+    <h2>📄 Final <code>styles.css</code> (complete Module 2 stylesheet)</h2>
+    <pre><code>/* ===== Design tokens ===== */
+:root {
+  --brand: #2563eb;
+  --brand-dark: #1e3a8a;
+  --ink: #1e293b;
+  --muted: #64748b;
+  --bg: #f8fafc;
+  --line: #e2e8f0;
+  --radius: 12px;
+  --font-body: "Inter", system-ui, -apple-system, sans-serif;
+  --font-head: "Poppins", system-ui, sans-serif;
+}
+
+/* ===== Base (mobile-first) ===== */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  font-family: var(--font-body);
+  line-height: 1.65;
+  color: var(--ink);
+  background: var(--bg);
+  margin: 0;
+  padding: 0 16px;
+}
+
+main { max-width: 1000px; margin: 0 auto; }
+
+h1, h2, h3 { font-family: var(--font-head); line-height: 1.2; }
+h1 { color: var(--brand-dark); font-size: 1.8rem; }
+h2 { color: var(--brand); font-size: 1.4rem; }
+
+img { max-width: 100%; height: auto; border-radius: var(--radius); }
+
+a { color: var(--brand); }
+
+/* ===== Navbar ===== */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #1e293b;
+  padding: 14px 22px;
+  border-radius: var(--radius);
+  margin: 16px 0;
+}
+header h1 { margin: 0; color: #fff; font-size: 1.3rem; }
+nav { display: flex; gap: 18px; }
+nav a { color: #cbd5e1; text-decoration: none; font-weight: 600; }
+nav a:hover, nav a.active { color: #fff; }
+
+/* ===== Cards ===== */
+section { background: #fff; border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 24px 28px; margin-bottom: 20px; }
+
+.card {
+  background: #fff; border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 18px;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.card:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(2,6,23,.10); }
+.card h3 { margin: 0 0 6px; color: var(--brand-dark); }
+.card p  { margin: 0; color: var(--muted); }
+
+.card-row { display: flex; gap: 16px; flex-wrap: wrap; }
+.card-row .card { flex: 1; min-width: 180px; }
+
+/* ===== Hero ===== */
+.hero { text-align: center; padding: 64px 20px; }
+.hero .tagline { font-size: 1.25rem; color: var(--muted); margin-bottom: 24px; }
+
+.button {
+  display: inline-block; background: var(--brand); color: #fff;
+  padding: 12px 22px; border-radius: 8px; text-decoration: none; font-weight: 600;
+}
+.button:hover { background: var(--brand-dark); }
+
+/* ===== Dashboard / projects grid ===== */
+.dashboard {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  grid-template-rows: auto 1fr auto;
+  grid-template-areas: "header header" "sidebar content" "footer footer";
+  gap: 16px;
+  min-height: 100vh;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.dashboard > header  { grid-area: header; margin: 0; }
+.dashboard > .sidebar{ grid-area: sidebar; }
+.dashboard > .content{ grid-area: content; }
+.dashboard > footer  { grid-area: footer; }
+
+.sidebar { background: #f1f5f9; border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
+.sidebar a { display: block; padding: 8px 10px; border-radius: 8px; color: var(--ink); text-decoration: none; }
+.sidebar a:hover { background: var(--accent-soft, #dbeafe); }
+
+.project-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+.project-grid .featured { grid-column: span 2; }
+
+/* ===== Tables &amp; footer ===== */
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid var(--line); padding: 10px 12px; text-align: left; }
+th { background: #f1f5f9; }
+
+footer { margin-top: 2rem; padding: 20px 0; font-size: .9rem; }
+footer p { color: #94a3b8; }
+
+/* ===== Responsive breakpoints ===== */
+@media (max-width: 600px) {
+  header { flex-direction: column; align-items: flex-start; gap: 10px; }
+  nav { flex-wrap: wrap; gap: 12px; }
+}
+@media (max-width: 700px) {
+  .dashboard {
+    grid-template-columns: 1fr;
+    grid-template-areas: "header" "content" "sidebar" "footer";
+  }
+}
+@media (min-width: 600px) { h1 { font-size: 2.2rem; } }
+@media (min-width: 900px) { h1 { font-size: 2.8rem; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .card { transition: none; }
+}</code></pre>
+  </section>
+
+  <section class="full">
+    <h2>📄 Redesigned <code>index.html</code> (with hero + card row)</h2>
+    <pre><code>&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+  &lt;meta charset="UTF-8"&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+  &lt;title&gt;Jane Doe — Home&lt;/title&gt;
+  &lt;link rel="preconnect" href="https://fonts.googleapis.com"&gt;
+  &lt;link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Poppins:wght@600;700&amp;display=swap" rel="stylesheet"&gt;
+  &lt;link rel="stylesheet" href="styles.css"&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;header&gt;
+    &lt;h1&gt;Jane Doe&lt;/h1&gt;
+    &lt;nav&gt;
+      &lt;a href="index.html" class="active"&gt;Home&lt;/a&gt;
+      &lt;a href="about.html"&gt;About&lt;/a&gt;
+      &lt;a href="projects.html"&gt;Projects&lt;/a&gt;
+      &lt;a href="contact.html"&gt;Contact&lt;/a&gt;
+    &lt;/nav&gt;
+  &lt;/header&gt;
+
+  &lt;main&gt;
+    &lt;section class="hero"&gt;
+      &lt;h1&gt;Hi, I'm Jane 👋&lt;/h1&gt;
+      &lt;p class="tagline"&gt;Aspiring full-stack developer building for the web.&lt;/p&gt;
+      &lt;a class="button" href="projects.html"&gt;View my work&lt;/a&gt;
+    &lt;/section&gt;
+
+    &lt;section&gt;
+      &lt;h2&gt;What I Do&lt;/h2&gt;
+      &lt;div class="card-row"&gt;
+        &lt;div class="card"&gt;&lt;h3&gt;🎨 Frontend&lt;/h3&gt;&lt;p&gt;HTML, CSS, and JavaScript.&lt;/p&gt;&lt;/div&gt;
+        &lt;div class="card"&gt;&lt;h3&gt;⚙️ Backend&lt;/h3&gt;&lt;p&gt;FastAPI &amp; databases.&lt;/p&gt;&lt;/div&gt;
+        &lt;div class="card"&gt;&lt;h3&gt;🚀 Learning&lt;/h3&gt;&lt;p&gt;Building real projects.&lt;/p&gt;&lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/section&gt;
+  &lt;/main&gt;
+
+  &lt;footer&gt;
+    &lt;p&gt;© 2026 Jane Doe&lt;/p&gt;
+  &lt;/footer&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+    <div class="callout note">
+      <div class="label">📝 Note the layout choice</div>
+      The Home/About/Contact pages use the simple centered <code>&lt;main&gt;</code> column; only <code>projects.html</code> uses the full <code>.dashboard</code> grid. Mixing layouts per page is completely normal — one shared stylesheet supports both.
+    </div>
+  </section>
+
+  <section>
+    <h2>How to verify (DevTools device mode)</h2>
+    <ul>
+      <li>Open DevTools, toggle device mode, and step through 360px → 768px → 1200px on every page.</li>
+      <li><strong>Pass criteria:</strong> no horizontal scrollbar; navbar never collides; projects page is one column on phones; headings scale; cards lift on hover (desktop).</li>
+      <li>If something overflows, find the culprit element in the Elements panel — it's usually a fixed width or an unconstrained image.</li>
+    </ul>
+  </section>
+
+  <section class="done">
+    <h2>🎉 Module 2 complete!</h2>
+    <p>You took the plain, semantic HTML site from Module 1 and turned it into a <strong>polished, responsive portfolio</strong>: a deliberate palette and web font, a clean box model and typography, a Flexbox navbar and card rows, a Grid dashboard, and media queries that make it shine from phone to desktop — all from <strong>one external stylesheet</strong>.</p>
+    <p>You can now style and lay out essentially any page. Add it to your GitHub and consider deploying it with GitHub Pages — it's a real portfolio you can share.</p>
+    <p><strong>Up next → Module 3: JavaScript Core</strong>, where you make pages <em>interactive</em> — the third layer, "the muscles". First stop: JavaScript basics.</p>
+    <p>Don't forget to commit and push your work. 🚀</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

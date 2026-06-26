@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment · Chunk 2.2 — The Box Model &amp; Typography</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #ede9fe;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .objective{background:#ede9fe;border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#5b21b6;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--task);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .deliverable{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .deliverable h2{border-color:#a7f3d0;color:#065f46;}
+  .check{list-style:none;padding-left:0;} .check li{padding-left:30px;position:relative;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:18px;color:var(--task);}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 2 — CSS &amp; Layout</div>
+    <h1>Chunk 2.2 — Lab: Spacing &amp; Typography Polish</h1>
+    <span class="badge">🧪 ASSIGNMENT</span>
+    <span class="badge">⏱️ 45–75 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 Your mission</h2>
+    <p>Continue growing <code>styles.css</code>. Add the box-sizing reset, give your sections real padding/borders so they read as "cards", fix the vertical rhythm, and add a Google Font for headings and body. The site should go from "plain but consistent" to "this looks designed".</p>
+  </section>
+
+  <section>
+    <h2>Before you start</h2>
+    <ul>
+      <li>You should already have <code>styles.css</code> from Chunk 2.1 linked to all three pages.</li>
+      <li>Pick two fonts at <a href="https://fonts.google.com">fonts.google.com</a> — one for headings, one for body (or one font in two weights). Suggestions: <em>Poppins</em> + <em>Inter</em>, or just <em>Inter</em> at 400/600/700.</li>
+      <li>Keep a browser tab open on your site and refresh after each change.</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ Try it yourself first</div>
+      Reach for the lecture, not the solution. Spacing is something you tune by eye — experiment with values until it looks right to you.
+    </div>
+  </section>
+
+  <section>
+    <h2>Tasks</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Add the box-sizing reset</h3>
+      <p>At the very top of <code>styles.css</code>, add the universal reset so all your width math behaves:</p>
+      <pre><code>*, *::before, *::after { box-sizing: border-box; }</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Add a Google Font</h3>
+      <p>In the <code>&lt;head&gt;</code> of all three pages (above your <code>styles.css</code> link), paste the <code>&lt;link&gt;</code> tags Google Fonts gave you. Then set <code>font-family</code> in your CSS for <code>body</code> and headings, keeping a system fallback after your chosen font.</p>
+      <div class="callout tip">
+        <div class="label">💡 Verify it loaded</div>
+        Refresh and look closely — the letterforms should change. If they don't, recheck the <code>&lt;link&gt;</code> URL and that the name in <code>font-family</code> matches Google's exactly (in quotes).
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Set a comfortable body rhythm</h3>
+      <p>On <code>body</code>, set <code>line-height</code> to about <code>1.6</code>–<code>1.7</code> and confirm your <code>max-width</code> + side <code>padding</code> from last chunk are still there. Body text should feel airy, not cramped.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Turn sections into cards</h3>
+      <p>Style every <code>&lt;section&gt;</code> with a white background, a subtle border, rounded corners, generous <code>padding</code>, and a <code>margin-bottom</code> to separate them. Your About page (with its multiple sections) should now look like a stack of neat cards.</p>
+      <pre><code>section {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 24px 28px;
+  margin-bottom: 20px;
+}</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Fix heading spacing</h3>
+      <p>Give headings deliberate spacing — for example a tighter <code>line-height</code> on <code>h1</code>/<code>h2</code>, and a little <code>margin-top</code> on <code>h2</code> so sections don't crowd their titles. Tune by eye.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Style the header &amp; footer</h3>
+      <p>Add padding to the <code>&lt;header&gt;</code> and <code>&lt;footer&gt;</code>. Make the footer text muted (a grey from your palette) and a bit smaller. Add spacing between the nav links if they feel tight.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Polish one detail: the image or table</h3>
+      <p>Pick one: give the profile <code>&lt;img&gt;</code> on the About page a <code>border-radius</code> and a <code>max-width: 100%</code> so it never overflows; OR style the experience <code>&lt;table&gt;</code> with <code>border-collapse: collapse</code> and padding on <code>th, td</code>. Either proves you can target a specific element cleanly.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">8</span> Review the whole site</h3>
+      <p>Click through all three pages. Check: consistent font, even spacing between cards, comfortable line-height, nothing cramped or touching the edges. Adjust until you're happy.</p>
+    </div>
+  </section>
+
+  <section class="deliverable">
+    <h2>✅ Deliverable — acceptance checklist</h2>
+    <ul class="check">
+      <li>The <code>box-sizing: border-box</code> reset is at the top of <code>styles.css</code>.</li>
+      <li>A Google Font is linked on all pages and applied via <code>font-family</code> (with a system fallback).</li>
+      <li>Body has a comfortable <code>line-height</code> (~1.6) and stays a centered, capped-width column.</li>
+      <li>Every <code>&lt;section&gt;</code> reads as a card (background, border, radius, padding, margin).</li>
+      <li>Headings have deliberate spacing — no cramped titles.</li>
+      <li>Header and footer are padded; footer text is muted and smaller.</li>
+      <li>One polished detail: rounded responsive image OR a cleanly styled table.</li>
+      <li>All three pages look consistent and intentional.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🚀 Stretch goals (optional)</h2>
+    <ul>
+      <li>Add a <code>box-shadow</code> to your section cards for subtle depth: <code>box-shadow: 0 4px 14px rgba(2,6,23,.06);</code></li>
+      <li>Create a <code>.lead</code> class for the intro paragraph on the Home page — larger, muted, maybe centered.</li>
+      <li>Use <code>rem</code> consistently for all font sizes and major spacing.</li>
+      <li>Add <code>letter-spacing</code> to your headings or uppercase a small label.</li>
+      <li>Find and fix any margin-collapse surprise (spacing that looks "half" what you set).</li>
+      <li>Commit: <code>git add . &amp;&amp; git commit -m "Box model + typography polish"</code>.</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a class="current">🧪 Assignment</a>
+    <a href="solution.html">✅ Solution →</a>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk 3.4 — Async JavaScript &amp; Fetch</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .full{border:2px solid #16a34a;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 3 — JavaScript Core</div>
+    <h1>Chunk 3.4 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>Build the quote machine step by step. Each step shows the code and expected behavior. The complete <code>quotes.html</code> and <code>quotes.js</code> are at the bottom.</p>
+  </section>
+
+  <section>
+    <div class="step">
+      <h3><span class="num">1</span> The page shell</h3>
+      <pre><code>&lt;h1&gt;Random Quote&lt;/h1&gt;
+&lt;blockquote id="quote"&gt;&lt;/blockquote&gt;
+&lt;p id="author"&gt;&lt;/p&gt;
+&lt;button id="new-btn"&gt;New quote&lt;/button&gt;
+
+&lt;script src="quotes.js"&gt;&lt;/script&gt;</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Async fetch function</h3>
+      <pre><code>const API = "https://dummyjson.com/quotes/random";
+
+async function loadQuote() {
+  const response = await fetch(API);
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+  return await response.json();   // { id, quote, author }
+}</code></pre>
+      <div class="callout warning">
+        <div class="label">⚠️ Check response.ok</div>
+        Remember: <code>fetch</code> only rejects on network failure, not on a 404/500. The <code>if (!response.ok) throw</code> line is what turns a bad status into a real error your <code>catch</code> can handle.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> + <span class="num">4</span> + <span class="num">5</span> Render with loading &amp; error states</h3>
+      <pre><code>const quoteEl = document.querySelector("#quote");
+const authorEl = document.querySelector("#author");
+const btn = document.querySelector("#new-btn");
+
+async function showQuote() {
+  quoteEl.textContent = "Loading…";   // loading state
+  authorEl.textContent = "";
+  btn.disabled = true;                // prevent double-clicks
+  try {
+    const data = await loadQuote();
+    quoteEl.textContent = `"${data.quote}"`;   // success
+    authorEl.textContent = `— ${data.author}`;
+  } catch (error) {
+    quoteEl.textContent = "Couldn't load a quote — check your connection and try again.";
+    console.error(error);             // error state
+  } finally {
+    btn.disabled = false;             // always re-enable
+  }
+}</code></pre>
+      <p><strong>Expected:</strong> a flicker of "Loading…", then a quote and author. With a broken URL, you see the friendly error message and the button still works.</p>
+      <div class="callout tip">
+        <div class="label">💡 Why finally?</div>
+        The <code>finally</code> block runs whether the fetch succeeded or failed, so the button always gets re-enabled. That's the perfect place for cleanup that must always happen.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Wire up the button &amp; first load</h3>
+      <pre><code>btn.addEventListener("click", showQuote);
+showQuote();   // load one immediately on page open</code></pre>
+      <p><strong>Expected:</strong> a quote appears on load; each click swaps in a new one.</p>
+    </div>
+  </section>
+
+  <section class="full">
+    <h2>📄 Complete <code>quotes.html</code></h2>
+    <pre><code>&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+  &lt;meta charset="UTF-8"&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+  &lt;title&gt;Random Quote&lt;/title&gt;
+  &lt;style&gt;
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+         max-width:560px;margin:60px auto;padding:0 16px;color:#1e293b;text-align:center;}
+    blockquote{font-size:22px;font-style:italic;margin:24px 0 8px;line-height:1.4;}
+    #author{color:#64748b;font-weight:600;margin-top:0;}
+    button{cursor:pointer;border:none;border-radius:8px;padding:12px 20px;
+           background:#2563eb;color:#fff;font-size:16px;margin-top:16px;}
+    button:disabled{opacity:.5;cursor:default;}
+  &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;h1&gt;Random Quote&lt;/h1&gt;
+  &lt;blockquote id="quote"&gt;&lt;/blockquote&gt;
+  &lt;p id="author"&gt;&lt;/p&gt;
+  &lt;button id="new-btn"&gt;New quote&lt;/button&gt;
+
+  &lt;script src="quotes.js"&gt;&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+  </section>
+
+  <section class="full">
+    <h2>📄 Complete <code>quotes.js</code></h2>
+    <pre><code>const API = "https://dummyjson.com/quotes/random";
+
+const quoteEl = document.querySelector("#quote");
+const authorEl = document.querySelector("#author");
+const btn = document.querySelector("#new-btn");
+
+async function loadQuote() {
+  const response = await fetch(API);
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+  return await response.json();
+}
+
+async function showQuote() {
+  quoteEl.textContent = "Loading…";
+  authorEl.textContent = "";
+  btn.disabled = true;
+  try {
+    const data = await loadQuote();
+    quoteEl.textContent = `"${data.quote}"`;
+    authorEl.textContent = `— ${data.author}`;
+  } catch (error) {
+    quoteEl.textContent = "Couldn't load a quote — check your connection and try again.";
+    console.error(error);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+btn.addEventListener("click", showQuote);
+showQuote();</code></pre>
+  </section>
+
+  <section>
+    <h2>🧰 Troubleshooting</h2>
+    <ul>
+      <li><strong>"undefined" appears instead of a quote.</strong> The property name is wrong — open the API URL in a browser and confirm it's <code>data.quote</code> and <code>data.author</code> (not <code>text</code>).</li>
+      <li><strong>Nothing happens / stuck on "Loading…".</strong> Check the Console. A typo in the URL or being offline triggers the <code>catch</code> — verify the message shows.</li>
+      <li><strong>"await is only valid in async function".</strong> You used <code>await</code> outside an <code>async</code> function. Make sure it's inside <code>loadQuote</code>/<code>showQuote</code>.</li>
+      <li><strong>CORS error.</strong> Some APIs block browser requests. dummyjson allows them; if you swap APIs and hit CORS, pick a different public API that permits cross-origin requests.</li>
+    </ul>
+  </section>
+
+  <section class="done">
+    <h2>🎉 You're done</h2>
+    <p>You loaded live data over the network without freezing the page, parsed JSON, and handled loading and error states like a real app. This async pattern is identical to what you'll use to talk to your own FastAPI backend later in the course.</p>
+    <p><strong>Up next → Chunk 3.5: ES Modules &amp; Modern JS Tooling</strong> — you'll split the to-do app into modules and run it with npm and the Vite dev server.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

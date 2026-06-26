@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 2.2 — The Box Model &amp; Typography</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .anatomy{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:15px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;}
+  .tag{color:#7c3aed;} .attr{color:#0e7490;} .val{color:#b45309;} .txt{color:#334155;}
+  /* live-demo helpers */
+  .demo{border:1px dashed #cbd5e1;border-radius:10px;padding:16px 18px;margin:14px 0;background:#fff;}
+  .demo .demo-label{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#64748b;margin:0 0 10px;font-weight:700;}
+  /* box-model diagram */
+  .bm{background:#fde68a;padding:22px;text-align:center;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:12px;color:#78350f;border-radius:6px;}
+  .bm-margin{background:#fca5a5;}.bm-border{background:#fdba74;padding:18px;}.bm-padding{background:#86efac;padding:18px;}
+  .bm-content{background:#7dd3fc;padding:16px;color:#0c4a6e;}
+  .bm span{display:block;text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-bottom:6px;}
+  /* box-sizing comparison */
+  .bs-row{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;}
+  .bs-box{width:160px;background:#dbeafe;border:6px solid #2563eb;padding:14px;color:#1e3a8a;font-size:13px;font-family:"SF Mono",Menlo,Consolas,monospace;}
+  .bs-border{box-sizing:border-box;}
+  .bs-content{box-sizing:content-box;}
+  /* type samples */
+  .t-serif{font-family:Georgia,"Times New Roman",serif;}
+  .t-sans{font-family:system-ui,-apple-system,sans-serif;}
+  .t-mono{font-family:"SF Mono",Menlo,Consolas,monospace;}
+  .lh-tight{line-height:1.1;background:#f1f5f9;padding:10px;border-radius:6px;}
+  .lh-loose{line-height:1.9;background:#f1f5f9;padding:10px;border-radius:6px;margin-top:10px;}
+  .card-demo{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px 22px;box-shadow:0 4px 14px rgba(2,6,23,.06);max-width:340px;}
+  .card-demo h4{margin:0 0 6px;color:#1e3a8a;}
+  .card-demo p{margin:0;color:#475569;font-size:15px;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 2 — CSS &amp; Layout</div>
+    <h1>Chunk 2.2 — The Box Model &amp; Typography</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>The <strong>box model</strong>: how content, <strong>padding</strong>, <strong>border</strong>, and <strong>margin</strong> stack.</li>
+      <li>Why <code>box-sizing: border-box</code> makes sizing sane, and the one-line reset everyone uses.</li>
+      <li>Shorthand for spacing, and the gotcha of <strong>margin collapse</strong>.</li>
+      <li>Typography: <code>font-family</code>, <code>font-size</code>, <code>font-weight</code>, <code>line-height</code>, and text styling.</li>
+      <li>How to add a real <strong>web font</strong> (a Google Font) to your own project.</li>
+    </ul>
+    <p>In the lab you'll fix the spacing and typography across Jane's site and give it a proper font.</p>
+  </section>
+
+  <section>
+    <h2>1. Every element is a box</h2>
+    <p>The single most important mental model in CSS: <strong>the browser draws every element as a rectangular box.</strong> A paragraph, an image, a <code>&lt;nav&gt;</code> — all boxes. Each box has four layers, from the inside out:</p>
+    <div class="demo">
+      <p class="demo-label">Live demo — the box model, layer by layer</p>
+      <div class="bm bm-margin"><span>margin</span> space <em>outside</em> the box (pushes neighbors away)
+        <div class="bm bm-border"><span>border</span> the edge line
+          <div class="bm bm-padding"><span>padding</span> space <em>inside</em>, between border and content
+            <div class="bm bm-content"><span>content</span> your text or image lives here</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <table>
+      <tr><th>Layer</th><th>What it is</th><th>Think of a framed photo</th></tr>
+      <tr><td><strong>content</strong></td><td>The actual text/image.</td><td>The photo itself.</td></tr>
+      <tr><td><strong>padding</strong></td><td>Space inside the border.</td><td>The mat/space around the photo.</td></tr>
+      <tr><td><strong>border</strong></td><td>The line around padding.</td><td>The frame.</td></tr>
+      <tr><td><strong>margin</strong></td><td>Space outside the border.</td><td>The gap to the next frame on the wall.</td></tr>
+    </table>
+    <div class="callout tip">
+      <div class="label">💡 padding vs. margin</div>
+      <strong>Padding</strong> is inside (it grows the box and is colored by the background). <strong>Margin</strong> is outside (invisible space between boxes). "Pad the inside, margin the outside."
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Setting padding, border &amp; margin</h2>
+    <pre><code>.card {
+  padding: 20px;                 /* all four sides */
+  border: 1px solid #e2e8f0;     /* width style color */
+  margin: 16px;                  /* all four sides */
+  border-radius: 12px;           /* rounded corners */
+}</code></pre>
+
+    <h3>Shorthand: one value, or two, or four</h3>
+    <pre><code>padding: 20px;             /* all sides: 20 */
+padding: 10px 20px;        /* top&amp;bottom: 10,  left&amp;right: 20 */
+padding: 10px 20px 30px;   /* top:10  left&amp;right:20  bottom:30 */
+padding: 10px 20px 30px 5px; /* top right bottom left (clockwise) */</code></pre>
+    <p>The same pattern works for <code>margin</code>. Remember the clockwise order: <strong>T R B L</strong> (Top, Right, Bottom, Left) — "TRouBLe".</p>
+
+    <h3>Centering a block: <code>margin: 0 auto</code></h3>
+    <p>You used this in Chunk 2.1. With a set <code>max-width</code>, <code>auto</code> left/right margins split the leftover space evenly, centering the box horizontally:</p>
+    <pre><code>main { max-width: 760px; margin: 0 auto; }</code></pre>
+  </section>
+
+  <section>
+    <h2>3. <code>box-sizing</code>: the fix you'll always want</h2>
+    <p>Here's the trap. By default (<code>content-box</code>), <code>width</code> sets only the <em>content</em> width — then padding and border are <strong>added on top</strong>. So a "200px" box with padding is actually wider than 200px. That breaks layouts constantly.</p>
+    <div class="demo">
+      <p class="demo-label">Live demo — both boxes have width:160px, padding:14px, border:6px</p>
+      <div class="bs-row">
+        <div class="bs-box bs-content"><strong>content-box</strong> (default) — actual width = 160 + 28 + 12 = <strong>200px</strong></div>
+        <div class="bs-box bs-border"><strong>border-box</strong> — actual width stays <strong>160px</strong>; padding eats inward</div>
+      </div>
+    </div>
+    <p>With <code>box-sizing: border-box</code>, <code>width</code> means the <em>total</em> width including padding and border — what you almost always expect. So apply it to <strong>everything</strong> with this universal reset at the top of your stylesheet:</p>
+    <pre><code>*, *::before, *::after {
+  box-sizing: border-box;
+}</code></pre>
+    <div class="callout note">
+      <div class="label">📝 You've seen this already</div>
+      Every lesson file in this course starts its <code>&lt;style&gt;</code> with <code>*{box-sizing:border-box;}</code>. It's that common. Add it once and forget about the math.
+    </div>
+  </section>
+
+  <section>
+    <h2>4. Margin collapse (the surprising one)</h2>
+    <p>When two <strong>vertical</strong> margins meet, they don't add up — they <em>collapse</em> to the larger of the two. If a paragraph has <code>margin-bottom: 20px</code> and the next has <code>margin-top: 30px</code>, the gap between them is <strong>30px</strong>, not 50px.</p>
+    <pre><code>p { margin: 20px 0; }
+/* gap between two stacked paragraphs = 20px, not 40px */</code></pre>
+    <div class="callout warning">
+      <div class="label">⚠️ Only vertical, only margins</div>
+      Collapse happens between top/bottom margins of block elements — not left/right, and never with padding. If spacing ever looks "half what I set", margin collapse is usually why. A common fix is to set margin in one direction only (e.g. only <code>margin-bottom</code>).
+    </div>
+  </section>
+
+  <section>
+    <h2>5. Typography — making text readable</h2>
+    <p>Good typography is most of what makes a site feel "designed". A few properties do the heavy lifting.</p>
+
+    <h3>font-family &amp; the fallback stack</h3>
+    <p>List fonts in order of preference; the browser uses the first one it has. Always end with a generic family (<code>serif</code>, <code>sans-serif</code>, <code>monospace</code>) as a safety net:</p>
+    <pre><code>body { font-family: "Inter", system-ui, -apple-system, sans-serif; }</code></pre>
+    <div class="demo">
+      <p class="demo-label">Live demo — the three generic families</p>
+      <p class="t-sans" style="margin:4px 0">Sans-serif — clean, modern. Great for screens &amp; UI.</p>
+      <p class="t-serif" style="margin:4px 0">Serif — little "feet" on letters. Classic, editorial.</p>
+      <p class="t-mono" style="margin:4px 0">Monospace — every character same width. Code.</p>
+    </div>
+
+    <h3>font-size &amp; font-weight</h3>
+    <pre><code>h1 { font-size: 2rem; font-weight: 700; }   /* 700 = bold   */
+p  { font-size: 1rem; font-weight: 400; }   /* 400 = normal */
+.subtle { font-weight: 300; }               /* 300 = light  */</code></pre>
+
+    <h3>line-height — vertical breathing room</h3>
+    <p>The space between lines of text. Set it <strong>unitless</strong> (a multiplier of the font size). <code>1.5</code>–<code>1.7</code> is comfortable for body text; headings can be tighter:</p>
+    <div class="demo">
+      <p class="demo-label">Live demo — line-height: 1.1 vs 1.9</p>
+      <div class="lh-tight">Tight (1.1). Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua enim ad minim.</div>
+      <div class="lh-loose">Loose (1.9). Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua enim ad minim.</div>
+    </div>
+
+    <h3>Other text properties you'll use</h3>
+    <pre><code>.lead {
+  color: #475569;
+  text-align: center;        /* left | right | center | justify */
+  letter-spacing: 0.02em;    /* space between letters */
+  text-transform: uppercase; /* UPPER | lower | Capitalize */
+  text-decoration: none;     /* remove the underline on links */
+}</code></pre>
+    <div class="callout tip">
+      <div class="label">💡 Limit line length for readability</div>
+      Lines of ~60–75 characters are easiest to read. That's why we cap text with <code>max-width</code> on a container instead of letting it stretch across a wide monitor.
+    </div>
+  </section>
+
+  <section>
+    <h2>6. Adding a web font (Google Fonts)</h2>
+    <p>System fonts are fine, but a chosen font gives your site personality. <strong>Google Fonts</strong> hosts hundreds for free. Two steps in your <em>own</em> project:</p>
+    <p><strong>1.</strong> Add a <code>&lt;link&gt;</code> in your page's <code>&lt;head&gt;</code> (Google gives you this when you pick a font at <code>fonts.google.com</code>):</p>
+    <pre><code>&lt;link rel="preconnect" href="https://fonts.googleapis.com"&gt;
+&lt;link rel="preconnect" href="https://fonts.gstatic.com" crossorigin&gt;
+&lt;link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"&gt;</code></pre>
+    <p><strong>2.</strong> Use it in your CSS — keep system fonts as the fallback:</p>
+    <pre><code>body { font-family: "Inter", system-ui, sans-serif; }
+h1, h2, h3 { font-family: "Poppins", system-ui, sans-serif; }</code></pre>
+    <div class="callout warning">
+      <div class="label">⚠️ Web fonts need the internet</div>
+      A Google Font is loaded over the network. That's perfect for your real project. (These <em>course</em> lesson files deliberately stay offline-only, so they use a system font stack — but your portfolio can and should use a web font.) Always keep a system fallback so text still shows while the font loads or if you're offline.
+    </div>
+    <div class="demo">
+      <p class="demo-label">Live demo — a styled "card" combining box model + type</p>
+      <div class="card-demo">
+        <h4>Jane Doe</h4>
+        <p>Aspiring full-stack developer. This card uses padding, a border, rounded corners, a shadow, and tuned type — exactly the tools from this lecture.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>7. Putting it together for Jane's site</h2>
+    <p>Here's how the box model + typography improves the site you styled in Chunk 2.1:</p>
+    <pre><code>*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  font-family: "Inter", system-ui, sans-serif;
+  line-height: 1.65;
+  color: #1e293b;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+h1, h2 { font-family: "Poppins", system-ui, sans-serif; line-height: 1.2; }
+h2 { margin-top: 2rem; }
+
+/* turn each &lt;section&gt; into a tidy card */
+section {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 24px 28px;
+  margin-bottom: 20px;
+}
+
+footer { margin-top: 2rem; padding: 16px 0; color: #94a3b8; }</code></pre>
+    <p>Same HTML as Module 1 — but now it breathes. That's padding, margin, and line-height working together.</p>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li>Every element is a box: <strong>content → padding → border → margin</strong> (inside out).</li>
+      <li>Add <code>*{box-sizing:border-box}</code> once so <code>width</code> includes padding &amp; border.</li>
+      <li>Spacing shorthand is clockwise <strong>T R B L</strong>; vertical margins <strong>collapse</strong> to the larger value.</li>
+      <li>Tune type with <code>font-family</code> (with fallbacks), <code>font-size</code> in <code>rem</code>, <code>font-weight</code>, and a comfortable unitless <code>line-height</code>.</li>
+      <li>Add a Google Font with a <code>&lt;link&gt;</code> + <code>font-family</code>, always keeping a system fallback.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and tune spacing + typography across your whole site.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 3.3 — The DOM &amp; Events</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 3 — JavaScript Core</div>
+    <h1>Chunk 3.3 — The DOM &amp; Events</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>What the <strong>DOM</strong> is and how JavaScript reaches into the page.</li>
+      <li><strong>Selecting</strong> elements and changing their content, attributes, and styles.</li>
+      <li><strong>Creating</strong> and <strong>removing</strong> nodes to build UI from data.</li>
+      <li><strong>Events</strong>: listening for clicks/typing and reading the event object.</li>
+    </ul>
+    <p>In the lab you'll build this module's headline project: an interactive <strong>to-do app</strong> (add, complete, remove) in vanilla JavaScript. We'll grow it across the rest of Module 3.</p>
+  </section>
+
+  <section>
+    <h2>1. What is the DOM?</h2>
+    <p>When the browser loads your HTML, it builds a live, in-memory tree of objects representing every element. That tree is the <strong>DOM</strong> — the <strong>D</strong>ocument <strong>O</strong>bject <strong>M</strong>odel. JavaScript can read and change this tree, and the browser instantly re-renders the page to match.</p>
+    <pre><code>&lt;body&gt;                ← document.body
+  &lt;h1&gt;To-Do&lt;/h1&gt;       ← an element node
+  &lt;ul&gt;                ← an element node
+    &lt;li&gt;Buy milk&lt;/li&gt;  ← child of the ul
+  &lt;/ul&gt;
+&lt;/body&gt;</code></pre>
+    <p>The global <code>document</code> object is your entry point into this tree. Everything in this chunk hangs off it.</p>
+    <div class="callout note">
+      <div class="label">📝 Run scripts after the HTML</div>
+      Your script can only find elements that already exist. Put <code>&lt;script src="todo.js"&gt;&lt;/script&gt;</code> just before <code>&lt;/body&gt;</code> so the HTML is parsed first. (Alternatively use <code>defer</code> on the script tag.)
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Selecting elements</h2>
+    <p>Two modern methods cover almost everything, and they take <strong>CSS selectors</strong> — the same syntax you learned in Module 2:</p>
+    <pre><code>// First match of a CSS selector:
+const title = document.querySelector("h1");
+const addBtn = document.querySelector("#add-btn");   // by id
+const firstItem = document.querySelector(".item");   // by class
+
+// ALL matches → a list you can loop over:
+const items = document.querySelectorAll(".item");
+items.forEach(item =&gt; console.log(item.textContent));</code></pre>
+    <table>
+      <tr><th>Method</th><th>Returns</th></tr>
+      <tr><td><code>querySelector(sel)</code></td><td>The first matching element (or <code>null</code>).</td></tr>
+      <tr><td><code>querySelectorAll(sel)</code></td><td>A NodeList of all matches (use <code>forEach</code>).</td></tr>
+    </table>
+    <div class="callout warning">
+      <div class="label">⚠️ null means "not found"</div>
+      If a selector matches nothing, <code>querySelector</code> returns <code>null</code>, and using it throws <em>"Cannot read properties of null"</em>. Check your selector spelling and that the script runs after the element exists.
+    </div>
+  </section>
+
+  <section>
+    <h2>3. Changing content &amp; styles</h2>
+    <p>Once you hold an element, you can read and write its properties:</p>
+    <pre><code>const title = document.querySelector("h1");
+
+title.textContent = "My Tasks";        // change the text
+title.classList.add("highlight");      // add a CSS class
+title.classList.remove("highlight");   // remove it
+title.classList.toggle("done");        // add if absent, remove if present
+title.style.color = "tomato";          // inline style (use sparingly)
+
+const link = document.querySelector("a");
+link.setAttribute("href", "https://example.com");  // change an attribute</code></pre>
+    <table>
+      <tr><th>Property / method</th><th>What it does</th></tr>
+      <tr><td><code>textContent</code></td><td>Get/set the plain text inside an element (safe).</td></tr>
+      <tr><td><code>classList.add / remove / toggle</code></td><td>Manage CSS classes — the preferred way to style.</td></tr>
+      <tr><td><code>style.color</code> etc.</td><td>Set one inline CSS property directly.</td></tr>
+      <tr><td><code>setAttribute(name, value)</code></td><td>Set any HTML attribute.</td></tr>
+    </table>
+    <div class="callout tip">
+      <div class="label">💡 Prefer classes over inline styles</div>
+      Toggling a class like <code>done</code> (and styling <code>.done</code> in CSS) keeps your look in the stylesheet where it belongs, instead of scattering colors through your JavaScript.
+    </div>
+  </section>
+
+  <section>
+    <h2>4. Creating &amp; removing nodes</h2>
+    <p>To add UI from data, build elements and attach them to the tree:</p>
+    <pre><code>const list = document.querySelector("ul");
+
+// 1) create an element
+const li = document.createElement("li");
+
+// 2) fill it in
+li.textContent = "Walk the dog";
+li.classList.add("item");
+
+// 3) attach it to the page
+list.appendChild(li);
+
+// remove an element later:
+li.remove();</code></pre>
+    <p>This three-step pattern — <strong>create → configure → append</strong> — is how you render lists, cards, rows, and every dynamic UI in vanilla JS.</p>
+    <div class="callout note">
+      <div class="label">📝 textContent vs innerHTML</div>
+      <code>textContent</code> sets plain text and is always safe. <code>innerHTML</code> parses a string as HTML — convenient, but dangerous if the string contains user input (it can inject scripts). For user-typed data, prefer <code>textContent</code>.
+    </div>
+  </section>
+
+  <section>
+    <h2>5. Events</h2>
+    <p>An <strong>event</strong> is something that happens: a click, a key press, a form submit. You react by attaching a <strong>listener</strong> with <code>addEventListener(type, handler)</code>. The handler runs each time the event fires.</p>
+    <pre><code>const btn = document.querySelector("#add-btn");
+
+btn.addEventListener("click", () =&gt; {
+  console.log("Button clicked!");
+});</code></pre>
+    <table>
+      <tr><th>Event</th><th>Fires when…</th></tr>
+      <tr><td><code>click</code></td><td>An element is clicked.</td></tr>
+      <tr><td><code>input</code></td><td>The value of an input changes (every keystroke).</td></tr>
+      <tr><td><code>submit</code></td><td>A form is submitted (Enter or a submit button).</td></tr>
+      <tr><td><code>keydown</code></td><td>A key is pressed.</td></tr>
+    </table>
+
+    <h3>The event object</h3>
+    <p>The browser passes your handler an <strong>event object</strong> with details about what happened, including <code>event.target</code> (the element that triggered it):</p>
+    <pre><code>document.querySelector("input").addEventListener("input", (event) =&gt; {
+  console.log(event.target.value);   // the current text in the box
+});</code></pre>
+
+    <h3>Forms &amp; preventDefault</h3>
+    <p>By default, submitting a form reloads the page. In a JavaScript app you almost always stop that with <code>event.preventDefault()</code> so you can handle the input yourself:</p>
+    <pre><code>const form = document.querySelector("form");
+form.addEventListener("submit", (event) =&gt; {
+  event.preventDefault();             // stop the page reload
+  const input = document.querySelector("input");
+  console.log("You typed:", input.value);
+  input.value = "";                   // clear the box
+});</code></pre>
+    <div class="callout tip">
+      <div class="label">💡 Why a form, not just a button?</div>
+      Wrapping the text box and button in a <code>&lt;form&gt;</code> gives you Enter-to-submit for free and is more accessible. You handle its <code>submit</code> event and call <code>preventDefault()</code>.
+    </div>
+  </section>
+
+  <section>
+    <h2>6. Event delegation (handling many items)</h2>
+    <p>A to-do list grows over time — you can't attach a listener to a button that doesn't exist yet. The trick is <strong>event delegation</strong>: listen on a stable parent, then check <code>event.target</code> to see what was actually clicked. Events "bubble" up from the clicked element to its ancestors, so the parent hears them all:</p>
+    <pre><code>const list = document.querySelector("ul");
+
+list.addEventListener("click", (event) =&gt; {
+  if (event.target.matches(".delete-btn")) {
+    event.target.closest("li").remove();   // delete that row
+  }
+});</code></pre>
+    <p>One listener on the <code>&lt;ul&gt;</code> handles deletes for every item — current and future. <code>closest("li")</code> walks up from the clicked button to its containing list item.</p>
+  </section>
+
+  <section>
+    <h2>7. Putting it together: a tiny to-do</h2>
+    <p>Here's the skeleton you'll flesh out in the lab — add an item on submit, toggle complete or delete on click:</p>
+    <pre><code>const form = document.querySelector("#todo-form");
+const input = document.querySelector("#todo-input");
+const list = document.querySelector("#todo-list");
+
+form.addEventListener("submit", (event) =&gt; {
+  event.preventDefault();
+  const text = input.value.trim();
+  if (text === "") return;          // ignore empty input
+
+  const li = document.createElement("li");
+  li.textContent = text;
+
+  const del = document.createElement("button");
+  del.textContent = "✕";
+  del.classList.add("delete-btn");
+  li.appendChild(del);
+
+  list.appendChild(li);
+  input.value = "";
+});
+
+list.addEventListener("click", (event) =&gt; {
+  if (event.target.matches(".delete-btn")) {
+    event.target.closest("li").remove();
+  } else {
+    event.target.classList.toggle("done");   // click text to complete
+  }
+});</code></pre>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li>The <strong>DOM</strong> is the browser's live tree of your page; <code>document</code> is the way in.</li>
+      <li>Select with <code>querySelector</code> / <code>querySelectorAll</code> using CSS selectors.</li>
+      <li>Change pages via <code>textContent</code>, <code>classList</code>, <code>style</code>, <code>setAttribute</code>.</li>
+      <li>Build UI with <strong>create → configure → append</strong>; remove with <code>.remove()</code>.</li>
+      <li>React to users with <code>addEventListener</code>; read details from the <strong>event object</strong> and stop reloads with <code>preventDefault()</code>.</li>
+      <li><strong>Delegate</strong> clicks to a parent to handle items added later.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and build the to-do app.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

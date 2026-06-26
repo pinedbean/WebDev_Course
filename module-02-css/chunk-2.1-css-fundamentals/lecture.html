@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 2.1 — CSS Fundamentals &amp; Selectors</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .anatomy{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:15px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;}
+  .tag{color:#7c3aed;} .attr{color:#0e7490;} .val{color:#b45309;} .txt{color:#334155;}
+  /* live-demo helpers (scoped class names so they don't affect the lesson chrome) */
+  .demo{border:1px dashed #cbd5e1;border-radius:10px;padding:16px 18px;margin:14px 0;background:#fff;}
+  .demo .demo-label{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#64748b;margin:0 0 10px;font-weight:700;}
+  .swatch{display:inline-block;width:120px;height:54px;border-radius:8px;border:1px solid #00000018;vertical-align:middle;margin:4px 8px 4px 0;}
+  .sw-label{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:13px;color:#475569;}
+  .d-card{padding:14px 16px;border-radius:10px;background:#dbeafe;color:#1e3a8a;font-weight:600;}
+  .d-card.alt{background:#fef3c7;color:#92400e;}
+  .spec-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:8px 0;}
+  .spec-tag{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:13px;background:#0f172a;color:#e2e8f0;padding:4px 10px;border-radius:6px;}
+  .palette{display:flex;flex-wrap:wrap;gap:0;border-radius:10px;overflow:hidden;border:1px solid var(--line);margin:14px 0;}
+  .palette div{flex:1;min-width:90px;padding:22px 10px;color:#fff;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:12px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 2 — CSS &amp; Layout</div>
+    <h1>Chunk 2.1 — CSS Fundamentals &amp; Selectors</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>What CSS is and the three ways to attach it to a page (inline, internal, <strong>external</strong>).</li>
+      <li>The anatomy of a CSS <strong>rule</strong>: selector, property, value.</li>
+      <li>The core <strong>selectors</strong>: element, class, id, descendant, and grouping.</li>
+      <li>How the browser resolves conflicts: the <strong>cascade</strong>, inheritance, and <strong>specificity</strong>.</li>
+      <li>How to write <strong>colors</strong> (named, hex, rgb, hsl) and which <strong>units</strong> to use (<code>px</code>, <code>rem</code>, <code>em</code>, <code>%</code>).</li>
+    </ul>
+    <p>In the lab you'll create a single <code>styles.css</code> file and apply a consistent palette across all three pages of your personal site from Module 1.</p>
+  </section>
+
+  <section>
+    <h2>1. What is CSS, and why a separate language?</h2>
+    <p>In Module 1 you built a 3-page site — Home, About, Contact — for "Jane Doe". It works, but it's plain: black text, blue underlined links, no spacing. That's because HTML only describes <em>structure</em>. <strong>CSS</strong> (Cascading Style Sheets) describes <em>presentation</em>: colors, fonts, spacing, and layout.</p>
+    <p>Keeping them separate is one of the most important ideas in web development. The same HTML can look completely different just by swapping the CSS — and you can restyle 50 pages by editing one stylesheet. Remember the analogy from Chunk 1.1:</p>
+    <table>
+      <tr><th>Language</th><th>Role</th><th>Analogy</th></tr>
+      <tr><td>HTML</td><td>Structure &amp; content</td><td>The skeleton</td></tr>
+      <tr><td><strong>CSS</strong></td><td><strong>Styling &amp; layout</strong></td><td><strong>The skin &amp; clothes</strong></td></tr>
+      <tr><td>JavaScript</td><td>Behavior &amp; interactivity</td><td>The muscles</td></tr>
+    </table>
+    <p>This whole module is the "skin &amp; clothes" layer. By the end you'll turn Jane's plain site into a polished, responsive portfolio.</p>
+  </section>
+
+  <section>
+    <h2>2. The anatomy of a CSS rule</h2>
+    <p>CSS is a list of <strong>rules</strong>. Each rule picks some elements with a <strong>selector</strong>, then sets one or more <strong>declarations</strong> (a <strong>property</strong> and a <strong>value</strong>) inside curly braces:</p>
+    <div class="anatomy">
+      <span class="tag">h1</span> <span class="txt">{</span><br>
+      &nbsp;&nbsp;<span class="attr">color</span><span class="txt">:</span> <span class="val">navy</span><span class="txt">;</span><br>
+      &nbsp;&nbsp;<span class="attr">font-size</span><span class="txt">:</span> <span class="val">32px</span><span class="txt">;</span><br>
+      <span class="txt">}</span>
+    </div>
+    <ul>
+      <li><code>h1</code> — the <strong>selector</strong> ("which elements?").</li>
+      <li><code>color</code> and <code>font-size</code> — <strong>properties</strong> ("what to change?").</li>
+      <li><code>navy</code> and <code>32px</code> — <strong>values</strong> ("change it to what?").</li>
+      <li>Each declaration ends with a <strong>semicolon</strong> <code>;</code>. The whole block is wrapped in <code>{ }</code>.</li>
+    </ul>
+    <div class="callout tip">
+      <div class="label">💡 Read it out loud</div>
+      "Select every <code>h1</code>, set its color to navy and its font-size to 32 pixels." If you can say a rule in plain English, you understand it.
+    </div>
+  </section>
+
+  <section>
+    <h2>3. Three ways to include CSS</h2>
+    <h3>a) Inline — on a single element (avoid)</h3>
+    <p>A <code>style</code> attribute right on the tag. It only affects that one element and is hard to maintain:</p>
+    <pre><code>&lt;h1 style="color: navy; font-size: 32px;"&gt;Jane Doe&lt;/h1&gt;</code></pre>
+
+    <h3>b) Internal — a <code>&lt;style&gt;</code> block in the <code>&lt;head&gt;</code></h3>
+    <p>Good for a quick one-page experiment (it's exactly what these lesson files use). It only styles <em>this</em> page, though:</p>
+    <pre><code>&lt;head&gt;
+  &lt;style&gt;
+    h1 { color: navy; }
+  &lt;/style&gt;
+&lt;/head&gt;</code></pre>
+
+    <h3>c) External — a separate <code>.css</code> file (the real-world way) ✅</h3>
+    <p>Put all your rules in <code>styles.css</code>, then link it from the <code>&lt;head&gt;</code> of <em>every</em> page. One file styles your whole site:</p>
+    <pre><code>&lt;head&gt;
+  &lt;link rel="stylesheet" href="styles.css"&gt;
+&lt;/head&gt;</code></pre>
+    <p>And <code>styles.css</code> contains plain CSS — no HTML tags, no <code>&lt;style&gt;</code> wrapper:</p>
+    <pre><code>/* styles.css */
+h1 {
+  color: navy;
+}</code></pre>
+    <div class="callout note">
+      <div class="label">📝 Why external wins</div>
+      Edit the color once and all three of Jane's pages update. The browser also <em>caches</em> the file, so pages load faster. This is what you'll build in the lab.
+    </div>
+    <div class="callout warning">
+      <div class="label">⚠️ Comments are different in CSS</div>
+      In HTML a comment is <code>&lt;!-- ... --&gt;</code>. In CSS it's <code>/* ... */</code>. Using the wrong one is a classic beginner bug.
+    </div>
+  </section>
+
+  <section>
+    <h2>4. Selectors — choosing what to style</h2>
+    <p>The selector is the most important part of a rule. Here are the ones you'll use constantly.</p>
+
+    <h3>Element (type) selector</h3>
+    <p>Matches every element of that type. Great for site-wide defaults.</p>
+    <pre><code>p      { line-height: 1.6; }     /* every paragraph   */
+a      { color: #2563eb; }       /* every link        */
+h2     { color: #0f172a; }       /* every h2          */</code></pre>
+
+    <h3>Class selector — <code>.name</code></h3>
+    <p>Matches any element with that <code>class</code> attribute. Classes are <strong>reusable</strong> — the workhorse of CSS. You add a class in HTML, then target it with a dot:</p>
+    <pre><code>&lt;p class="lead"&gt;A short intro paragraph.&lt;/p&gt;
+&lt;a class="button" href="contact.html"&gt;Contact me&lt;/a&gt;</code></pre>
+    <pre><code>.lead   { font-size: 20px; color: #475569; }
+.button { background: #2563eb; color: white; padding: 10px 16px; }</code></pre>
+
+    <h3>ID selector — <code>#name</code></h3>
+    <p>Matches the one element with that <code>id</code>. IDs must be <strong>unique</strong> per page. Prefer classes for styling; reserve IDs for things like in-page anchor links.</p>
+    <pre><code>&lt;header id="top"&gt; ... &lt;/header&gt;</code></pre>
+    <pre><code>#top { background: #1e293b; }</code></pre>
+
+    <h3>Descendant selector — <code>A B</code> (a space)</h3>
+    <p>"Any <code>B</code> inside an <code>A</code>." This is how you style links <em>only</em> inside the nav without touching links elsewhere:</p>
+    <pre><code>nav a      { font-weight: 600; }   /* links inside &lt;nav&gt; only */
+footer p   { color: #94a3b8; }     /* paragraphs inside &lt;footer&gt; */</code></pre>
+
+    <h3>Grouping — <code>A, B, C</code> (commas)</h3>
+    <p>Apply the same rule to several selectors at once. Don't repeat yourself:</p>
+    <pre><code>h1, h2, h3 { font-family: Georgia, serif; }</code></pre>
+
+    <div class="demo">
+      <p class="demo-label">Live demo — descendant vs. element selector</p>
+      <div class="d-card">This whole box is one demo container.</div>
+      <p style="margin:10px 0 0;">The rule <code>.d-card { background:#dbeafe; color:#1e3a8a; }</code> styled the blue box above — and it's a real CSS class applied right here on this page, not a picture of one.</p>
+    </div>
+
+    <table>
+      <tr><th>Selector</th><th>Matches</th><th>Example</th></tr>
+      <tr><td><code>p</code></td><td>Every <code>&lt;p&gt;</code></td><td>element</td></tr>
+      <tr><td><code>.lead</code></td><td>Anything with <code>class="lead"</code></td><td>class</td></tr>
+      <tr><td><code>#top</code></td><td>The element with <code>id="top"</code></td><td>id</td></tr>
+      <tr><td><code>nav a</code></td><td><code>&lt;a&gt;</code> inside <code>&lt;nav&gt;</code></td><td>descendant</td></tr>
+      <tr><td><code>h1, h2</code></td><td>Every <code>h1</code> and every <code>h2</code></td><td>grouping</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>5. The cascade, inheritance &amp; specificity</h2>
+    <p>"Cascading" is the C in CSS. When several rules target the same element, the browser needs a way to decide which one wins. Three ideas govern this.</p>
+
+    <h3>Inheritance</h3>
+    <p>Some properties pass down from a parent to its children automatically — mostly text properties like <code>color</code> and <code>font-family</code>. Set the font on <code>body</code> once and every paragraph inherits it:</p>
+    <pre><code>body { font-family: system-ui, sans-serif; color: #1e293b; }
+/* every &lt;p&gt;, &lt;li&gt;, &lt;h2&gt;... inherits these unless overridden */</code></pre>
+    <p>Layout properties like <code>margin</code>, <code>padding</code>, and <code>border</code> do <strong>not</strong> inherit — that would be chaos.</p>
+
+    <h3>The cascade (source order)</h3>
+    <p>If two rules have equal strength, the <strong>last one wins</strong>. Order matters:</p>
+    <pre><code>p { color: red; }
+p { color: green; }   /* paragraphs end up green */</code></pre>
+
+    <h3>Specificity</h3>
+    <p>A more <em>specific</em> selector beats a less specific one, regardless of order. Think of it as a score — id &gt; class &gt; element:</p>
+    <div class="spec-row"><span class="spec-tag">#id</span> beats <span class="spec-tag">.class</span> beats <span class="spec-tag">element</span></div>
+    <pre><code>p          { color: black; }   /* specificity: low    */
+.intro     { color: blue;  }   /* specificity: medium */
+#headline  { color: red;   }   /* specificity: high   */
+
+&lt;p&gt;                            → black
+&lt;p class="intro"&gt;             → blue  (class beats element)
+&lt;p id="headline" class="intro"&gt; → red (id beats class)</code></pre>
+    <div class="callout warning">
+      <div class="label">⚠️ <code>!important</code> is a trap</div>
+      Adding <code>!important</code> to a value forces it to win, overriding everything. It feels handy but quickly leads to unmaintainable battles. <strong>Avoid it</strong> — instead, write a slightly more specific selector or fix your source order.
+    </div>
+    <div class="callout tip">
+      <div class="label">💡 Keep specificity low</div>
+      Style with simple classes whenever you can. Low, even specificity makes your CSS easy to override later — which is exactly what you want for a growing site.
+    </div>
+  </section>
+
+  <section>
+    <h2>6. Colors</h2>
+    <p>There are several ways to write the same color. You'll mostly use <strong>hex</strong> and <strong>hsl</strong>.</p>
+    <table>
+      <tr><th>Form</th><th>Example</th><th>Notes</th></tr>
+      <tr><td>Named</td><td><code>navy</code>, <code>tomato</code></td><td>~140 keywords; handy for quick tests.</td></tr>
+      <tr><td>Hex</td><td><code>#2563eb</code></td><td>Red/Green/Blue in base-16. The most common form.</td></tr>
+      <tr><td>RGB</td><td><code>rgb(37, 99, 235)</code></td><td>0–255 per channel. <code>rgb(0 0 0 / 50%)</code> adds transparency.</td></tr>
+      <tr><td>HSL</td><td><code>hsl(220, 83%, 53%)</code></td><td>Hue, Saturation, Lightness — easiest to tweak by hand.</td></tr>
+    </table>
+    <div class="demo">
+      <p class="demo-label">Live demo — the same blue, four ways</p>
+      <span class="swatch" style="background:navy"></span>
+      <span class="swatch" style="background:#2563eb"></span>
+      <span class="swatch" style="background:rgb(37,99,235)"></span>
+      <span class="swatch" style="background:hsl(220,83%,53%)"></span>
+      <div class="sw-label">navy &nbsp;·&nbsp; #2563eb &nbsp;·&nbsp; rgb(37,99,235) &nbsp;·&nbsp; hsl(220,83%,53%)</div>
+    </div>
+    <div class="callout tip">
+      <div class="label">💡 Where colors come from</div>
+      Pick palettes from tools like <code>coolors.co</code> or your browser's DevTools color picker. A simple, consistent palette (1 brand color, 1 dark text color, 1–2 neutrals) looks more professional than a rainbow.
+    </div>
+    <div class="palette">
+      <div style="background:#1e3a8a">#1e3a8a<br>brand dark</div>
+      <div style="background:#2563eb">#2563eb<br>brand</div>
+      <div style="background:#1e293b">#1e293b<br>text</div>
+      <div style="background:#64748b">#64748b<br>muted</div>
+      <div style="background:#94a3b8">#94a3b8<br>border</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>7. Units — px, rem, em, %</h2>
+    <p>Lengths need a unit. The four you'll use most:</p>
+    <table>
+      <tr><th>Unit</th><th>Means</th><th>Use it for</th></tr>
+      <tr><td><code>px</code></td><td>Absolute pixels.</td><td>Borders, small fixed gaps, fine details.</td></tr>
+      <tr><td><code>rem</code></td><td>Relative to the <strong>root</strong> font-size (16px by default). <code>1rem = 16px</code>.</td><td>Font sizes &amp; spacing — scales with the user's settings.</td></tr>
+      <tr><td><code>em</code></td><td>Relative to the <em>element's own</em> font-size.</td><td>Padding inside a button that should grow with its text.</td></tr>
+      <tr><td><code>%</code></td><td>Relative to the parent's size.</td><td>Fluid widths (e.g. <code>width: 100%</code>).</td></tr>
+    </table>
+    <pre><code>html { font-size: 16px; }       /* the root */
+h1   { font-size: 2rem; }       /* = 32px, and scales if root changes */
+p    { font-size: 1rem; }       /* = 16px */
+.box { padding: 1.5rem; width: 100%; }</code></pre>
+    <div class="callout note">
+      <div class="label">📝 Default to <code>rem</code> for type &amp; spacing</div>
+      Using <code>rem</code> means if a user bumps their browser's base font size for readability, your whole layout scales with them. Reserve <code>px</code> for hairline borders and tiny details. You'll lean on these heavily in Chunk 2.5 (responsive design).
+    </div>
+  </section>
+
+  <section>
+    <h2>8. A first taste — styling Jane's site</h2>
+    <p>Here's a tiny external stylesheet that already makes the personal site look intentional. You'll write your own version in the lab:</p>
+    <pre><code>/* styles.css */
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  color: #1e293b;
+  background: #f8fafc;
+  max-width: 760px;
+  margin: 0 auto;          /* centers the page */
+  padding: 0 16px;
+}
+
+h1 { color: #1e3a8a; }
+h2 { color: #2563eb; }
+
+nav a {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+footer p { color: #94a3b8; }</code></pre>
+    <p>Notice it uses element selectors (<code>body</code>, <code>h1</code>) and one descendant selector (<code>nav a</code>) — exactly the tools from this lecture. No HTML changes required; the markup from Module 1 already has <code>&lt;nav&gt;</code>, <code>&lt;h1&gt;</code>, and <code>&lt;footer&gt;</code> for these selectors to grab onto.</p>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li>CSS styles HTML with <strong>rules</strong>: <code>selector { property: value; }</code>.</li>
+      <li>Attach it three ways — inline, internal <code>&lt;style&gt;</code>, or (best) an <strong>external</strong> <code>styles.css</code> via <code>&lt;link rel="stylesheet"&gt;</code>.</li>
+      <li>Core selectors: <strong>element</strong>, <strong>class</strong> (<code>.x</code>), <strong>id</strong> (<code>#x</code>), <strong>descendant</strong> (<code>a b</code>), <strong>grouping</strong> (<code>a, b</code>).</li>
+      <li>Conflicts resolve by <strong>inheritance</strong>, the <strong>cascade</strong> (last wins), and <strong>specificity</strong> (id &gt; class &gt; element). Avoid <code>!important</code>.</li>
+      <li>Write colors as hex/hsl; default to <code>rem</code> for type &amp; spacing, <code>px</code> for fine details.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and give Jane's whole site a real stylesheet and palette.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

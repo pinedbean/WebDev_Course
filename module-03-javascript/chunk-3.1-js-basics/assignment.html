@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment · Chunk 3.1 — JavaScript Basics</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #ede9fe;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .objective{background:#ede9fe;border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#5b21b6;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--task);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .deliverable{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .deliverable h2{border-color:#a7f3d0;color:#065f46;}
+  .check{list-style:none;padding-left:0;} .check li{padding-left:30px;position:relative;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:18px;color:var(--task);}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 3 — JavaScript Core</div>
+    <h1>Chunk 3.1 — Lab: Five Small Problems</h1>
+    <span class="badge">🧪 ASSIGNMENT</span>
+    <span class="badge">⏱️ 45–75 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 Your mission</h2>
+    <p>Write a single file, <code>basics.js</code>, that solves <strong>five small problems</strong> using variables, operators, template literals, conditionals, and loops. You'll run it in the browser and watch the answers appear in the Console.</p>
+  </section>
+
+  <section>
+    <h2>Before you start</h2>
+    <ul>
+      <li>Make a folder for this chunk, e.g. <code>~/Desktop/webdev-course/module-03-javascript/js-basics/</code>.</li>
+      <li>Open it in VS Code (<code>code .</code>).</li>
+      <li>Create two files: <code>index.html</code> and <code>basics.js</code>.</li>
+      <li>In <code>index.html</code>, add a minimal page that loads your script. The whole point is to run <code>basics.js</code>:</li>
+    </ul>
+    <pre><code>&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+  &lt;meta charset="UTF-8"&gt;
+  &lt;title&gt;JS Basics&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;h1&gt;Open the Console (look in DevTools)&lt;/h1&gt;
+  &lt;script src="basics.js"&gt;&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+    <p>Open <code>index.html</code> in your browser, then open the Console (macOS Chrome: <kbd>⌥</kbd>+<kbd>⌘</kbd>+<kbd>J</kbd>). Every <code>console.log(...)</code> in <code>basics.js</code> will print there. Edit, save, reload the page to re-run.</p>
+    <div class="callout warning">
+      <div class="label">⚠️ Try it yourself first</div>
+      Build each problem from memory and the lecture. Only open <code>solution.html</code> when you're stuck or to compare at the end.
+    </div>
+  </section>
+
+  <section>
+    <h2>Tasks</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Greeting with a template literal</h3>
+      <p>Declare a <code>const name</code> (your name) and a <code>const age</code> (a number). Use a template literal to <code>console.log</code> a sentence like: <em>"Hi, I'm Jane and I'm 28 years old."</em></p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Temperature converter</h3>
+      <p>Declare <code>const celsius = 25;</code>. Compute Fahrenheit with the formula <code>C × 9/5 + 32</code>, store it in a variable, and log a sentence like <em>"25°C is 77°F."</em> Then change <code>celsius</code> to another value and reload to confirm it updates.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Even or odd</h3>
+      <p>Declare a <code>const number</code>. Using <code>if</code>/<code>else</code> and the remainder operator <code>%</code>, log whether it is <em>"even"</em> or <em>"odd"</em>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> FizzBuzz (1 to 20)</h3>
+      <p>Use a <code>for</code> loop from 1 to 20. Log <em>"Fizz"</em> for multiples of 3, <em>"Buzz"</em> for multiples of 5, <em>"FizzBuzz"</em> for multiples of both, otherwise the number itself.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Sum &amp; simple "calculator" logic</h3>
+      <p>Declare two numbers <code>a</code> and <code>b</code>. Log their sum, difference, product, and quotient — each as a labeled sentence using a template literal (e.g. <em>"7 + 3 = 10"</em>). Then use a loop to log the running total of all numbers from 1 to <code>b</code>.</p>
+    </div>
+  </section>
+
+  <section class="deliverable">
+    <h2>✅ Deliverable — acceptance checklist</h2>
+    <ul class="check">
+      <li><code>basics.js</code> exists and is loaded by <code>index.html</code>.</li>
+      <li>Opening the page and the Console shows output from all five problems, with no red errors.</li>
+      <li>Problem 1 uses a <strong>template literal</strong> (backticks + <code>${...}</code>).</li>
+      <li>Problem 2 correctly converts °C to °F.</li>
+      <li>Problem 3 reports even/odd using <code>%</code> and <code>if</code>/<code>else</code>.</li>
+      <li>Problem 4 prints FizzBuzz for 1–20 with the combined case handled first.</li>
+      <li>Problem 5 prints the four arithmetic results and a running total via a loop.</li>
+      <li>You used <code>const</code> by default and <code>let</code> only where a value changes.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🚀 Stretch goals (optional)</h2>
+    <ul>
+      <li>Make problem 2 round Fahrenheit to one decimal with <code>Math.round(f * 10) / 10</code>.</li>
+      <li>Rewrite problem 3 using the ternary operator instead of <code>if</code>/<code>else</code>.</li>
+      <li>Use <code>prompt("Enter a number")</code> to read a value from the user, then <code>Number(...)</code> to convert the text to a number before using it.</li>
+      <li>Add a "countdown" with a <code>while</code> loop that logs from 5 down to 1, then <code>"Lift off! 🚀"</code>.</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a class="current">🧪 Assignment</a>
+    <a href="solution.html">✅ Solution →</a>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 3.6 — Browser Storage &amp; Debugging</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 3 — JavaScript Core</div>
+    <h1>Chunk 3.6 — Browser Storage &amp; Debugging</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>How to persist data in the browser with <code>localStorage</code> and <code>sessionStorage</code>.</li>
+      <li><strong>JSON serialization</strong>: storing objects and arrays as text.</li>
+      <li>Debugging with DevTools: the <strong>Console</strong>, <strong>breakpoints</strong>, the <strong>Network</strong> tab, and the storage inspector.</li>
+    </ul>
+    <p>In the lab you'll make your to-do app remember tasks across reloads — then, for the <strong>Module 3 Checkpoint</strong>, build a brand-new <strong>expense tracker</strong> widget using everything from this module.</p>
+  </section>
+
+  <section>
+    <h2>1. The problem: memory is temporary</h2>
+    <p>Every variable in your to-do app lives in memory. Refresh the page and it's gone. To <em>remember</em> data between visits, you need persistent storage. The browser gives you a simple built-in option: <strong>Web Storage</strong>.</p>
+    <table>
+      <tr><th>API</th><th>Lifetime</th><th>Use it for</th></tr>
+      <tr><td><code>localStorage</code></td><td>Stays until explicitly cleared (survives reloads &amp; restarts).</td><td>Saving user data like a to-do list, preferences, theme.</td></tr>
+      <tr><td><code>sessionStorage</code></td><td>Cleared when the tab closes.</td><td>Temporary state for one session (e.g. a multi-step form).</td></tr>
+    </table>
+    <p>Both share the same API — we'll focus on <code>localStorage</code>.</p>
+  </section>
+
+  <section>
+    <h2>2. The localStorage API</h2>
+    <p>It's a simple key→value store. Both the key and the value must be <strong>strings</strong>:</p>
+    <pre><code>localStorage.setItem("username", "Jane");   // save
+localStorage.getItem("username");           // "Jane"  (read)
+localStorage.removeItem("username");        // delete one key
+localStorage.clear();                       // delete everything</code></pre>
+    <div class="callout warning">
+      <div class="label">⚠️ Strings only</div>
+      <code>localStorage</code> can only store strings. If you save a number you'll read it back as text (<code>"42"</code>, not <code>42</code>). And if you try to save an object directly, you get the useless string <code>"[object Object]"</code>. The fix is JSON.
+    </div>
+  </section>
+
+  <section>
+    <h2>3. JSON serialization: storing objects &amp; arrays</h2>
+    <p>To store structured data (like your tasks array), convert it to a JSON <strong>string</strong> on the way in, and parse it back to an object on the way out:</p>
+    <pre><code>const tasks = [
+  { id: "a1", text: "Buy milk", done: false },
+  { id: "b2", text: "Walk dog", done: true },
+];
+
+// SAVE: object → JSON string
+localStorage.setItem("tasks", JSON.stringify(tasks));
+
+// LOAD: JSON string → object
+const saved = JSON.parse(localStorage.getItem("tasks"));
+console.log(saved[0].text);   // "Buy milk"</code></pre>
+    <table>
+      <tr><th>Function</th><th>Direction</th></tr>
+      <tr><td><code>JSON.stringify(value)</code></td><td>JS object/array → JSON string (to save).</td></tr>
+      <tr><td><code>JSON.parse(string)</code></td><td>JSON string → JS object/array (to read).</td></tr>
+    </table>
+    <div class="callout warning">
+      <div class="label">⚠️ Nothing saved yet?</div>
+      <code>getItem</code> returns <code>null</code> if the key doesn't exist, and <code>JSON.parse(null)</code> throws. Guard it with a fallback: <code>JSON.parse(localStorage.getItem("tasks")) || []</code> or check for <code>null</code> first.
+    </div>
+  </section>
+
+  <section>
+    <h2>4. The load/save pattern</h2>
+    <p>Two small helpers wrap all storage access in one place. Load once at startup; save after every change:</p>
+    <pre><code>const KEY = "todo-tasks";
+
+function loadTasks() {
+  const raw = localStorage.getItem(KEY);
+  return raw ? JSON.parse(raw) : [];   // [] if nothing saved yet
+}
+
+function saveTasks(tasks) {
+  localStorage.setItem(KEY, JSON.stringify(tasks));
+}</code></pre>
+    <p>In your modular app, the perfect home for these is <code>store.js</code>: call <code>loadTasks()</code> to initialize the array, and call <code>saveTasks()</code> at the end of <code>addTask</code>, <code>toggleTask</code>, and <code>removeTask</code>. The UI never needs to know storage exists.</p>
+    <div class="callout tip">
+      <div class="label">💡 Wrap, don't scatter</div>
+      Keeping every <code>localStorage</code> call inside <code>store.js</code> means the rest of your app stays unaware of <em>how</em> data persists. Swap to a real database backend later (you will!) and only one file changes.
+    </div>
+  </section>
+
+  <section>
+    <h2>5. Inspecting storage in DevTools</h2>
+    <p>You can see exactly what your app saved. Open DevTools and find the storage panel:</p>
+    <ul>
+      <li><strong>Chrome/Edge:</strong> <em>Application</em> tab → <em>Local Storage</em> → your site's origin.</li>
+      <li><strong>Firefox:</strong> <em>Storage</em> tab → <em>Local Storage</em>.</li>
+    </ul>
+    <p>You'll see your keys and values as a table. You can edit or delete entries here to test how your app reacts — incredibly handy for debugging persistence.</p>
+  </section>
+
+  <section>
+    <h2>6. Debugging like a pro</h2>
+    <p>Bugs are normal. The difference between guessing and fixing is knowing your tools. DevTools gives you several.</p>
+
+    <h3>Console methods</h3>
+    <pre><code>console.log("value:", value);   // everyday inspection
+console.table(tasks);           // arrays of objects as a neat grid
+console.error("Something broke");
+console.warn("Heads up");</code></pre>
+    <p>Read error messages carefully — they usually name the file and line. <em>"Cannot read properties of null (reading 'addEventListener')"</em> almost always means a <code>querySelector</code> returned <code>null</code> (wrong id, or script ran too early).</p>
+
+    <h3>Breakpoints (pause and look around)</h3>
+    <p>Instead of sprinkling <code>console.log</code> everywhere, you can <strong>pause</strong> execution and inspect everything:</p>
+    <ul>
+      <li>Open the <strong>Sources</strong> tab, find your file, and click a line number to set a breakpoint.</li>
+      <li>Trigger the code (e.g. click your button). Execution pauses on that line.</li>
+      <li>Hover variables to see their values; use the <em>Scope</em> panel; step through with the controls (step over / into / out).</li>
+      <li>Or drop a <code>debugger;</code> statement in your code — DevTools pauses there automatically when open.</li>
+    </ul>
+
+    <h3>The Network tab</h3>
+    <p>For fetches (Chunk 3.4), the <strong>Network</strong> tab shows every request: its URL, status code, timing, and the response body. If data isn't appearing, check here first — is the request even firing? Is it a 404? What did the server actually return?</p>
+    <div class="callout note">
+      <div class="label">📝 A debugging mindset</div>
+      <strong>1)</strong> Reproduce it reliably. <strong>2)</strong> Read the actual error. <strong>3)</strong> Form a hypothesis ("the id is wrong"). <strong>4)</strong> Check it with a log or breakpoint. <strong>5)</strong> Fix and re-test. Change one thing at a time.
+    </div>
+  </section>
+
+  <section>
+    <h2>7. About the Module 3 Checkpoint</h2>
+    <p>After persisting the to-do app, you'll build a fresh widget — an <strong>expense tracker</strong> — that exercises the whole module at once:</p>
+    <table>
+      <tr><th>Skill</th><th>From</th><th>In the expense tracker</th></tr>
+      <tr><td>Variables, operators</td><td>3.1</td><td>Totals, math on amounts.</td></tr>
+      <tr><td>Arrays of objects, <code>reduce</code></td><td>3.2</td><td>Store expenses; sum the balance.</td></tr>
+      <tr><td>DOM &amp; events</td><td>3.3</td><td>Form to add, list to display, delete buttons.</td></tr>
+      <tr><td>localStorage + JSON</td><td>3.6</td><td>Remember expenses across reloads.</td></tr>
+      <tr><td>(Optional) modules/Vite</td><td>3.5</td><td>Split into store/ui/main if you like.</td></tr>
+    </table>
+    <p>Full instructions are in the assignment and solution pages for this chunk.</p>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li><code>localStorage</code> persists data indefinitely; <code>sessionStorage</code> lasts one tab session.</li>
+      <li>Storage holds <strong>strings only</strong> — use <code>JSON.stringify</code> to save and <code>JSON.parse</code> to read objects/arrays.</li>
+      <li>Guard reads with a fallback (<code>|| []</code>) since missing keys return <code>null</code>.</li>
+      <li>Centralize storage in one place (your <code>store.js</code>).</li>
+      <li>Debug with <code>console</code> methods, <strong>breakpoints</strong>, the <strong>Network</strong> tab, and the storage inspector.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> — persist the to-do app, then build the 🏁 checkpoint expense tracker.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

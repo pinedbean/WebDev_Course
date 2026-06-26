@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 3.1 — JavaScript Basics</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 3 — JavaScript Core</div>
+    <h1>Chunk 3.1 — JavaScript Basics</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>What JavaScript is and where it runs (the browser console).</li>
+      <li>Declaring data with <code>let</code> and <code>const</code>, and the basic <strong>types</strong>.</li>
+      <li><strong>Operators</strong> (math, comparison, logic) and <strong>template literals</strong>.</li>
+      <li>Making decisions with <code>if</code>/<code>else</code> and repeating work with <strong>loops</strong>.</li>
+    </ul>
+    <p>In the lab you'll write a <code>basics.js</code> file that solves 5 small problems — a temperature converter, FizzBuzz, and more.</p>
+  </section>
+
+  <section>
+    <h2>1. What is JavaScript?</h2>
+    <p>You've built the <strong>skeleton</strong> (HTML) and the <strong>skin</strong> (CSS). JavaScript is the <strong>muscles</strong> — it makes pages <em>do</em> things: respond to clicks, validate forms, load data, update the screen without a reload.</p>
+    <p>Unlike HTML and CSS, JavaScript is a real <strong>programming language</strong>: it has variables, logic, math, and loops. Every browser ships with a JavaScript engine built in, so you don't install anything to start.</p>
+    <table>
+      <tr><th>Language</th><th>Role</th><th>Module</th></tr>
+      <tr><td>HTML</td><td>Structure &amp; content</td><td>Module 1</td></tr>
+      <tr><td>CSS</td><td>Styling &amp; layout</td><td>Module 2</td></tr>
+      <tr><td><strong>JavaScript</strong></td><td>Behavior &amp; logic</td><td><strong>Module 3 (here)</strong></td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>2. Where to run it: the Console</h2>
+    <p>The fastest place to experiment is the browser's <strong>DevTools Console</strong>. Open any page, then:</p>
+    <ul>
+      <li><strong>macOS:</strong> press <kbd>⌥ Option</kbd> + <kbd>⌘ Cmd</kbd> + <kbd>J</kbd> (Chrome) to jump straight to the Console.</li>
+      <li><strong>Windows/Linux:</strong> press <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>J</kbd>.</li>
+      <li>Or right-click the page → <em>Inspect</em> → click the <strong>Console</strong> tab.</li>
+    </ul>
+    <p>Type an expression, press <kbd>Enter</kbd>, and the console prints the result. <code>console.log(...)</code> prints whatever you pass it:</p>
+    <pre><code>console.log("Hello, JavaScript!");
+console.log(2 + 2);   // 4</code></pre>
+    <div class="callout tip">
+      <div class="label">💡 Why a separate file?</div>
+      The console is great for quick tests, but real code lives in a <code>.js</code> file. You can run a file by linking it from an HTML page with <code>&lt;script src="basics.js"&gt;&lt;/script&gt;</code> just before the closing <code>&lt;/body&gt;</code> tag — that's exactly what the lab does.
+    </div>
+  </section>
+
+  <section>
+    <h2>3. Variables: <code>let</code> and <code>const</code></h2>
+    <p>A <strong>variable</strong> is a named box that holds a value. You create one with <code>let</code> or <code>const</code>:</p>
+    <pre><code>let score = 0;          // can be reassigned later
+const name = "Jane";    // a constant — cannot be reassigned
+
+score = 10;             // ✅ allowed
+// name = "Bob";        // ❌ TypeError: Assignment to constant variable</code></pre>
+    <table>
+      <tr><th>Keyword</th><th>Reassignable?</th><th>Use it when…</th></tr>
+      <tr><td><code>const</code></td><td>No</td><td>The value won't be reassigned (your default choice).</td></tr>
+      <tr><td><code>let</code></td><td>Yes</td><td>The value will change (a counter, a running total).</td></tr>
+      <tr><td><code>var</code></td><td>Yes</td><td>Old, pre-2015 style. <strong>Avoid it</strong> — it has confusing scope rules.</td></tr>
+    </table>
+    <div class="callout note">
+      <div class="label">📝 Rule of thumb</div>
+      Reach for <code>const</code> first. Only switch to <code>let</code> when you actually need to reassign the variable. This makes your intent obvious and prevents accidental changes.
+    </div>
+  </section>
+
+  <section>
+    <h2>4. Data types</h2>
+    <p>Every value has a <strong>type</strong>. The ones you'll use constantly:</p>
+    <table>
+      <tr><th>Type</th><th>Example</th><th>What it is</th></tr>
+      <tr><td><code>string</code></td><td><code>"hello"</code>, <code>'hi'</code></td><td>Text, in quotes.</td></tr>
+      <tr><td><code>number</code></td><td><code>42</code>, <code>3.14</code>, <code>-7</code></td><td>Any number (no separate int/float).</td></tr>
+      <tr><td><code>boolean</code></td><td><code>true</code>, <code>false</code></td><td>Yes/no, on/off.</td></tr>
+      <tr><td><code>undefined</code></td><td><code>undefined</code></td><td>A variable with no value yet.</td></tr>
+      <tr><td><code>null</code></td><td><code>null</code></td><td>Intentionally "empty".</td></tr>
+    </table>
+    <p>JavaScript figures out the type for you. You can check it with <code>typeof</code>:</p>
+    <pre><code>typeof "hello";   // "string"
+typeof 42;        // "number"
+typeof true;      // "boolean"
+typeof undefined; // "undefined"</code></pre>
+    <p>Arrays and objects are types too — they hold collections of values. You'll meet them properly in Chunk 3.2.</p>
+  </section>
+
+  <section>
+    <h2>5. Operators</h2>
+    <h3>Arithmetic</h3>
+    <pre><code>10 + 3   // 13   addition
+10 - 3   // 7    subtraction
+10 * 3   // 30   multiplication
+10 / 3   // 3.333…   division
+10 % 3   // 1    remainder (the "modulo" — super useful!)
+2 ** 3   // 8    exponent (2 to the power of 3)</code></pre>
+    <p>The <strong>remainder</strong> operator <code>%</code> tells you what's left over after dividing. <code>n % 2 === 0</code> is the classic test for "is n even?".</p>
+
+    <h3>Comparison (always return a boolean)</h3>
+    <pre><code>5 &gt; 3      // true
+5 &lt; 3      // false
+5 &gt;= 5     // true
+5 &lt;= 4     // false
+5 === 5    // true   (strict equal: same value AND same type)
+5 === "5"  // false  (number vs string)
+5 !== 6    // true   (not equal)</code></pre>
+    <div class="callout warning">
+      <div class="label">⚠️ Use === not ==</div>
+      Always prefer <code>===</code> (strict equality) over <code>==</code>. The double-equals version does sneaky type conversions: <code>0 == ""</code> is <code>true</code> and <code>1 == "1"</code> is <code>true</code>, which causes bugs. Triple-equals compares value <em>and</em> type, with no surprises.
+    </div>
+
+    <h3>Logical</h3>
+    <pre><code>true &amp;&amp; false   // false   AND: both must be true
+true || false   // true    OR: at least one true
+!true           // false   NOT: flips it</code></pre>
+  </section>
+
+  <section>
+    <h2>6. Template literals</h2>
+    <p>To build strings from variables, use <strong>backticks</strong> (<code>`</code>) and <code>${...}</code> placeholders. This is far cleaner than gluing strings with <code>+</code>:</p>
+    <pre><code>const name = "Jane";
+const age = 28;
+
+// Old way — clunky:
+console.log("Hi " + name + ", you are " + age + ".");
+
+// Template literal — clean:
+console.log(`Hi ${name}, you are ${age}.`);
+// → "Hi Jane, you are 28."</code></pre>
+    <p>Anything inside <code>${ }</code> is evaluated as JavaScript, so you can do math or call functions there too: <code>`Next year you'll be ${age + 1}.`</code>. Backtick strings can also span multiple lines.</p>
+  </section>
+
+  <section>
+    <h2>7. Making decisions: <code>if</code> / <code>else</code></h2>
+    <p>Run code only when a condition is true:</p>
+    <pre><code>const temp = 32;
+
+if (temp &gt;= 30) {
+  console.log("It's hot 🔥");
+} else if (temp &gt;= 20) {
+  console.log("Nice weather 🙂");
+} else {
+  console.log("Bring a jacket 🧥");
+}</code></pre>
+    <p>The condition in the parentheses must evaluate to <code>true</code> or <code>false</code>. JavaScript also treats some values as "truthy" or "falsy" — <code>0</code>, <code>""</code>, <code>null</code>, and <code>undefined</code> are <strong>falsy</strong>; almost everything else is <strong>truthy</strong>.</p>
+    <h3>Ternary — a compact if/else</h3>
+    <pre><code>const label = temp &gt;= 30 ? "hot" : "not hot";
+// condition ? valueIfTrue : valueIfFalse</code></pre>
+  </section>
+
+  <section>
+    <h2>8. Loops</h2>
+    <p>Loops repeat work. The classic <code>for</code> loop counts with a start, a condition, and a step:</p>
+    <pre><code>for (let i = 1; i &lt;= 5; i++) {
+  console.log(i);
+}
+// prints 1, 2, 3, 4, 5</code></pre>
+    <p>Read it as: <em>start</em> <code>i</code> at 1; <em>keep going while</em> <code>i &lt;= 5</code>; <em>after each pass</em> do <code>i++</code> (add 1). <code>i++</code> is shorthand for <code>i = i + 1</code>.</p>
+    <h3>The <code>while</code> loop</h3>
+    <p>Repeats as long as a condition stays true — use it when you don't know the count up front:</p>
+    <pre><code>let count = 3;
+while (count &gt; 0) {
+  console.log(count);
+  count--;        // subtract 1 each time
+}
+// prints 3, 2, 1</code></pre>
+    <div class="callout warning">
+      <div class="label">⚠️ Infinite loops</div>
+      A loop whose condition never becomes false runs forever and freezes the tab. Make sure something inside the loop moves toward the exit (here, <code>count--</code>). If you ever freeze a page, close that tab.
+    </div>
+  </section>
+
+  <section>
+    <h2>9. Worked example: FizzBuzz</h2>
+    <p>The famous beginner puzzle: print 1–15, but for multiples of 3 print "Fizz", multiples of 5 print "Buzz", and multiples of both print "FizzBuzz". It combines loops, conditionals, and the remainder operator:</p>
+    <pre><code>for (let i = 1; i &lt;= 15; i++) {
+  if (i % 3 === 0 &amp;&amp; i % 5 === 0) {
+    console.log("FizzBuzz");
+  } else if (i % 3 === 0) {
+    console.log("Fizz");
+  } else if (i % 5 === 0) {
+    console.log("Buzz");
+  } else {
+    console.log(i);
+  }
+}</code></pre>
+    <p>Notice the order: we test "both" <strong>first</strong>, because 15 is divisible by 3 and 5 — if we checked "divisible by 3" first, we'd print "Fizz" and never reach the combined case.</p>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li>JavaScript adds <strong>behavior</strong>; test it fast in the <strong>Console</strong>, ship it in a <code>.js</code> file.</li>
+      <li>Use <code>const</code> by default, <code>let</code> when a value changes; avoid <code>var</code>.</li>
+      <li>Core types: <code>string</code>, <code>number</code>, <code>boolean</code>, <code>undefined</code>, <code>null</code>.</li>
+      <li>Prefer <code>===</code>; remember <code>%</code> (remainder) for even/odd and divisibility tests.</li>
+      <li>Build strings with template literals <code>`${...}`</code>.</li>
+      <li>Branch with <code>if</code>/<code>else</code>; repeat with <code>for</code> and <code>while</code>.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and write your <code>basics.js</code> solving 5 small problems.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

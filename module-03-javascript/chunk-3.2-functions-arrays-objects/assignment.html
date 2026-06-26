@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment · Chunk 3.2 — Functions, Arrays &amp; Objects</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #ede9fe;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .objective{background:#ede9fe;border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#5b21b6;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--task);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .deliverable{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .deliverable h2{border-color:#a7f3d0;color:#065f46;}
+  .check{list-style:none;padding-left:0;} .check li{padding-left:30px;position:relative;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:18px;color:var(--task);}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 3 — JavaScript Core</div>
+    <h1>Chunk 3.2 — Lab: Process a Product Catalog</h1>
+    <span class="badge">🧪 ASSIGNMENT</span>
+    <span class="badge">⏱️ 45–75 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 Your mission</h2>
+    <p>Write <code>catalog.js</code>, a script that takes an <strong>array of product objects</strong> and transforms it: filtering, mapping, sorting, and summarizing with functions and array methods. All output goes to the Console.</p>
+  </section>
+
+  <section>
+    <h2>Before you start</h2>
+    <ul>
+      <li>Make a folder, e.g. <code>~/Desktop/webdev-course/module-03-javascript/catalog/</code>.</li>
+      <li>Create <code>index.html</code> (loading <code>catalog.js</code> like in Chunk 3.1) and <code>catalog.js</code>.</li>
+      <li>Start <code>catalog.js</code> with this dataset — copy it exactly:</li>
+    </ul>
+    <pre><code>const products = [
+  { name: "Keyboard",    price: 49.99, category: "accessories", inStock: true  },
+  { name: "Mouse",       price: 19.99, category: "accessories", inStock: false },
+  { name: "Monitor",     price: 199.0, category: "displays",    inStock: true  },
+  { name: "Webcam",      price: 79.0,  category: "accessories", inStock: true  },
+  { name: "Laptop Stand",price: 35.5,  category: "accessories", inStock: true  },
+  { name: "USB-C Hub",   price: 29.99, category: "accessories", inStock: false },
+  { name: "4K Monitor",  price: 349.0, category: "displays",    inStock: true  },
+];</code></pre>
+    <div class="callout warning">
+      <div class="label">⚠️ Try it yourself first</div>
+      Reach for <code>map</code>, <code>filter</code>, <code>reduce</code>, and <code>sort</code> from the lecture. Only open <code>solution.html</code> when stuck.
+    </div>
+  </section>
+
+  <section>
+    <h2>Tasks</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> List all product names</h3>
+      <p>Use <code>map</code> to build an array of just the names, and log it.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Only what's in stock</h3>
+      <p>Use <code>filter</code> to get the in-stock products. Log how many there are (use <code>.length</code>) and their names.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Apply a discount (a reusable function)</h3>
+      <p>Write a function <code>applyDiscount(product, percent)</code> that <strong>returns a new object</strong> with the price reduced by <code>percent</code>%. Use it with <code>map</code> to produce a "10% off" version of the in-stock list, then log the new names + prices.</p>
+      <div class="callout tip">
+        <div class="label">💡 Build a new object</div>
+        Use the spread operator to copy then override: <code>{ ...product, price: newPrice }</code>. This keeps the original untouched.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Sort by price</h3>
+      <p>Produce a copy of <code>products</code> sorted from cheapest to most expensive, and log the names in that order. (Remember to copy with <code>[...products]</code> before <code>sort</code>.)</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Total &amp; average value of in-stock items</h3>
+      <p>Use <code>reduce</code> to total the prices of in-stock products. Then compute and log the average (total ÷ count), rounded to 2 decimals.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Find the most expensive product</h3>
+      <p>Using <code>reduce</code> (or a loop), find and log the single most expensive product's name and price. Use <strong>destructuring</strong> to pull <code>name</code> and <code>price</code> out when you log it.</p>
+    </div>
+  </section>
+
+  <section class="deliverable">
+    <h2>✅ Deliverable — acceptance checklist</h2>
+    <ul class="check">
+      <li><code>catalog.js</code> runs from <code>index.html</code> with no Console errors.</li>
+      <li>Task 1 logs all 7 names via <code>map</code>.</li>
+      <li>Task 2 logs the in-stock count (5) and their names via <code>filter</code>.</li>
+      <li><code>applyDiscount</code> is a function that <strong>returns a new object</strong> and does not mutate the original.</li>
+      <li>Task 4 logs names sorted by ascending price, original array unchanged.</li>
+      <li>Task 5 logs the correct total and a 2-decimal average via <code>reduce</code>.</li>
+      <li>Task 6 logs the most expensive product, using destructuring.</li>
+      <li>You used arrow functions for your array-method callbacks.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🚀 Stretch goals (optional)</h2>
+    <ul>
+      <li>Group products by <code>category</code> into an object like <code>{ accessories: [...], displays: [...] }</code> using <code>reduce</code>.</li>
+      <li>Write <code>formatPrice(n)</code> that returns <code>"$49.99"</code> and use it everywhere you print a price.</li>
+      <li>Chain methods into a single expression: in-stock → sorted by price → names.</li>
+      <li>Add a <code>search(term)</code> function that returns products whose name includes <code>term</code> (case-insensitive with <code>.toLowerCase()</code>).</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a class="current">🧪 Assignment</a>
+    <a href="solution.html">✅ Solution →</a>
+  </div>
+</footer>
+</body>
+</html>

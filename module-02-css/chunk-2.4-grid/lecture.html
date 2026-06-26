@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 2.4 — CSS Grid Layout</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+  /* live-demo helpers */
+  .demo{border:1px dashed #cbd5e1;border-radius:10px;padding:16px 18px;margin:14px 0;background:#fff;}
+  .demo .demo-label{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#64748b;margin:0 0 10px;font-weight:700;}
+  .grid{display:grid;gap:10px;background:#eef2ff;border-radius:8px;padding:10px;}
+  .grid .cell{background:#2563eb;color:#fff;padding:14px;border-radius:6px;font-weight:600;font-size:14px;text-align:center;}
+  .g-3eq{grid-template-columns:1fr 1fr 1fr;}
+  .g-sidebar{grid-template-columns:200px 1fr;}
+  .g-mix{grid-template-columns:1fr 2fr 1fr;}
+  .g-repeat{grid-template-columns:repeat(4,1fr);}
+  .g-autofit{grid-template-columns:repeat(auto-fit,minmax(120px,1fr));}
+  /* page layout demo using grid-template-areas */
+  .layout{display:grid;gap:10px;grid-template-columns:180px 1fr;
+    grid-template-areas:"header header" "sidebar content" "footer footer";}
+  .layout > div{border-radius:6px;padding:14px;color:#fff;font-weight:600;font-size:13px;text-align:center;}
+  .l-head{grid-area:header;background:#1e3a8a;}
+  .l-side{grid-area:sidebar;background:#7c3aed;min-height:90px;}
+  .l-main{grid-area:content;background:#2563eb;min-height:90px;}
+  .l-foot{grid-area:footer;background:#475569;}
+  .span-demo{grid-template-columns:repeat(3,1fr);}
+  .span-2{grid-column:span 2;background:#16a34a;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 2 — CSS &amp; Layout</div>
+    <h1>Chunk 2.4 — CSS Grid Layout</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>What <strong>CSS Grid</strong> is and how it differs from Flexbox (two dimensions vs one).</li>
+      <li>Defining columns and rows with <code>grid-template-columns</code> / <code>-rows</code> and the <code>fr</code> unit.</li>
+      <li><code>gap</code>, <code>repeat()</code>, <code>minmax()</code>, and <code>auto-fit</code> for responsive grids with no media queries.</li>
+      <li>Placing items by <strong>spanning</strong> tracks and by named <strong>grid-template-areas</strong>.</li>
+      <li>Building a classic page layout: <strong>header · sidebar · content · footer</strong>.</li>
+    </ul>
+    <p>In the lab you'll build a reusable dashboard-style page template with Grid.</p>
+  </section>
+
+  <section>
+    <h2>1. Grid vs Flexbox — which when?</h2>
+    <p>Both place elements, but they think differently:</p>
+    <table>
+      <tr><th></th><th>Flexbox (Chunk 2.3)</th><th>Grid (this chunk)</th></tr>
+      <tr><td>Dimensions</td><td><strong>One</strong> — a row OR a column</td><td><strong>Two</strong> — rows AND columns</td></tr>
+      <tr><td>Best for</td><td>Navbars, button groups, card rows, aligning items in a line</td><td>Whole-page layouts, dashboards, image galleries, anything in a matrix</td></tr>
+      <tr><td>Driven by</td><td>Content (items size themselves, then flow)</td><td>The container (you define the tracks up front)</td></tr>
+    </table>
+    <div class="callout tip">
+      <div class="label">💡 They're partners, not rivals</div>
+      Real sites use both: Grid for the page skeleton, Flexbox <em>inside</em> grid cells for the little rows (like the navbar in the header cell). Use the simplest tool for each job.
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Your first grid</h2>
+    <p>Set <code>display: grid</code> on a container and declare its columns. The children flow into the cells automatically:</p>
+    <pre><code>.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;  /* three equal columns */
+  gap: 10px;
+}</code></pre>
+    <div class="demo">
+      <p class="demo-label">Live demo — three equal columns (1fr 1fr 1fr)</p>
+      <div class="grid g-3eq">
+        <div class="cell">1</div><div class="cell">2</div><div class="cell">3</div>
+        <div class="cell">4</div><div class="cell">5</div><div class="cell">6</div>
+      </div>
+    </div>
+    <p>Six children, three columns → the grid automatically wraps them into two rows. You never had to say "new row" — Grid figures it out.</p>
+  </section>
+
+  <section>
+    <h2>3. The <code>fr</code> unit — fractions of free space</h2>
+    <p><code>fr</code> means "fraction of the available space". It's the secret to flexible grids. <code>1fr 1fr 1fr</code> = three equal columns. <code>1fr 2fr 1fr</code> = the middle column is twice as wide:</p>
+    <div class="demo">
+      <p class="demo-label">grid-template-columns: 1fr 2fr 1fr</p>
+      <div class="grid g-mix"><div class="cell">1fr</div><div class="cell">2fr</div><div class="cell">1fr</div></div>
+    </div>
+    <p>You can mix fixed and flexible. A fixed sidebar plus a content area that takes the rest:</p>
+    <div class="demo">
+      <p class="demo-label">grid-template-columns: 200px 1fr (fixed sidebar + fluid content)</p>
+      <div class="grid g-sidebar"><div class="cell">200px<br>sidebar</div><div class="cell">1fr — content fills the rest</div></div>
+    </div>
+    <pre><code>grid-template-columns: 200px 1fr;   /* fixed + flexible */</code></pre>
+  </section>
+
+  <section>
+    <h2>4. <code>repeat()</code>, <code>minmax()</code> &amp; <code>auto-fit</code></h2>
+    <h3><code>repeat()</code> — don't write the same track 12 times</h3>
+    <pre><code>grid-template-columns: repeat(4, 1fr);   /* same as 1fr 1fr 1fr 1fr */</code></pre>
+    <div class="demo">
+      <p class="demo-label">repeat(4, 1fr)</p>
+      <div class="grid g-repeat"><div class="cell">1</div><div class="cell">2</div><div class="cell">3</div><div class="cell">4</div></div>
+    </div>
+
+    <h3><code>minmax()</code> + <code>auto-fit</code> — a responsive grid with no media queries</h3>
+    <p>This is the magic line you'll reuse forever. "Make as many columns as fit, each at least 120px, sharing leftover space." Resize the window and watch the count change:</p>
+    <pre><code>grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));</code></pre>
+    <div class="demo">
+      <p class="demo-label">repeat(auto-fit, minmax(120px, 1fr)) — narrow the window!</p>
+      <div class="grid g-autofit">
+        <div class="cell">A</div><div class="cell">B</div><div class="cell">C</div>
+        <div class="cell">D</div><div class="cell">E</div><div class="cell">F</div>
+      </div>
+    </div>
+    <div class="callout note">
+      <div class="label">📝 Why this is special</div>
+      Flexbox can wrap, but every item has a fixed-ish width. Grid's <code>auto-fit + minmax</code> keeps the columns perfectly equal AND responsive at the same time — ideal for photo galleries and card grids.
+    </div>
+  </section>
+
+  <section>
+    <h2>5. Spanning multiple tracks</h2>
+    <p>By default each item fills one cell. Make an item stretch across several columns with <code>grid-column: span N</code> (or rows with <code>grid-row</code>):</p>
+    <pre><code>.featured { grid-column: span 2; }   /* take up two columns */</code></pre>
+    <div class="demo">
+      <p class="demo-label">grid-column: span 2 on the green item</p>
+      <div class="grid span-demo">
+        <div class="cell span-2">span 2</div><div class="cell">B</div>
+        <div class="cell">C</div><div class="cell">D</div><div class="cell">E</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>6. Named areas — <code>grid-template-areas</code></h2>
+    <p>For whole-page layouts, the clearest approach is to <em>draw</em> the layout with names. You name each region, then assign elements to those names. It reads like ASCII art:</p>
+    <pre><code>.layout {
+  display: grid;
+  grid-template-columns: 180px 1fr;       /* sidebar + content */
+  grid-template-areas:
+    "header  header"
+    "sidebar content"
+    "footer  footer";
+  gap: 10px;
+}
+.layout > header  { grid-area: header;  }
+.layout > .side   { grid-area: sidebar; }
+.layout > main    { grid-area: content; }
+.layout > footer  { grid-area: footer;  }</code></pre>
+    <div class="demo">
+      <p class="demo-label">Live demo — header / sidebar / content / footer via grid-template-areas</p>
+      <div class="layout">
+        <div class="l-head">header (spans both columns)</div>
+        <div class="l-side">sidebar</div>
+        <div class="l-main">content</div>
+        <div class="l-foot">footer (spans both columns)</div>
+      </div>
+    </div>
+    <p>Repeating a name (<code>"header header"</code>) makes that area span those columns. The whole layout is visible at a glance in the CSS — and you can rearrange the entire page just by editing those strings. <strong>This is exactly the dashboard layout you'll build in the lab.</strong></p>
+    <div class="callout tip">
+      <div class="label">💡 Responsive areas (preview of 2.5)</div>
+      On a phone you redraw the areas into a single stacked column inside a media query — header, then content, then sidebar, then footer — without touching the HTML. We'll do this next chunk.
+    </div>
+  </section>
+
+  <section>
+    <h2>7. Rows &amp; full-height layouts</h2>
+    <p>You can size rows too, and make the layout fill the viewport height with <code>min-height: 100vh</code> (100% of the viewport height) so the footer sits at the bottom:</p>
+    <pre><code>.layout {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  grid-template-rows: auto 1fr auto;   /* header / content grows / footer */
+  grid-template-areas:
+    "header  header"
+    "sidebar content"
+    "footer  footer";
+  min-height: 100vh;
+  gap: 10px;
+}</code></pre>
+    <p><code>auto</code> sizes a row to its content (good for header/footer); <code>1fr</code> on the middle row lets the content area expand to fill the leftover height.</p>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li><code>display: grid</code> lays children into <strong>two dimensions</strong>; you define tracks with <code>grid-template-columns</code>/<code>-rows</code>.</li>
+      <li><code>fr</code> distributes free space; mix with fixed sizes like <code>200px 1fr</code>.</li>
+      <li><code>repeat(auto-fit, minmax(120px, 1fr))</code> = responsive equal columns, no media query needed.</li>
+      <li>Items can <code>span</code> tracks; whole pages are clearest with named <code>grid-template-areas</code>.</li>
+      <li>Use Grid for the page skeleton, Flexbox inside the cells.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and build a dashboard-style grid layout template.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

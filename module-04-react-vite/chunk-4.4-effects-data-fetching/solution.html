@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk 4.4 — Side Effects &amp; Data Fetching</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .full{border:2px solid #16a34a;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 4 — React + Vite</div>
+    <h1>Chunk 4.4 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>We'll build a <code>RecipeList</code> that fetches from TheMealDB with full loading/error/empty handling, plus a search box. It reuses the <code>RecipeCard</code> from Chunk 4.2. Full files at the bottom.</p>
+    <div class="filetree">recipe-box/
+└── src/
+    ├── App.jsx
+    └── components/
+        ├── RecipeCard.jsx   (from 4.2, lightly adapted)
+        └── RecipeList.jsx   (new)</div>
+  </section>
+
+  <section>
+    <div class="step">
+      <h3><span class="num">1</span> Confirm the API shape</h3>
+      <p>Open this in your browser first so you know what you're parsing:</p>
+      <pre><code>https://www.themealdb.com/api/json/v1/1/search.php?s=chicken</code></pre>
+      <p>You'll get <code>{ "meals": [ { "idMeal": "...", "strMeal": "...", "strArea": "...", "strCategory": "...", "strMealThumb": "..." }, ... ] }</code>. A no-match search returns <code>{ "meals": null }</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Adapt <code>RecipeCard</code> to API fields</h3>
+      <p>Keep the card generic. We'll pass it <code>title</code>, <code>area</code>, <code>category</code>, and <code>image</code>:</p>
+      <pre><code>function RecipeCard({ title, area, category, image }) {
+  return (
+    &lt;article className="card"&gt;
+      &lt;img src={image} alt={title} /&gt;
+      &lt;h3&gt;{title}&lt;/h3&gt;
+      &lt;p className="meta"&gt;{area} · {category}&lt;/p&gt;
+    &lt;/article&gt;
+  );
+}
+
+export default RecipeCard;</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> The fetch with three states</h3>
+      <p><code>RecipeList.jsx</code> takes a <code>query</code> prop and owns the request lifecycle.</p>
+      <pre><code>import { useState, useEffect } from "react";
+import RecipeCard from "./RecipeCard";
+
+function RecipeList({ query }) {
+  const [meals, setMeals] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() =&gt; {
+    let active = true;              // ignore stale responses
+    async function load() {
+      setLoading(true);
+      setError(null);
+      try {
+        const url =
+          "https://www.themealdb.com/api/json/v1/1/search.php?s=" +
+          encodeURIComponent(query);
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (active) setMeals(data.meals ?? []);
+      } catch (err) {
+        if (active) setError(err.message);
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+    load();
+    return () =&gt; { active = false; };   // cleanup
+  }, [query]);
+
+  if (loading) return &lt;p className="status"&gt;⏳ Loading recipes…&lt;/p&gt;;
+  if (error)   return &lt;p className="status error"&gt;😕 Couldn't load: {error}&lt;/p&gt;;
+  if (meals.length === 0) return &lt;p className="status"&gt;No recipes found for “{query}”.&lt;/p&gt;;
+
+  return (
+    &lt;&gt;
+      &lt;p className="status"&gt;Found {meals.length} recipes&lt;/p&gt;
+      &lt;div className="grid"&gt;
+        {meals.map((m) =&gt; (
+          &lt;RecipeCard
+            key={m.idMeal}
+            title={m.strMeal}
+            area={m.strArea}
+            category={m.strCategory}
+            image={m.strMealThumb}
+          /&gt;
+        ))}
+      &lt;/div&gt;
+    &lt;/&gt;
+  );
+}
+
+export default RecipeList;</code></pre>
+      <div class="callout tip">
+        <div class="label">💡 The <code>active</code> flag</div>
+        If a faster, newer request resolves before an older one, the cleanup sets <code>active = false</code> on the old effect run so its late response is ignored. This prevents flickering wrong results — the race-condition guard from the lecture.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> The search box in <code>App</code></h3>
+      <pre><code>import { useState } from "react";
+import RecipeList from "./components/RecipeList";
+import "./index.css";
+
+function App() {
+  const [query, setQuery] = useState("chicken");
+
+  return (
+    &lt;main&gt;
+      &lt;h1&gt;🍳 Recipe Box&lt;/h1&gt;
+      &lt;input
+        className="search"
+        value={query}
+        onChange={(e) =&gt; setQuery(e.target.value)}
+        placeholder="Search recipes…"
+      /&gt;
+      &lt;RecipeList query={query} /&gt;
+    &lt;/main&gt;
+  );
+}
+
+export default App;</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Verify in the Network tab</h3>
+      <p>Open DevTools → Network. Each search should fire <strong>one</strong> request (or two in StrictMode dev mode — that's expected). If you see a flood of requests, your dependency array is wrong or missing.</p>
+    </div>
+  </section>
+
+  <section class="full">
+    <h2>📄 Complete <code>src/components/RecipeList.jsx</code></h2>
+    <pre><code>import { useState, useEffect } from "react";
+import RecipeCard from "./RecipeCard";
+
+function RecipeList({ query }) {
+  const [meals, setMeals] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() =&gt; {
+    let active = true;
+    async function load() {
+      setLoading(true);
+      setError(null);
+      try {
+        const url =
+          "https://www.themealdb.com/api/json/v1/1/search.php?s=" +
+          encodeURIComponent(query);
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (active) setMeals(data.meals ?? []);
+      } catch (err) {
+        if (active) setError(err.message);
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+    load();
+    return () =&gt; { active = false; };
+  }, [query]);
+
+  if (loading) return &lt;p className="status"&gt;⏳ Loading recipes…&lt;/p&gt;;
+  if (error)   return &lt;p className="status error"&gt;😕 Couldn't load: {error}&lt;/p&gt;;
+  if (meals.length === 0) return &lt;p className="status"&gt;No recipes found for “{query}”.&lt;/p&gt;;
+
+  return (
+    &lt;&gt;
+      &lt;p className="status"&gt;Found {meals.length} recipes&lt;/p&gt;
+      &lt;div className="grid"&gt;
+        {meals.map((m) =&gt; (
+          &lt;RecipeCard
+            key={m.idMeal}
+            title={m.strMeal}
+            area={m.strArea}
+            category={m.strCategory}
+            image={m.strMealThumb}
+          /&gt;
+        ))}
+      &lt;/div&gt;
+    &lt;/&gt;
+  );
+}
+
+export default RecipeList;</code></pre>
+
+    <h2>📄 Add to <code>src/index.css</code></h2>
+    <pre><code>.search { padding: 8px 12px; width: 100%; max-width: 320px; margin: 12px 0; }
+.status { color: #475569; }
+.status.error { color: #b91c1c; }
+.card img { width: 100%; border-radius: 8px; display: block; }</code></pre>
+  </section>
+
+  <section>
+    <h2>🛠 Troubleshooting</h2>
+    <table>
+      <tr><th>Symptom</th><th>Fix</th></tr>
+      <tr><td>Hundreds of requests / browser freezes</td><td>Effect is missing its dependency array, or you put state you set <em>inside</em> the effect into the deps. Use <code>[query]</code> only.</td></tr>
+      <tr><td><code>Cannot read properties of null (reading 'map')</code></td><td>The API returned <code>meals: null</code>. Coerce: <code>setMeals(data.meals ?? [])</code>.</td></tr>
+      <tr><td>Loading spinner never goes away</td><td>You set <code>loading=false</code> only on success. Put it in <code>finally</code> so it runs on error too.</td></tr>
+      <tr><td>Effect runs twice on load</td><td>Normal in dev under <code>&lt;React.StrictMode&gt;</code>. It won't happen in the production build.</td></tr>
+      <tr><td>Images broken</td><td>Use <code>m.strMealThumb</code> for the <code>src</code>; check the field name matches the JSON exactly.</td></tr>
+    </table>
+  </section>
+
+  <section class="done">
+    <h2>🎉 You're done</h2>
+    <p>Your app now shows live data, gracefully handles slow networks and failures, and re-fetches as the user searches. That loading/error/empty/success pattern is the backbone of every real frontend.</p>
+    <p><strong>Up next → Chunk 4.5: Routing with React Router</strong> — you'll give the app real pages (Home, recipe list, recipe detail) with shareable URLs.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

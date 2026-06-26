@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk 4.5 — Routing with React Router</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .full{border:2px solid #16a34a;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 4 — React + Vite</div>
+    <h1>Chunk 4.5 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>We'll wire up routing, a shared layout, list, and detail pages. Target structure:</p>
+    <div class="filetree">recipe-box/
+└── src/
+    ├── main.jsx
+    ├── App.jsx
+    ├── components/
+    │   ├── Layout.jsx
+    │   └── RecipeCard.jsx
+    └── pages/
+        ├── Home.jsx
+        ├── Recipes.jsx
+        ├── RecipeDetail.jsx
+        └── NotFound.jsx</div>
+  </section>
+
+  <section>
+    <div class="step">
+      <h3><span class="num">1</span> Install and wrap</h3>
+      <pre><code>npm install react-router-dom</code></pre>
+      <pre><code>// src/main.jsx
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
+import App from "./App.jsx";
+import "./index.css";
+
+ReactDOM.createRoot(document.getElementById("root")).render(
+  &lt;React.StrictMode&gt;
+    &lt;BrowserRouter&gt;
+      &lt;App /&gt;
+    &lt;/BrowserRouter&gt;
+  &lt;/React.StrictMode&gt;
+);</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> The layout shell</h3>
+      <pre><code>// src/components/Layout.jsx
+import { NavLink, Outlet } from "react-router-dom";
+
+const linkClass = ({ isActive }) =&gt; (isActive ? "tab active" : "tab");
+
+function Layout() {
+  return (
+    &lt;&gt;
+      &lt;header className="nav"&gt;
+        &lt;NavLink to="/" className={linkClass} end&gt;🍳 Home&lt;/NavLink&gt;
+        &lt;NavLink to="/recipes" className={linkClass}&gt;Recipes&lt;/NavLink&gt;
+      &lt;/header&gt;
+      &lt;main&gt;
+        &lt;Outlet /&gt;
+      &lt;/main&gt;
+    &lt;/&gt;
+  );
+}
+
+export default Layout;</code></pre>
+      <div class="callout tip">
+        <div class="label">💡 The <code>end</code> prop</div>
+        Add <code>end</code> to the Home <code>NavLink</code> so it's only "active" on the exact <code>/</code> path, not on every route that starts with <code>/</code>.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Routes in <code>App</code></h3>
+      <pre><code>// src/App.jsx
+import { Routes, Route } from "react-router-dom";
+import Layout from "./components/Layout";
+import Home from "./pages/Home";
+import Recipes from "./pages/Recipes";
+import RecipeDetail from "./pages/RecipeDetail";
+import NotFound from "./pages/NotFound";
+
+function App() {
+  return (
+    &lt;Routes&gt;
+      &lt;Route element={&lt;Layout /&gt;}&gt;
+        &lt;Route path="/" element={&lt;Home /&gt;} /&gt;
+        &lt;Route path="/recipes" element={&lt;Recipes /&gt;} /&gt;
+        &lt;Route path="/recipes/:id" element={&lt;RecipeDetail /&gt;} /&gt;
+        &lt;Route path="*" element={&lt;NotFound /&gt;} /&gt;
+      &lt;/Route&gt;
+    &lt;/Routes&gt;
+  );
+}
+
+export default App;</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Home &amp; NotFound</h3>
+      <pre><code>// src/pages/Home.jsx
+import { Link } from "react-router-dom";
+
+function Home() {
+  return (
+    &lt;section&gt;
+      &lt;h1&gt;Welcome to Recipe Box 🍳&lt;/h1&gt;
+      &lt;p&gt;Search thousands of recipes from around the world.&lt;/p&gt;
+      &lt;Link to="/recipes" className="btn"&gt;Browse recipes →&lt;/Link&gt;
+    &lt;/section&gt;
+  );
+}
+export default Home;</code></pre>
+      <pre><code>// src/pages/NotFound.jsx
+import { Link } from "react-router-dom";
+
+function NotFound() {
+  return (
+    &lt;section&gt;
+      &lt;h1&gt;404 — Page not found&lt;/h1&gt;
+      &lt;Link to="/"&gt;← Back home&lt;/Link&gt;
+    &lt;/section&gt;
+  );
+}
+export default NotFound;</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Recipes list — cards link to detail</h3>
+      <p>Reuse your 4.4 fetch. Wrap each card in a <code>Link</code> to its detail route:</p>
+      <pre><code>// src/pages/Recipes.jsx
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+
+function Recipes() {
+  const [query, setQuery] = useState("chicken");
+  const [meals, setMeals] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() =&gt; {
+    let active = true;
+    async function load() {
+      setLoading(true); setError(null);
+      try {
+        const res = await fetch(
+          "https://www.themealdb.com/api/json/v1/1/search.php?s=" +
+          encodeURIComponent(query)
+        );
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (active) setMeals(data.meals ?? []);
+      } catch (err) {
+        if (active) setError(err.message);
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+    load();
+    return () =&gt; { active = false; };
+  }, [query]);
+
+  return (
+    &lt;section&gt;
+      &lt;h1&gt;Recipes&lt;/h1&gt;
+      &lt;input
+        className="search"
+        value={query}
+        onChange={(e) =&gt; setQuery(e.target.value)}
+        placeholder="Search recipes…"
+      /&gt;
+      {loading &amp;&amp; &lt;p className="status"&gt;⏳ Loading…&lt;/p&gt;}
+      {error &amp;&amp; &lt;p className="status error"&gt;😕 {error}&lt;/p&gt;}
+      {!loading &amp;&amp; !error &amp;&amp; meals.length === 0 &amp;&amp; (
+        &lt;p className="status"&gt;No recipes found.&lt;/p&gt;
+      )}
+      &lt;div className="grid"&gt;
+        {meals.map((m) =&gt; (
+          &lt;Link key={m.idMeal} to={`/recipes/${m.idMeal}`} className="card-link"&gt;
+            &lt;article className="card"&gt;
+              &lt;img src={m.strMealThumb} alt={m.strMeal} /&gt;
+              &lt;h3&gt;{m.strMeal}&lt;/h3&gt;
+              &lt;p className="meta"&gt;{m.strArea} · {m.strCategory}&lt;/p&gt;
+            &lt;/article&gt;
+          &lt;/Link&gt;
+        ))}
+      &lt;/div&gt;
+    &lt;/section&gt;
+  );
+}
+
+export default Recipes;</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> The detail page (<code>useParams</code> + fetch + back)</h3>
+      <pre><code>// src/pages/RecipeDetail.jsx
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+
+function RecipeDetail() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [meal, setMeal] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() =&gt; {
+    let active = true;
+    async function load() {
+      setLoading(true); setError(null);
+      try {
+        const res = await fetch(
+          `https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`
+        );
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (active) setMeal(data.meals ? data.meals[0] : null);
+      } catch (err) {
+        if (active) setError(err.message);
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+    load();
+    return () =&gt; { active = false; };
+  }, [id]);
+
+  if (loading) return &lt;p className="status"&gt;⏳ Loading…&lt;/p&gt;;
+  if (error)   return &lt;p className="status error"&gt;😕 {error}&lt;/p&gt;;
+  if (!meal)   return &lt;p className="status"&gt;Recipe not found.&lt;/p&gt;;
+
+  return (
+    &lt;section&gt;
+      &lt;button onClick={() =&gt; navigate(-1)}&gt;← Back&lt;/button&gt;
+      &lt;h1&gt;{meal.strMeal}&lt;/h1&gt;
+      &lt;p className="meta"&gt;{meal.strArea} · {meal.strCategory}&lt;/p&gt;
+      &lt;img src={meal.strMealThumb} alt={meal.strMeal} width="320" /&gt;
+      &lt;h2&gt;Instructions&lt;/h2&gt;
+      &lt;p&gt;{meal.strInstructions}&lt;/p&gt;
+    &lt;/section&gt;
+  );
+}
+
+export default RecipeDetail;</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> A little CSS</h3>
+      <pre><code>.nav { display: flex; gap: 16px; padding: 12px 24px; background: #fff; border-bottom: 1px solid #e2e8f0; }
+.tab { text-decoration: none; color: #2563eb; font-weight: 600; }
+.tab.active { color: #1e293b; border-bottom: 2px solid #2563eb; }
+.card-link { text-decoration: none; color: inherit; }
+.btn { display: inline-block; margin-top: 8px; }</code></pre>
+    </div>
+  </section>
+
+  <section>
+    <h2>🛠 Troubleshooting</h2>
+    <table>
+      <tr><th>Symptom</th><th>Fix</th></tr>
+      <tr><td><code>useRoutes() may be used only in the context of a Router</code></td><td>You forgot to wrap the app in <code>&lt;BrowserRouter&gt;</code> in <code>main.jsx</code>.</td></tr>
+      <tr><td>Clicking a card reloads the whole page</td><td>You used <code>&lt;a href&gt;</code> instead of <code>&lt;Link to&gt;</code>.</td></tr>
+      <tr><td>Detail page is blank</td><td>Check the route path is <code>/recipes/:id</code> and you read <code>const { id } = useParams()</code> with the same name.</td></tr>
+      <tr><td>Navbar repeats / missing</td><td>Make sure pages are nested inside the <code>&lt;Route element={&lt;Layout /&gt;}&gt;</code> and the layout renders <code>&lt;Outlet /&gt;</code>.</td></tr>
+      <tr><td>Home tab always "active"</td><td>Add the <code>end</code> prop to the Home <code>NavLink</code>.</td></tr>
+    </table>
+  </section>
+
+  <section class="done">
+    <h2>🎉 You're done</h2>
+    <p>Your SPA now has real, shareable URLs, a shared layout, and a list → detail flow — all without a single page reload. This is exactly how production React apps are structured.</p>
+    <p><strong>Up next → Chunk 4.6: Forms &amp; Shared State</strong> — you'll build a "favorites" feature whose state is shared across pages using <code>useContext</code>.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

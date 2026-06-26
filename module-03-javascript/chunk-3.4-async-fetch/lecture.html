@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 3.4 — Async JavaScript &amp; Fetch</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 3 — JavaScript Core</div>
+    <h1>Chunk 3.4 — Async JavaScript &amp; Fetch</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>Why some operations are <strong>asynchronous</strong> and how the event loop keeps the page responsive.</li>
+      <li>The evolution: <strong>callbacks → Promises → async/await</strong>.</li>
+      <li>Calling an API with <code>fetch</code> and parsing <strong>JSON</strong>.</li>
+      <li>Handling <strong>loading</strong> and <strong>error</strong> states gracefully.</li>
+    </ul>
+    <p>In the lab you'll build a page that fetches live data from a public API and renders it on screen.</p>
+  </section>
+
+  <section>
+    <h2>1. Why "async"? The event loop intuition</h2>
+    <p>JavaScript runs your code on a <strong>single thread</strong> — one thing at a time. So what happens when you ask for data from a server that takes 800ms to reply? If JS just <em>waited</em>, the whole page would freeze: no scrolling, no clicks, nothing.</p>
+    <p>Instead, slow operations (network requests, timers, file reads) are <strong>asynchronous</strong>: JavaScript kicks them off, immediately moves on to other work, and comes back to handle the result <em>later</em> when it's ready. The mechanism that schedules "later" is the <strong>event loop</strong>.</p>
+    <pre><code>console.log("1");
+setTimeout(() =&gt; console.log("2 (later)"), 0);
+console.log("3");
+
+// Output order: 1, 3, 2 (later)</code></pre>
+    <p>Even with a <code>0</code>ms timer, <code>"2"</code> prints last — the timer's callback waits until the current code finishes. That's the event loop deferring async work.</p>
+    <div class="callout note">
+      <div class="label">📝 The restaurant analogy</div>
+      A waiter (the single thread) doesn't stand frozen at your table while the kitchen cooks. They take your order, serve other tables, and return when your food is ready. Async lets one thread stay busy and responsive.
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Callbacks: the original approach</h2>
+    <p>The oldest way to handle "do this when it's done" is to pass a <strong>callback</strong> function:</p>
+    <pre><code>setTimeout(() =&gt; {
+  console.log("Runs after 1 second");
+}, 1000);</code></pre>
+    <p>This works, but when one async step depends on another, callbacks nest into a hard-to-read pyramid nicknamed <strong>"callback hell"</strong>:</p>
+    <pre><code>getUser(1, (user) =&gt; {
+  getPosts(user, (posts) =&gt; {
+    getComments(posts[0], (comments) =&gt; {
+      // ...deeper and deeper
+    });
+  });
+});</code></pre>
+    <p>Promises and <code>async/await</code> were invented to flatten this out.</p>
+  </section>
+
+  <section>
+    <h2>3. Promises</h2>
+    <p>A <strong>Promise</strong> is an object representing a value that isn't ready <em>yet</em> — it will either <strong>resolve</strong> (success, with a value) or <strong>reject</strong> (failure, with an error). You attach handlers with <code>.then()</code> and <code>.catch()</code>:</p>
+    <pre><code>fetch("https://api.example.com/data")
+  .then((response) =&gt; response.json())   // when the response arrives…
+  .then((data) =&gt; console.log(data))     // …then when JSON is parsed…
+  .catch((error) =&gt; console.error(error)); // …or if anything failed</code></pre>
+    <table>
+      <tr><th>State</th><th>Meaning</th></tr>
+      <tr><td><strong>pending</strong></td><td>Still working, no result yet.</td></tr>
+      <tr><td><strong>fulfilled</strong></td><td>Done successfully — <code>.then()</code> runs.</td></tr>
+      <tr><td><strong>rejected</strong></td><td>Failed — <code>.catch()</code> runs.</td></tr>
+    </table>
+    <p>Chaining <code>.then()</code> calls is already much flatter than nested callbacks. But there's an even cleaner syntax built on top of Promises…</p>
+  </section>
+
+  <section>
+    <h2>4. async / await (the modern way)</h2>
+    <p><code>async</code>/<code>await</code> lets you write asynchronous code that <em>reads</em> like ordinary top-to-bottom code. Mark a function <code>async</code>, then <code>await</code> any Promise inside it — execution pauses there (without freezing the page) until the Promise settles:</p>
+    <pre><code>async function loadData() {
+  const response = await fetch("https://api.example.com/data");
+  const data = await response.json();
+  console.log(data);
+}
+loadData();</code></pre>
+    <p>This is exactly the same work as the <code>.then()</code> chain above, but flatter and easier to follow. <code>await</code> can only be used inside an <code>async</code> function.</p>
+    <div class="callout tip">
+      <div class="label">💡 await pauses, it doesn't block</div>
+      While an <code>await</code> is waiting, JavaScript is free to handle clicks, animations, and other code. The function resumes only when the awaited Promise is ready.
+    </div>
+  </section>
+
+  <section>
+    <h2>5. fetch &amp; JSON</h2>
+    <p><code>fetch(url)</code> is the browser's built-in way to make HTTP requests. It returns a Promise that resolves to a <strong>Response</strong> object. To get the actual data you call <code>response.json()</code> (which is <em>also</em> async, so it gets its own <code>await</code>):</p>
+    <pre><code>const response = await fetch("https://api.example.com/quote");
+const data = await response.json();
+console.log(data.text, data.author);</code></pre>
+    <h3>What is JSON?</h3>
+    <p><strong>JSON</strong> (JavaScript Object Notation) is the universal text format for sending data between servers and apps. It looks just like JavaScript objects and arrays:</p>
+    <pre><code>{
+  "text": "Stay hungry, stay foolish.",
+  "author": "Steve Jobs",
+  "tags": ["motivation", "tech"]
+}</code></pre>
+    <p><code>response.json()</code> parses that text into a real JavaScript object you can use with dot notation. Going the other way, <code>JSON.stringify(obj)</code> turns an object back into a JSON string (you'll use that in Chunk 3.6 for storage).</p>
+  </section>
+
+  <section>
+    <h2>6. Handling errors properly</h2>
+    <p>Two things can go wrong, and they're handled differently:</p>
+    <ul>
+      <li><strong>The network fails</strong> (no connection, bad URL) → <code>fetch</code>'s Promise <em>rejects</em>, caught by <code>try/catch</code> or <code>.catch()</code>.</li>
+      <li><strong>The server responds with an error status</strong> (404, 500) → <code>fetch</code> still <em>resolves</em>! You must check <code>response.ok</code> yourself.</li>
+    </ul>
+    <pre><code>async function loadQuote() {
+  try {
+    const response = await fetch("https://api.example.com/quote");
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);   // turn a bad status into an error
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Failed to load:", error.message);
+  }
+}</code></pre>
+    <div class="callout warning">
+      <div class="label">⚠️ fetch doesn't reject on 404</div>
+      A common surprise: a 404 or 500 does <strong>not</strong> trigger <code>catch</code> on its own — only network-level failures do. Always check <code>if (!response.ok)</code> and throw, so your <code>catch</code> handles HTTP errors too.
+    </div>
+  </section>
+
+  <section>
+    <h2>7. Loading &amp; error states in the UI</h2>
+    <p>Because data takes time, a good UI tells the user what's happening. The standard pattern has three visible states: <strong>loading → success → error</strong>.</p>
+    <pre><code>const output = document.querySelector("#output");
+
+async function showQuote() {
+  output.textContent = "Loading…";          // 1) loading
+  try {
+    const response = await fetch("https://api.example.com/quote");
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    output.textContent = `"${data.text}" — ${data.author}`;  // 2) success
+  } catch (error) {
+    output.textContent = "Could not load a quote. Try again.";  // 3) error
+  }
+}</code></pre>
+    <p>Set "Loading…" <em>before</em> the await, fill in real data on success, and show a friendly message on failure. You'll build exactly this in the lab.</p>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li>JavaScript is single-threaded; <strong>async</strong> work is deferred by the <strong>event loop</strong> so the page never freezes.</li>
+      <li>Callbacks → Promises (<code>.then()</code>/<code>.catch()</code>) → <code>async/await</code> — each cleaner than the last.</li>
+      <li><code>fetch(url)</code> returns a Response; <code>await response.json()</code> parses the body.</li>
+      <li><strong>JSON</strong> is the text format for data; <code>JSON.parse</code>/<code>JSON.stringify</code> convert to and from it.</li>
+      <li>Wrap fetches in <code>try/catch</code> <em>and</em> check <code>response.ok</code> — fetch won't reject on a 404.</li>
+      <li>Show <strong>loading</strong> and <strong>error</strong> states so the UI feels alive.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and build a live API-powered page.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

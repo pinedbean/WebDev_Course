@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk 3.2 — Functions, Arrays &amp; Objects</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .full{border:2px solid #16a34a;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 3 — JavaScript Core</div>
+    <h1>Chunk 3.2 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>Each step shows the code and the expected Console output. The complete <code>catalog.js</code> is at the bottom. Compare it with yours — there are many valid ways to write these.</p>
+  </section>
+
+  <section>
+    <div class="step">
+      <h3><span class="num">1</span> List all product names</h3>
+      <pre><code>const names = products.map(p =&gt; p.name);
+console.log(names);</code></pre>
+      <p><strong>Expected:</strong> <code>["Keyboard", "Mouse", "Monitor", "Webcam", "Laptop Stand", "USB-C Hub", "4K Monitor"]</code></p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Only what's in stock</h3>
+      <pre><code>const available = products.filter(p =&gt; p.inStock);
+console.log(`In stock: ${available.length}`);
+console.log(available.map(p =&gt; p.name));</code></pre>
+      <p><strong>Expected:</strong> <code>In stock: 5</code> then <code>["Keyboard", "Monitor", "Webcam", "Laptop Stand", "4K Monitor"]</code></p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Apply a discount</h3>
+      <pre><code>function applyDiscount(product, percent) {
+  const newPrice = product.price * (1 - percent / 100);
+  return { ...product, price: Math.round(newPrice * 100) / 100 };
+}
+
+const discounted = available.map(p =&gt; applyDiscount(p, 10));
+console.log(discounted.map(p =&gt; `${p.name}: $${p.price}`));</code></pre>
+      <p><strong>Expected:</strong> <code>["Keyboard: $44.99", "Monitor: $179.1", "Webcam: $71.1", "Laptop Stand: $31.95", "4K Monitor: $314.1"]</code></p>
+      <div class="callout note">
+        <div class="label">📝 Why <code>{ ...product, price: ... }</code></div>
+        The spread copies every existing property, then <code>price:</code> overrides just that one. The original <code>product</code> object is never changed — a habit that prevents whole categories of bugs.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Sort by price</h3>
+      <pre><code>const byPrice = [...products].sort((a, b) =&gt; a.price - b.price);
+console.log(byPrice.map(p =&gt; `${p.name} ($${p.price})`));</code></pre>
+      <p><strong>Expected (cheapest first):</strong> <code>Mouse, USB-C Hub, Laptop Stand, Keyboard, Webcam, Monitor, 4K Monitor</code></p>
+      <div class="callout warning">
+        <div class="label">⚠️ Copy before you sort</div>
+        <code>sort</code> reorders the array <em>in place</em>. Without <code>[...products]</code> you'd permanently scramble your original data.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Total &amp; average of in-stock items</h3>
+      <pre><code>const total = available.reduce((sum, p) =&gt; sum + p.price, 0);
+const average = total / available.length;
+console.log(`Total: $${total.toFixed(2)}`);
+console.log(`Average: $${average.toFixed(2)}`);</code></pre>
+      <p><strong>Expected:</strong> <code>Total: $712.49</code> and <code>Average: $142.50</code></p>
+      <div class="callout tip">
+        <div class="label">💡 toFixed</div>
+        <code>number.toFixed(2)</code> returns a string with exactly two decimals — perfect for money. Note it rounds, so use it for display, not for further math.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Most expensive product</h3>
+      <pre><code>const priciest = products.reduce((max, p) =&gt;
+  p.price &gt; max.price ? p : max
+);
+const { name, price } = priciest;
+console.log(`Most expensive: ${name} at $${price}`);</code></pre>
+      <p><strong>Expected:</strong> <code>Most expensive: 4K Monitor at $349</code></p>
+      <div class="callout note">
+        <div class="label">📝 reduce without a start value</div>
+        Here we omit the second argument, so <code>reduce</code> uses the first item as the initial <code>max</code> and starts comparing from the second. The destructuring <code>const { name, price } = priciest</code> unpacks both properties at once.
+      </div>
+    </div>
+  </section>
+
+  <section class="full">
+    <h2>📄 Complete <code>catalog.js</code></h2>
+    <pre><code>const products = [
+  { name: "Keyboard",    price: 49.99, category: "accessories", inStock: true  },
+  { name: "Mouse",       price: 19.99, category: "accessories", inStock: false },
+  { name: "Monitor",     price: 199.0, category: "displays",    inStock: true  },
+  { name: "Webcam",      price: 79.0,  category: "accessories", inStock: true  },
+  { name: "Laptop Stand",price: 35.5,  category: "accessories", inStock: true  },
+  { name: "USB-C Hub",   price: 29.99, category: "accessories", inStock: false },
+  { name: "4K Monitor",  price: 349.0, category: "displays",    inStock: true  },
+];
+
+// 1) All names
+const names = products.map(p =&gt; p.name);
+console.log("All names:", names);
+
+// 2) In stock
+const available = products.filter(p =&gt; p.inStock);
+console.log(`In stock: ${available.length}`);
+console.log(available.map(p =&gt; p.name));
+
+// 3) Apply a discount (returns a NEW object)
+function applyDiscount(product, percent) {
+  const newPrice = product.price * (1 - percent / 100);
+  return { ...product, price: Math.round(newPrice * 100) / 100 };
+}
+const discounted = available.map(p =&gt; applyDiscount(p, 10));
+console.log("10% off:", discounted.map(p =&gt; `${p.name}: $${p.price}`));
+
+// 4) Sort by price (copy first!)
+const byPrice = [...products].sort((a, b) =&gt; a.price - b.price);
+console.log("By price:", byPrice.map(p =&gt; `${p.name} ($${p.price})`));
+
+// 5) Total &amp; average of in-stock
+const total = available.reduce((sum, p) =&gt; sum + p.price, 0);
+const average = total / available.length;
+console.log(`Total: $${total.toFixed(2)}`);
+console.log(`Average: $${average.toFixed(2)}`);
+
+// 6) Most expensive
+const priciest = products.reduce((max, p) =&gt; (p.price &gt; max.price ? p : max));
+const { name, price } = priciest;
+console.log(`Most expensive: ${name} at $${price}`);</code></pre>
+  </section>
+
+  <section class="done">
+    <h2>🎉 You're done</h2>
+    <p>You modeled real-world data as an array of objects and reshaped it with functions and <code>map</code>/<code>filter</code>/<code>reduce</code> — the exact pattern you'll use to render lists in the DOM and, later, in React.</p>
+    <p><strong>Up next → Chunk 3.3: The DOM &amp; Events</strong> — where data finally meets the screen. You'll start building the interactive <strong>to-do app</strong> that becomes this module's running project.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

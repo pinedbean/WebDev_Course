@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment · Chunk 2.5 — Responsive Design + Module 2 Checkpoint</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #ede9fe;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .objective{background:#ede9fe;border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#5b21b6;}
+  .checkpoint{background:#fffbeb;border:2px solid #f59e0b;}
+  .checkpoint h2{border-color:#fde68a;color:#92400e;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--task);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .deliverable{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .deliverable h2{border-color:#a7f3d0;color:#065f46;}
+  .check{list-style:none;padding-left:0;} .check li{padding-left:30px;position:relative;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:18px;color:var(--task);}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 2 — CSS &amp; Layout</div>
+    <h1>Chunk 2.5 — Lab: Responsive Site + 🏁 Module 2 Checkpoint</h1>
+    <span class="badge">🧪 ASSIGNMENT</span>
+    <span class="badge">🏁 CHECKPOINT</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 Your mission</h2>
+    <p>Two parts. <strong>Part A</strong>: make your existing site work across three breakpoints (phone, tablet, desktop) with media queries. <strong>Part B</strong> — the 🏁 Module 2 Checkpoint: pull everything from this module together to redesign the site into a polished, responsive <strong>portfolio</strong> you'd be proud to share.</p>
+  </section>
+
+  <section>
+    <h2>Before you start</h2>
+    <ul>
+      <li>You have <code>styles.css</code> plus four pages: <code>index.html</code>, <code>about.html</code>, <code>projects.html</code>, <code>contact.html</code>.</li>
+      <li>Confirm the viewport meta tag is in every page's <code>&lt;head&gt;</code>.</li>
+      <li>Open DevTools device mode (<kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd>) and keep it open while you work.</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ Try it yourself first</div>
+      Resize as you go. Find the widths where things look cramped — those are <em>your</em> breakpoints. Only check the solution to compare.
+    </div>
+  </section>
+
+  <section>
+    <h2>Part A — Make it responsive</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Audit at 360px</h3>
+      <p>In device mode, set the width to ~360px (a small phone) and visit all four pages. Note every problem: overflow/horizontal scroll, cramped navbar, sidebar squished, text too big, images too wide. This list drives the rest of Part A.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Guarantee fluid images</h3>
+      <p>Make sure <code>img { max-width: 100%; height: auto; }</code> is in your stylesheet so the profile photo (and any project images) never overflow.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Make the navbar stack on phones</h3>
+      <p>Add a media query so that below ~600px the header switches to a column (or the nav wraps), so the brand and links don't collide. Example:</p>
+      <pre><code>@media (max-width: 600px) {
+  header { flex-direction: column; align-items: flex-start; gap: 10px; }
+  nav { flex-wrap: wrap; }
+}</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Restack the dashboard grid</h3>
+      <p>On <code>projects.html</code>, add a query that turns the <code>.dashboard</code> into a single column on phones by redrawing <code>grid-template-areas</code> (header → content → sidebar → footer). No HTML changes.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Tune typography per screen</h3>
+      <p>Big desktop headings can be too large on a phone. Set comfortable base (mobile) sizes, then bump them up at a <code>min-width</code> breakpoint. Aim for at least <strong>three breakpoints total</strong> across your stylesheet.</p>
+      <pre><code>h1 { font-size: 1.8rem; }                 /* mobile base */
+@media (min-width: 600px) { h1 { font-size: 2.2rem; } }
+@media (min-width: 900px) { h1 { font-size: 2.8rem; } }</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Re-test at 3 widths</h3>
+      <p>Check ~360px (phone), ~768px (tablet), ~1200px (desktop). At every width: no horizontal scrollbar, readable text, nothing overlapping, comfortable spacing.</p>
+    </div>
+  </section>
+
+  <section class="checkpoint">
+    <h2>🏁 Part B — Module 2 Checkpoint: the Portfolio Redesign</h2>
+    <p>This is the capstone of the module. Combine everything — palette, box model, typography, Flexbox, Grid, responsiveness — to turn the plain Module 1 site into a portfolio that looks intentionally designed and works on any device.</p>
+
+    <div class="step">
+      <h3><span class="num">7</span> Add a hero section to the Home page</h3>
+      <p>Give <code>index.html</code> a strong opening: a large heading ("Hi, I'm Jane — full-stack developer"), a one-line tagline, and a prominent <code>.button</code> call-to-action ("View my work" → projects, or "Get in touch" → contact). Center it and give it generous vertical padding. This is the first thing visitors see.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">8</span> Polish the cards &amp; layout</h3>
+      <p>Make your project cards and content cards consistent: same radius, padding, subtle <code>box-shadow</code>, and a hover effect (e.g. <code>transform: translateY(-3px)</code> with a <code>transition</code>). Ensure spacing is even and the page has a clear visual rhythm.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">9</span> Unify the design system</h3>
+      <p>Define your palette and key spacing as CSS variables on <code>:root</code> and use them everywhere. One brand color, consistent fonts (heading + body), consistent border-radius. Consistency is what separates "designed" from "thrown together".</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">10</span> Final responsive QA pass</h3>
+      <p>Walk all four pages at phone / tablet / desktop in device mode. Fix the last rough edges. The portfolio should feel polished and effortless at every size.</p>
+    </div>
+  </section>
+
+  <section class="deliverable">
+    <h2>✅ Deliverable — acceptance checklist</h2>
+    <p><strong>Part A — responsive:</strong></p>
+    <ul class="check">
+      <li>Viewport meta tag present on all pages; images use <code>max-width: 100%</code>.</li>
+      <li>At least <strong>three breakpoints</strong> used across the stylesheet.</li>
+      <li>Navbar adapts (stacks/wraps) on small screens.</li>
+      <li>The projects dashboard restacks to one column on phones via redrawn grid areas.</li>
+      <li>No horizontal scrollbar at 360px on any page.</li>
+    </ul>
+    <p><strong>Part B — portfolio checkpoint:</strong></p>
+    <ul class="check">
+      <li>Home page has a clear hero with heading, tagline, and a CTA button.</li>
+      <li>Cards are consistent and have a hover effect with a transition.</li>
+      <li>Palette &amp; fonts are unified (ideally via CSS variables) across all pages.</li>
+      <li>The whole site looks polished and works at phone, tablet, and desktop widths.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🚀 Stretch goals (optional)</h2>
+    <ul>
+      <li>Add a <code>prefers-reduced-motion</code> guard so hover animations respect accessibility settings.</li>
+      <li>Use <code>clamp()</code> for fluid type that scales smoothly without breakpoints: <code>font-size: clamp(1.8rem, 5vw, 3rem);</code></li>
+      <li>Add a sticky navbar with <code>position: sticky; top: 0;</code>.</li>
+      <li>Run a Lighthouse audit in DevTools and improve the scores.</li>
+      <li>Deploy it free with GitHub Pages and share the live link.</li>
+      <li>Commit: <code>git add . &amp;&amp; git commit -m "Responsive portfolio — Module 2 complete"</code>.</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a class="current">🧪 Assignment</a>
+    <a href="solution.html">✅ Solution →</a>
+  </div>
+</footer>
+</body>
+</html>

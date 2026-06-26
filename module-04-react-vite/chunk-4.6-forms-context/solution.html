@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk 4.6 — Forms &amp; Shared State</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .full{border:2px solid #16a34a;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 4 — React + Vite</div>
+    <h1>Chunk 4.6 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>We'll add a Favorites context, wire toggles across pages, build a Favorites page, and add a validated form. New/changed files:</p>
+    <div class="filetree">recipe-box/
+└── src/
+    ├── main.jsx                       (add the provider)
+    ├── context/
+    │   └── FavoritesContext.jsx       (new)
+    ├── components/
+    │   ├── Layout.jsx                 (navbar count)
+    │   └── FavoriteButton.jsx         (new)
+    └── pages/
+        └── Favorites.jsx              (new: list + form)</div>
+  </section>
+
+  <section>
+    <div class="step">
+      <h3><span class="num">1</span> The context + provider + hook</h3>
+      <pre><code>// src/context/FavoritesContext.jsx
+import { createContext, useContext, useState } from "react";
+
+const FavoritesContext = createContext(null);
+
+export function FavoritesProvider({ children }) {
+  const [favorites, setFavorites] = useState([]);
+
+  function addFavorite(recipe) {
+    setFavorites((prev) =&gt;
+      prev.some((r) =&gt; r.id === recipe.id) ? prev : [...prev, recipe]
+    );
+  }
+  function removeFavorite(id) {
+    setFavorites((prev) =&gt; prev.filter((r) =&gt; r.id !== id));
+  }
+  function isFavorite(id) {
+    return favorites.some((r) =&gt; r.id === id);
+  }
+
+  const value = { favorites, addFavorite, removeFavorite, isFavorite };
+  return (
+    &lt;FavoritesContext.Provider value={value}&gt;
+      {children}
+    &lt;/FavoritesContext.Provider&gt;
+  );
+}
+
+export function useFavorites() {
+  const ctx = useContext(FavoritesContext);
+  if (!ctx) throw new Error("useFavorites must be used inside &lt;FavoritesProvider&gt;");
+  return ctx;
+}</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Provide it at the top</h3>
+      <pre><code>// src/main.jsx
+import { BrowserRouter } from "react-router-dom";
+import { FavoritesProvider } from "./context/FavoritesContext";
+
+ReactDOM.createRoot(document.getElementById("root")).render(
+  &lt;React.StrictMode&gt;
+    &lt;BrowserRouter&gt;
+      &lt;FavoritesProvider&gt;
+        &lt;App /&gt;
+      &lt;/FavoritesProvider&gt;
+    &lt;/BrowserRouter&gt;
+  &lt;/React.StrictMode&gt;
+);</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> A reusable favorite button</h3>
+      <pre><code>// src/components/FavoriteButton.jsx
+import { useFavorites } from "../context/FavoritesContext";
+
+function FavoriteButton({ recipe }) {
+  const { isFavorite, addFavorite, removeFavorite } = useFavorites();
+  const fav = isFavorite(recipe.id);
+
+  function toggle(e) {
+    e.preventDefault();   // don't trigger the card's Link
+    fav ? removeFavorite(recipe.id) : addFavorite(recipe);
+  }
+
+  return (
+    &lt;button onClick={toggle} aria-pressed={fav}&gt;
+      {fav ? "⭐ Saved" : "☆ Save"}
+    &lt;/button&gt;
+  );
+}
+
+export default FavoriteButton;</code></pre>
+      <p>Use it on cards and on the detail page, passing a normalized recipe object, e.g. <code>{ id: m.idMeal, title: m.strMeal, area: m.strArea, image: m.strMealThumb }</code>.</p>
+      <div class="callout tip">
+        <div class="label">💡 <code>e.preventDefault()</code> inside a Link</div>
+        Because the card is wrapped in a <code>&lt;Link&gt;</code>, clicking the button would also navigate. Calling <code>preventDefault()</code> in the button handler stops that, so the click only toggles the favorite.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Navbar count (no drilling)</h3>
+      <pre><code>// src/components/Layout.jsx
+import { NavLink, Outlet } from "react-router-dom";
+import { useFavorites } from "../context/FavoritesContext";
+
+function Layout() {
+  const { favorites } = useFavorites();
+  const cls = ({ isActive }) =&gt; (isActive ? "tab active" : "tab");
+  return (
+    &lt;&gt;
+      &lt;header className="nav"&gt;
+        &lt;NavLink to="/" className={cls} end&gt;🍳 Home&lt;/NavLink&gt;
+        &lt;NavLink to="/recipes" className={cls}&gt;Recipes&lt;/NavLink&gt;
+        &lt;NavLink to="/favorites" className={cls}&gt;⭐ Favorites ({favorites.length})&lt;/NavLink&gt;
+      &lt;/header&gt;
+      &lt;main&gt;&lt;Outlet /&gt;&lt;/main&gt;
+    &lt;/&gt;
+  );
+}
+
+export default Layout;</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> The Favorites page: list + validated form</h3>
+      <pre><code>// src/pages/Favorites.jsx
+import { useState } from "react";
+import { useFavorites } from "../context/FavoritesContext";
+
+function Favorites() {
+  const { favorites, addFavorite, removeFavorite } = useFavorites();
+  const [form, setForm] = useState({ title: "", area: "", minutes: "" });
+  const [errors, setErrors] = useState({});
+
+  function handleChange(e) {
+    const { name, value } = e.target;
+    setForm((prev) =&gt; ({ ...prev, [name]: value }));
+  }
+
+  function validate(v) {
+    const next = {};
+    if (!v.title.trim()) next.title = "Title is required";
+    if (!(Number(v.minutes) &gt; 0)) next.minutes = "Minutes must be a positive number";
+    return next;
+  }
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    const found = validate(form);
+    setErrors(found);
+    if (Object.keys(found).length &gt; 0) return;
+    addFavorite({
+      id: crypto.randomUUID(),
+      title: form.title.trim(),
+      area: form.area.trim() || "Custom",
+      minutes: Number(form.minutes),
+    });
+    setForm({ title: "", area: "", minutes: "" });
+  }
+
+  return (
+    &lt;section&gt;
+      &lt;h1&gt;⭐ Favorites&lt;/h1&gt;
+
+      {favorites.length === 0 ? (
+        &lt;p className="status"&gt;No favorites yet — save some recipes!&lt;/p&gt;
+      ) : (
+        &lt;ul className="fav-list"&gt;
+          {favorites.map((r) =&gt; (
+            &lt;li key={r.id}&gt;
+              {r.title} &lt;span className="meta"&gt;({r.area})&lt;/span&gt;
+              &lt;button onClick={() =&gt; removeFavorite(r.id)}&gt;Remove&lt;/button&gt;
+            &lt;/li&gt;
+          ))}
+        &lt;/ul&gt;
+      )}
+
+      &lt;h2&gt;Add your own&lt;/h2&gt;
+      &lt;form onSubmit={handleSubmit} noValidate&gt;
+        &lt;div&gt;
+          &lt;input name="title" value={form.title} onChange={handleChange} placeholder="Title" /&gt;
+          {errors.title &amp;&amp; &lt;span className="field-error"&gt;{errors.title}&lt;/span&gt;}
+        &lt;/div&gt;
+        &lt;div&gt;
+          &lt;input name="area" value={form.area} onChange={handleChange} placeholder="Cuisine" /&gt;
+        &lt;/div&gt;
+        &lt;div&gt;
+          &lt;input name="minutes" type="number" value={form.minutes} onChange={handleChange} placeholder="Minutes" /&gt;
+          {errors.minutes &amp;&amp; &lt;span className="field-error"&gt;{errors.minutes}&lt;/span&gt;}
+        &lt;/div&gt;
+        &lt;button type="submit"&gt;Add to favorites&lt;/button&gt;
+      &lt;/form&gt;
+    &lt;/section&gt;
+  );
+}
+
+export default Favorites;</code></pre>
+      <p>Add the route in <code>App.jsx</code>: <code>&lt;Route path="/favorites" element={&lt;Favorites /&gt;} /&gt;</code> (inside the layout route).</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> A little CSS</h3>
+      <pre><code>.field-error { color: #b91c1c; font-size: 13px; display: block; }
+.fav-list { list-style: none; padding: 0; }
+.fav-list li { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
+.fav-list li button { margin-left: auto; }
+form &gt; div { margin-bottom: 10px; }</code></pre>
+    </div>
+  </section>
+
+  <section>
+    <h2>🛠 Troubleshooting</h2>
+    <table>
+      <tr><th>Symptom</th><th>Fix</th></tr>
+      <tr><td><code>Cannot destructure property ... of useContext(...) as it is null</code></td><td>The component isn't inside <code>&lt;FavoritesProvider&gt;</code>. Make sure the provider wraps <code>&lt;App /&gt;</code> in <code>main.jsx</code>.</td></tr>
+      <tr><td>Clicking the star also navigates</td><td>Call <code>e.preventDefault()</code> in the toggle handler (the button is inside a <code>Link</code>).</td></tr>
+      <tr><td>Only one field updates / fields clobber each other</td><td>Each input needs a unique <code>name</code>, and the handler must spread: <code>{ ...prev, [name]: value }</code>.</td></tr>
+      <tr><td>Validation never blocks submit</td><td>You forgot <code>e.preventDefault()</code> or didn't <code>return</code> early when errors exist.</td></tr>
+      <tr><td>Navbar count doesn't update</td><td>Read <code>favorites</code> from <code>useFavorites()</code> inside <code>Layout</code>, not a stale prop.</td></tr>
+    </table>
+  </section>
+
+  <section class="done">
+    <h2>🎉 You're done</h2>
+    <p>You built app-wide shared state with Context, wired it into deeply-nested components with no prop drilling, and drove it from a validated multi-field form. This is the standard pattern for auth, themes, carts, and favorites in real apps.</p>
+    <p><strong>Up next → Chunk 4.7: Reusable Hooks &amp; Project Structure</strong> — you'll extract a <code>useFetch</code> hook, clean up the folders, and then tackle the 🏁 Module 4 Checkpoint.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

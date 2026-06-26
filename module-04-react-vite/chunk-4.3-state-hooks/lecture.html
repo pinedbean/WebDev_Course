@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 4.3 — State &amp; Events with Hooks</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 4 — React + Vite</div>
+    <h1>Chunk 4.3 — State &amp; Events with Hooks (useState)</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>What <strong>state</strong> is and why props alone aren't enough.</li>
+      <li>The <strong><code>useState</code></strong> hook — giving a component memory.</li>
+      <li>Handling <strong>events</strong> in React (<code>onClick</code>, <code>onSubmit</code>, <code>onChange</code>).</li>
+      <li><strong>Controlled inputs</strong> — making React the source of truth for form fields.</li>
+      <li>Updating arrays of state immutably, and <strong>lifting state up</strong> to share it.</li>
+    </ul>
+    <p>In the lab you'll rebuild your Module 3 to-do app in React — and feel how much less DOM code it takes.</p>
+  </section>
+
+  <section>
+    <h2>1. Props vs. state</h2>
+    <p>So far your components have been static: data comes in as <strong>props</strong> (read-only, from the parent) and gets rendered. But interactive UI needs to <em>remember</em> things that change over time: the text in an input, whether a menu is open, the list of to-dos. That remembered, changeable data is <strong>state</strong>.</p>
+    <table>
+      <tr><th>Props</th><th>State</th></tr>
+      <tr><td>Passed in from the parent</td><td>Owned by the component itself</td></tr>
+      <tr><td>Read-only</td><td>Changeable (via a setter)</td></tr>
+      <tr><td>Like function arguments</td><td>Like the component's memory</td></tr>
+    </table>
+    <div class="callout note">
+      <div class="label">📝 The key rule</div>
+      When state changes, React <strong>re-renders</strong> the component — it calls your function again with the new value and updates the DOM for you. You never touch the DOM directly. Change the data, the screen follows.
+    </div>
+  </section>
+
+  <section>
+    <h2>2. The <code>useState</code> hook</h2>
+    <p>You add state with the <code>useState</code> hook. A "hook" is just a special function (its name starts with <code>use</code>) that lets a component tap into React features. Import it from <code>react</code>:</p>
+    <pre><code>import { useState } from "react";
+
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  return (
+    &lt;button onClick={() =&gt; setCount(count + 1)}&gt;
+      Clicked {count} times
+    &lt;/button&gt;
+  );
+}</code></pre>
+    <p>Unpack that one line — <code>const [count, setCount] = useState(0)</code>:</p>
+    <ul>
+      <li><code>useState(0)</code> declares a state variable with an <strong>initial value</strong> of <code>0</code>.</li>
+      <li>It returns a pair (array destructuring): the <strong>current value</strong> (<code>count</code>) and a <strong>setter function</strong> (<code>setCount</code>).</li>
+      <li>Calling <code>setCount(newValue)</code> updates the value <em>and</em> tells React to re-render.</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ Never assign state directly</div>
+      <code>count = count + 1</code> does nothing useful — React won't notice and won't re-render. <strong>Always</strong> use the setter: <code>setCount(count + 1)</code>. The setter is what schedules the re-render.
+    </div>
+  </section>
+
+  <section>
+    <h2>3. Handling events</h2>
+    <p>In Module 3 you wrote <code>button.addEventListener("click", ...)</code>. In React you attach handlers right in JSX with camelCase props like <code>onClick</code>, and you pass a <strong>function</strong> (not a call):</p>
+    <pre><code>// ✅ pass the function
+&lt;button onClick={handleClick}&gt;Save&lt;/button&gt;
+
+// ✅ or an inline arrow function
+&lt;button onClick={() =&gt; setCount(count + 1)}&gt;+1&lt;/button&gt;
+
+// ❌ this CALLS handleClick immediately on render — wrong
+&lt;button onClick={handleClick()}&gt;Save&lt;/button&gt;</code></pre>
+    <p>Handlers receive the React <strong>event object</strong>, just like the DOM event you've seen:</p>
+    <pre><code>function SearchBox() {
+  function handleSubmit(event) {
+    event.preventDefault(); // stop the browser reloading the page
+    console.log("submitted!");
+  }
+  return &lt;form onSubmit={handleSubmit}&gt;...&lt;/form&gt;;
+}</code></pre>
+    <div class="callout tip">
+      <div class="label">💡 preventDefault still matters</div>
+      Forms still try to reload the page on submit by default. Call <code>event.preventDefault()</code> in your <code>onSubmit</code> handler to keep your SPA from refreshing — same concept as vanilla JS.
+    </div>
+  </section>
+
+  <section>
+    <h2>4. Controlled inputs</h2>
+    <p>To read what a user types, you make the input a <strong>controlled component</strong>: its <code>value</code> comes from state, and an <code>onChange</code> handler writes every keystroke back into state. React becomes the single source of truth.</p>
+    <pre><code>function NameField() {
+  const [name, setName] = useState("");
+
+  return (
+    &lt;input
+      value={name}
+      onChange={(e) =&gt; setName(e.target.value)}
+      placeholder="Your name"
+    /&gt;
+  );
+}</code></pre>
+    <p>Every keystroke fires <code>onChange</code> → <code>setName</code> updates state → React re-renders → the input shows the new <code>value</code>. The state and the input can never drift apart.</p>
+  </section>
+
+  <section>
+    <h2>5. Updating arrays &amp; objects immutably</h2>
+    <p>To-do apps keep a list in state. The catch: you must <strong>not mutate</strong> the existing array — React decides whether to re-render by checking if you handed it a <em>new</em> array reference. Create a new array instead of pushing into the old one.</p>
+    <pre><code>const [todos, setTodos] = useState([]);
+
+// ✅ ADD — build a new array with the spread operator
+setTodos([...todos, newTodo]);
+
+// ✅ REMOVE — filter returns a new array
+setTodos(todos.filter((t) =&gt; t.id !== id));
+
+// ✅ UPDATE one item — map returns a new array
+setTodos(todos.map((t) =&gt;
+  t.id === id ? { ...t, done: !t.done } : t
+));
+
+// ❌ DON'T mutate — React may not re-render
+todos.push(newTodo);          // wrong
+todos[0].done = true;         // wrong</code></pre>
+    <p>You already know <code>map</code>, <code>filter</code>, and spread from Chunk 3.2. Here they become your everyday tools for "change state without mutating it".</p>
+    <div class="callout note">
+      <div class="label">📝 Why immutable?</div>
+      React compares the old and new state by reference. If you mutate the same array, the reference is unchanged and React assumes nothing happened. A brand-new array (<code>[...todos, x]</code>) signals "this changed, re-render".
+    </div>
+  </section>
+
+  <section>
+    <h2>6. Lifting state up</h2>
+    <p>Where should the to-do list live? If a <code>&lt;TodoForm&gt;</code> adds items and a <code>&lt;TodoList&gt;</code> displays them, they both need access to the same array. The answer: put the state in their <strong>closest common parent</strong> and pass it down — state lives "up", data and handlers flow "down" as props.</p>
+    <pre><code>function TodoApp() {
+  const [todos, setTodos] = useState([]);
+
+  function addTodo(text) {
+    setTodos([...todos, { id: Date.now(), text, done: false }]);
+  }
+
+  return (
+    &lt;&gt;
+      &lt;TodoForm onAdd={addTodo} /&gt;        {/* pass a handler down */}
+      &lt;TodoList items={todos} /&gt;          {/* pass data down */}
+    &lt;/&gt;
+  );
+}</code></pre>
+    <p>The parent owns the state. <code>TodoForm</code> doesn't store the list — it just calls <code>onAdd(text)</code>. <code>TodoList</code> doesn't own the list — it just renders the <code>items</code> prop. This one-way flow (data down, events up) keeps large apps predictable.</p>
+    <div class="callout tip">
+      <div class="label">💡 Generate ids</div>
+      Each todo needs a stable <code>key</code> for the list. <code>Date.now()</code> or <code>crypto.randomUUID()</code> both make easy unique ids when you create the item.
+    </div>
+  </section>
+
+  <section>
+    <h2>7. The whole loop, end to end</h2>
+    <p>Here's the cycle every interactive React app runs:</p>
+    <ol>
+      <li>Component renders using current state.</li>
+      <li>User does something → an event handler fires.</li>
+      <li>The handler calls a state setter with a new value.</li>
+      <li>React re-renders the component with the new state and patches the DOM.</li>
+      <li>Back to step 1.</li>
+    </ol>
+    <p>Compare this to Module 3, where <em>you</em> manually found elements and rewrote them. React collapses all of that into "call the setter".</p>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li><strong>State</strong> is a component's changeable memory; changing it triggers a re-render.</li>
+      <li><code>const [value, setValue] = useState(initial)</code> — read <code>value</code>, change it only via <code>setValue</code>.</li>
+      <li>Events use camelCase props (<code>onClick</code>, <code>onSubmit</code>) and take a function; call <code>e.preventDefault()</code> on form submit.</li>
+      <li><strong>Controlled inputs</strong>: <code>value</code> from state + <code>onChange</code> setting state.</li>
+      <li>Update arrays/objects <strong>immutably</strong> with spread/<code>map</code>/<code>filter</code>, never <code>push</code>/direct assignment.</li>
+      <li><strong>Lift state up</strong> to the common parent; pass data and handlers down as props.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and rebuild the to-do app in React.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

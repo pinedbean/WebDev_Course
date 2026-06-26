@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 3.2 — Functions, Arrays &amp; Objects</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 3 — JavaScript Core</div>
+    <h1>Chunk 3.2 — Functions, Arrays &amp; Objects</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>Writing reusable <strong>functions</strong> — declarations vs arrow functions, parameters and return values.</li>
+      <li><strong>Arrays</strong>: storing lists and looping with <code>forEach</code>.</li>
+      <li>The big three transforms: <code>map</code>, <code>filter</code>, <code>reduce</code>.</li>
+      <li><strong>Objects</strong>: modeling a thing with named properties, plus <strong>destructuring</strong>.</li>
+    </ul>
+    <p>In the lab you'll process an array of product objects — filtering, sorting, and summarizing it.</p>
+  </section>
+
+  <section>
+    <h2>1. Functions: packaging logic</h2>
+    <p>A <strong>function</strong> is a reusable block of code with a name. You define it once and <em>call</em> it as many times as you like, optionally passing in <strong>arguments</strong> and getting back a <strong>return value</strong>.</p>
+    <pre><code>function greet(name) {
+  return `Hello, ${name}!`;
+}
+
+const message = greet("Jane");   // call it
+console.log(message);            // "Hello, Jane!"
+console.log(greet("Sam"));       // "Hello, Sam!"</code></pre>
+    <ul>
+      <li><code>name</code> is a <strong>parameter</strong> — a placeholder for whatever you pass in.</li>
+      <li><code>"Jane"</code> is the <strong>argument</strong> — the actual value for this call.</li>
+      <li><code>return</code> hands a value back to whoever called the function. Without <code>return</code>, a function gives back <code>undefined</code>.</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ return vs console.log</div>
+      They are not the same! <code>console.log</code> just <em>prints</em> to the console. <code>return</code> actually <em>produces a value</em> you can store and reuse. A function that only logs can't be combined with other code.
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Arrow functions</h2>
+    <p>Arrow functions are a shorter syntax for writing functions, introduced in modern JavaScript. They're everywhere in React and in the array methods below, so get comfortable with them:</p>
+    <pre><code>// Function declaration
+function add(a, b) {
+  return a + b;
+}
+
+// Arrow function — same thing
+const add = (a, b) =&gt; {
+  return a + b;
+};
+
+// If the body is a single return, drop the braces and the word "return":
+const add = (a, b) =&gt; a + b;
+
+// One parameter? Parentheses are optional:
+const double = n =&gt; n * 2;</code></pre>
+    <table>
+      <tr><th>Form</th><th>When to use</th></tr>
+      <tr><td><code>function name() {}</code></td><td>Top-level named helpers; fine anywhere.</td></tr>
+      <tr><td><code>const f = () =&gt; {}</code></td><td>Short callbacks, especially passed into array methods.</td></tr>
+    </table>
+    <div class="callout note">
+      <div class="label">📝 Implicit return</div>
+      <code>n =&gt; n * 2</code> automatically returns <code>n * 2</code> — no braces, no <code>return</code> keyword. The moment you add <code>{ }</code>, you must write <code>return</code> yourself.
+    </div>
+  </section>
+
+  <section>
+    <h2>3. Arrays</h2>
+    <p>An <strong>array</strong> is an ordered list of values, written with square brackets. Items are numbered from <strong>0</strong>:</p>
+    <pre><code>const fruits = ["apple", "banana", "cherry"];
+
+fruits[0];        // "apple"   (first item)
+fruits[2];        // "cherry"
+fruits.length;    // 3
+fruits.push("date");     // add to the end → length 4
+fruits.includes("banana"); // true</code></pre>
+    <h3>Looping with <code>forEach</code></h3>
+    <p>To do something with every item, <code>forEach</code> runs a function once per element:</p>
+    <pre><code>fruits.forEach((fruit, index) =&gt; {
+  console.log(`${index}: ${fruit}`);
+});
+// 0: apple
+// 1: banana
+// 2: cherry</code></pre>
+    <p>The function you pass in receives each item (and optionally its index). <code>forEach</code> is for <em>side effects</em> like logging — it doesn't build a new array. For that, you want <code>map</code>.</p>
+  </section>
+
+  <section>
+    <h2>4. The big three: map, filter, reduce</h2>
+    <p>These three methods are the heart of working with data in JavaScript. Each takes a function and returns something new — they never modify the original array.</p>
+
+    <h3><code>map</code> — transform every item</h3>
+    <p>Returns a <strong>new array</strong> of the same length, with each item passed through your function:</p>
+    <pre><code>const numbers = [1, 2, 3, 4];
+const doubled = numbers.map(n =&gt; n * 2);
+console.log(doubled);   // [2, 4, 6, 8]
+console.log(numbers);   // [1, 2, 3, 4]  ← original untouched</code></pre>
+
+    <h3><code>filter</code> — keep some items</h3>
+    <p>Returns a <strong>new, possibly shorter array</strong> containing only items for which your function returns <code>true</code>:</p>
+    <pre><code>const numbers = [1, 2, 3, 4, 5, 6];
+const evens = numbers.filter(n =&gt; n % 2 === 0);
+console.log(evens);     // [2, 4, 6]</code></pre>
+
+    <h3><code>reduce</code> — boil a list down to one value</h3>
+    <p>Combines all items into a single result (a sum, a max, a joined string). It carries an <strong>accumulator</strong> from item to item:</p>
+    <pre><code>const numbers = [10, 20, 30];
+const total = numbers.reduce((sum, n) =&gt; sum + n, 0);
+//                            ↑acc  ↑item        ↑start value
+console.log(total);     // 60</code></pre>
+    <p>Read it as: start <code>sum</code> at <code>0</code>; for each <code>n</code>, the new <code>sum</code> is <code>sum + n</code>. After the last item, <code>reduce</code> returns the final <code>sum</code>.</p>
+    <div class="callout tip">
+      <div class="label">💡 They chain</div>
+      Because <code>map</code> and <code>filter</code> return arrays, you can chain them: <code>products.filter(p =&gt; p.inStock).map(p =&gt; p.name)</code> gives the names of in-stock products in one readable line.
+    </div>
+  </section>
+
+  <section>
+    <h2>5. Objects</h2>
+    <p>An <strong>object</strong> groups related data under named <strong>properties</strong> (key: value pairs). Where an array is a list, an object is a labeled record of one "thing":</p>
+    <pre><code>const product = {
+  name: "Keyboard",
+  price: 49.99,
+  inStock: true,
+};
+
+product.name;        // "Keyboard"   (dot notation)
+product["price"];    // 49.99        (bracket notation)
+product.price = 39.99;   // update a property
+product.brand = "Acme";  // add a new property</code></pre>
+    <p>Objects can hold anything as values — including arrays and other objects. A list of products is just an <strong>array of objects</strong>, which is how almost all real app data looks:</p>
+    <pre><code>const products = [
+  { name: "Keyboard", price: 49.99, inStock: true },
+  { name: "Mouse",    price: 19.99, inStock: false },
+  { name: "Monitor",  price: 199.0, inStock: true },
+];</code></pre>
+  </section>
+
+  <section>
+    <h2>6. Destructuring</h2>
+    <p><strong>Destructuring</strong> pulls properties out of an object (or items out of an array) into their own variables — less typing, clearer code:</p>
+    <pre><code>const product = { name: "Keyboard", price: 49.99 };
+
+// Without destructuring:
+const name = product.name;
+const price = product.price;
+
+// With destructuring — same result, one line:
+const { name, price } = product;
+console.log(name, price);   // "Keyboard" 49.99</code></pre>
+    <p>It's especially handy in function parameters, so you can name exactly what you need:</p>
+    <pre><code>function label({ name, price }) {
+  return `${name}: $${price}`;
+}
+label(product);   // "Keyboard: $49.99"</code></pre>
+    <p>Arrays destructure by position:</p>
+    <pre><code>const [first, second] = ["gold", "silver", "bronze"];
+console.log(first);   // "gold"
+console.log(second);  // "silver"</code></pre>
+  </section>
+
+  <section>
+    <h2>7. Worked example: processing products</h2>
+    <p>Combining everything — filter the in-stock items, sort them by price, and total their value:</p>
+    <pre><code>const products = [
+  { name: "Keyboard", price: 49.99, inStock: true },
+  { name: "Mouse",    price: 19.99, inStock: false },
+  { name: "Monitor",  price: 199.0, inStock: true },
+  { name: "Webcam",   price: 79.0,  inStock: true },
+];
+
+// 1) keep only in-stock
+const available = products.filter(p =&gt; p.inStock);
+
+// 2) sort by price, cheapest first (a copy, sorted in place)
+const sorted = [...available].sort((a, b) =&gt; a.price - b.price);
+
+// 3) total price of available products
+const total = available.reduce((sum, p) =&gt; sum + p.price, 0);
+
+console.log(sorted.map(p =&gt; p.name));   // ["Keyboard", "Webcam", "Monitor"]
+console.log(`Total in stock: $${total}`); // "Total in stock: $327.99"</code></pre>
+    <div class="callout note">
+      <div class="label">📝 The spread <code>...</code></div>
+      <code>sort</code> changes the array it's called on. <code>[...available]</code> makes a fresh copy first (the <strong>spread</strong> operator copies all items into a new array), so the original order is preserved. The sorter <code>(a, b) =&gt; a.price - b.price</code> returns a negative number when <code>a</code> should come first.
+    </div>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li>Functions package logic; <code>return</code> hands back a value. Arrow functions <code>=&gt;</code> are the short form.</li>
+      <li>Arrays are ordered lists; <code>forEach</code> loops for side effects.</li>
+      <li><code>map</code> transforms, <code>filter</code> selects, <code>reduce</code> summarizes — all return new values, none mutate.</li>
+      <li>Objects model one thing with named properties; an array of objects is your typical dataset.</li>
+      <li>Destructuring unpacks properties/items into variables in one line.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and transform a catalog of products.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

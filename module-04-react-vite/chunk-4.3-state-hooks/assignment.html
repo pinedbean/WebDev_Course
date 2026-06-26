@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment · Chunk 4.3 — State &amp; Events with Hooks</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #ede9fe;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .objective{background:#ede9fe;border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#5b21b6;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--task);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .deliverable{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .deliverable h2{border-color:#a7f3d0;color:#065f46;}
+  .check{list-style:none;padding-left:0;} .check li{padding-left:30px;position:relative;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:18px;color:var(--task);}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 4 — React + Vite</div>
+    <h1>Chunk 4.3 — Lab: The To-Do App, in React</h1>
+    <span class="badge">🧪 ASSIGNMENT</span>
+    <span class="badge">⏱️ 45–75 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 Your mission</h2>
+    <p>Rebuild the to-do app you made in Module 3 — but this time in React, using <code>useState</code>. The user can <strong>add</strong> a task, <strong>toggle</strong> it complete, and <strong>delete</strong> it. Notice how you never call <code>document.querySelector</code> or <code>appendChild</code> once.</p>
+  </section>
+
+  <section>
+    <h2>Before you start</h2>
+    <ul>
+      <li>Work in your <code>recipe-box</code> project, or scaffold a fresh one — your call. Run <code>npm run dev</code>.</li>
+      <li>Plan your components: a <code>TodoApp</code> that owns the state, a <code>TodoForm</code> to add, and a <code>TodoList</code>/<code>TodoItem</code> to display.</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ Try it yourself first</div>
+      You've done a to-do app before — this time the challenge is the React way (state, not the DOM). Reach for the solution only when stuck.
+    </div>
+  </section>
+
+  <section>
+    <h2>Tasks</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Hold the list in state</h3>
+      <p>In a <code>TodoApp</code> component, create state for the list: <code>const [todos, setTodos] = useState([])</code>. Each todo is an object like <code>{ id, text, done }</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Build the add form (controlled input)</h3>
+      <p>Add a <code>&lt;form&gt;</code> with a controlled text <code>&lt;input&gt;</code> (its <code>value</code> from state, updated <code>onChange</code>). On submit, call <code>preventDefault()</code>, add a new todo immutably, and clear the input. Don't add empty/whitespace-only tasks.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Render the list</h3>
+      <p>Map over <code>todos</code> to render each one with its <code>text</code>, a checkbox/toggle, and a delete button. Remember a unique <code>key</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Toggle complete</h3>
+      <p>Clicking a todo (or its checkbox) flips its <code>done</code> flag. Update state immutably with <code>.map()</code>. Show completed items with a strikethrough (a CSS class applied conditionally).</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Delete a todo</h3>
+      <p>A "✕" button removes that todo. Update state immutably with <code>.filter()</code> on the <code>id</code>.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Lift state up</h3>
+      <p>Split the UI into at least two child components (e.g. <code>TodoForm</code> and <code>TodoList</code>) and keep the <code>todos</code> state in the parent <code>TodoApp</code>. Pass data down as props and pass handlers (<code>onAdd</code>, <code>onToggle</code>, <code>onDelete</code>) down too.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">7</span> Show a count</h3>
+      <p>Display how many tasks are left (e.g. "2 of 5 done"). Derive it from state — don't store a separate counter.</p>
+    </div>
+  </section>
+
+  <section class="deliverable">
+    <h2>✅ Deliverable — acceptance checklist</h2>
+    <ul class="check">
+      <li>Adding a task via the form appends it to the list and clears the input.</li>
+      <li>Empty/whitespace-only submissions are ignored.</li>
+      <li>Clicking a task toggles its done state with a visible strikethrough.</li>
+      <li>The ✕ button removes the correct task.</li>
+      <li>The list lives in state in a parent component; children get props (data + handlers).</li>
+      <li>A live count of completed/total tasks is derived from state.</li>
+      <li>No direct DOM manipulation anywhere; the console is warning-free (keys present).</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🚀 Stretch goals (optional)</h2>
+    <ul>
+      <li>Add filter buttons: <em>All / Active / Completed</em> (store the current filter in state, derive the visible list).</li>
+      <li>Add an "edit" mode that turns a todo's text into a controlled input.</li>
+      <li>Add a "Clear completed" button.</li>
+      <li>Persist the list to <code>localStorage</code> (a taste of Chunk 4.4's <code>useEffect</code> — or do it inside your handlers for now).</li>
+      <li>Disable the Add button when the input is empty.</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a class="current">🧪 Assignment</a>
+    <a href="solution.html">✅ Solution →</a>
+  </div>
+</footer>
+</body>
+</html>

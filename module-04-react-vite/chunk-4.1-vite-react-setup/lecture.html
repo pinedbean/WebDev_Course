@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 4.1 — Vite + React Project Setup</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .filetree{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;white-space:pre;overflow:auto;line-height:1.55;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 4 — React + Vite</div>
+    <h1>Chunk 4.1 — Vite + React Project Setup</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li><strong>Why React exists</strong> — the problem with hand-writing DOM updates (which you felt in Module 3).</li>
+      <li><strong>Why Vite</strong> — what a dev server and bundler do, and why it's so fast.</li>
+      <li>How to scaffold a React app with <code>npm create vite@latest</code> and run the dev server.</li>
+      <li>The anatomy of a Vite + React project, and how a component ends up on screen.</li>
+      <li><strong>JSX</strong> — the HTML-in-JavaScript syntax React uses.</li>
+    </ul>
+    <p>In the lab you'll create a fresh React project and customize its landing component.</p>
+  </section>
+
+  <section>
+    <h2>1. Where we left off — and the problem React solves</h2>
+    <p>In Module 3 you built a to-do app in vanilla JavaScript. To add a single item you had to: create an element, set its <code>textContent</code>, build a delete button, attach a listener, and <code>appendChild</code> it. To mark something done you hunted for the element with <code>querySelector</code> and toggled a class by hand. Your data lived in one place (a JS array) and the screen lived in another (the DOM), and <em>you</em> were the glue keeping them in sync.</p>
+    <p>That manual syncing is where bugs breed. Forget to update the DOM after changing the array and the screen lies. This is the exact pain <strong>React</strong> was built to remove.</p>
+    <div class="callout note">
+      <div class="label">📝 The big idea</div>
+      In React you <strong>describe what the UI should look like for a given set of data</strong>, and React figures out the DOM changes for you. You change the data; the screen follows automatically. This is called <strong>declarative</strong> UI (you declare the result) versus the <strong>imperative</strong> DOM code (step-by-step instructions) you wrote in Module 3.
+    </div>
+  </section>
+
+  <section>
+    <h2>2. What is React?</h2>
+    <p><strong>React</strong> is a JavaScript library for building user interfaces out of <strong>components</strong> — small, reusable functions that return a piece of UI. You compose those pieces into a whole app, the way you nest HTML elements.</p>
+    <p>Two ideas power everything in this module:</p>
+    <ul>
+      <li><strong>Components</strong> — a function that returns markup. <code>&lt;Navbar /&gt;</code>, <code>&lt;TodoItem /&gt;</code>, <code>&lt;App /&gt;</code>. You'll write dozens.</li>
+      <li><strong>State</strong> — the data a component remembers. When state changes, React <strong>re-renders</strong> the component (calls the function again) and updates only the parts of the real DOM that actually changed.</li>
+    </ul>
+    <p>That "updates only what changed" magic comes from React keeping a lightweight copy of the UI in memory (often called the <strong>virtual DOM</strong>), comparing it to the previous version, and applying the minimal set of real DOM edits. You never call <code>appendChild</code> again.</p>
+    <div class="callout tip">
+      <div class="label">💡 Function components &amp; hooks only</div>
+      Modern React (18+) is written with <strong>function components</strong> and <strong>hooks</strong> (functions like <code>useState</code> you'll meet in 4.3). Older tutorials use "class components" — you can safely ignore those for this course.
+    </div>
+  </section>
+
+  <section>
+    <h2>3. What is Vite, and why not just open an HTML file?</h2>
+    <p>Browsers don't understand JSX (the HTML-in-JS you're about to see), and a real app is split across many files. Something has to translate and bundle that code for the browser. That something is a <strong>build tool</strong>. <strong>Vite</strong> (French for "quick", pronounced "veet") is the modern standard.</p>
+    <p>Vite gives you two things:</p>
+    <ul>
+      <li>A <strong>dev server</strong> — run <code>npm run dev</code> and it serves your app at a local URL with <strong>Hot Module Replacement (HMR)</strong>: save a file and the browser updates instantly, often without losing your place.</li>
+      <li>A <strong>build</strong> command — <code>npm run build</code> bundles and optimizes everything into static files for production (you'll use this in Module 9).</li>
+    </ul>
+    <p>You met Vite briefly at the end of Module 3. Now it becomes your everyday tool.</p>
+    <div class="callout note">
+      <div class="label">📝 You need Node.js</div>
+      Vite runs on <strong>Node.js</strong> (installed back in Module 0). Check it's ready: <code>node --version</code> should print v18 or newer. Vite 5+ requires Node 18+.
+    </div>
+  </section>
+
+  <section>
+    <h2>4. Scaffolding a project with <code>create vite</code></h2>
+    <p>You don't build the boilerplate by hand. One command generates a ready-to-run project:</p>
+    <pre><code>npm create vite@latest</code></pre>
+    <p>It asks you a few questions interactively:</p>
+    <table>
+      <tr><th>Prompt</th><th>Your answer</th></tr>
+      <tr><td>Project name</td><td><code>recipe-box</code> (our Module 4 project)</td></tr>
+      <tr><td>Select a framework</td><td><strong>React</strong></td></tr>
+      <tr><td>Select a variant</td><td><strong>JavaScript</strong> (we'll skip TypeScript for now)</td></tr>
+    </table>
+    <p>Then you install dependencies and start the server:</p>
+    <pre><code>cd recipe-box
+npm install
+npm run dev</code></pre>
+    <p>Vite prints a local URL — open it in your browser:</p>
+    <pre><code>  VITE v5.x.x  ready in 312 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  press h + enter to show help</code></pre>
+    <div class="callout tip">
+      <div class="label">💡 What is npm doing?</div>
+      <code>npm create vite@latest</code> downloads and runs the latest project generator. <code>npm install</code> reads <code>package.json</code> and downloads React + Vite into a <code>node_modules/</code> folder. <code>npm run dev</code> runs the "dev" script defined in <code>package.json</code>. You learned about <code>package.json</code> and npm in Chunk 3.5 — same ideas.
+    </div>
+  </section>
+
+  <section>
+    <h2>5. A tour of the project</h2>
+    <p>Open the folder in VS Code. Here's what matters (some files trimmed):</p>
+    <div class="filetree">recipe-box/
+├── index.html          ← the ONE real HTML page the browser loads
+├── package.json        ← project metadata + scripts + dependencies
+├── vite.config.js      ← Vite configuration
+├── public/             ← static files served as-is (favicon, images)
+└── src/                ← all your React code lives here
+    ├── main.jsx        ← entry point: mounts React into the page
+    ├── App.jsx         ← your root component
+    ├── App.css         ← styles for App
+    └── index.css       ← global styles</div>
+    <p>Two files deserve a closer look.</p>
+
+    <h3><code>index.html</code> — surprisingly empty</h3>
+    <pre><code>&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+  &lt;head&gt;
+    &lt;meta charset="UTF-8" /&gt;
+    &lt;title&gt;Vite + React&lt;/title&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;div id="root"&gt;&lt;/div&gt;
+    &lt;script type="module" src="/src/main.jsx"&gt;&lt;/script&gt;
+  &lt;/body&gt;
+&lt;/html&gt;</code></pre>
+    <p>There's no visible content — just an empty <code>&lt;div id="root"&gt;</code> and a script tag. This is a <strong>Single Page Application (SPA)</strong>: the HTML is a shell, and React builds the entire page inside <code>#root</code> with JavaScript.</p>
+
+    <h3><code>main.jsx</code> — the entry point</h3>
+    <pre><code>import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App.jsx'
+import './index.css'
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  &lt;React.StrictMode&gt;
+    &lt;App /&gt;
+  &lt;/React.StrictMode&gt;,
+)</code></pre>
+    <p>Read it top to bottom: import React, find the <code>#root</code> div, and <strong>render</strong> your <code>&lt;App /&gt;</code> component into it. <code>&lt;React.StrictMode&gt;</code> is a development helper that points out potential problems — leave it on.</p>
+  </section>
+
+  <section>
+    <h2>6. JSX — HTML inside JavaScript</h2>
+    <p>That <code>&lt;App /&gt;</code> and the markup components return is <strong>JSX</strong>. It looks like HTML but it lives inside <code>.jsx</code> files and Vite compiles it to real JavaScript. Here's a minimal component:</p>
+    <pre><code>function App() {
+  const name = "Jane";
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;Hello, {name}! 👋&lt;/h1&gt;
+      &lt;p&gt;My first React component.&lt;/p&gt;
+    &lt;/div&gt;
+  );
+}
+
+export default App;</code></pre>
+    <p>A component is just a function that <code>return</code>s JSX. The curly braces <code>{name}</code> drop a JavaScript value into the markup — any expression works: <code>{2 + 2}</code>, <code>{user.email}</code>, <code>{items.length}</code>.</p>
+    <p>JSX looks like HTML but has a few important rules:</p>
+    <table>
+      <tr><th>Rule</th><th>Why / example</th></tr>
+      <tr><td><strong>Return one root element</strong></td><td>A function returns one thing. Wrap siblings in a <code>&lt;div&gt;</code> or an empty <code>&lt;&gt;...&lt;/&gt;</code> (a "Fragment").</td></tr>
+      <tr><td><strong><code>className</code>, not <code>class</code></strong></td><td><code>class</code> is a reserved word in JS, so JSX uses <code>className="card"</code>.</td></tr>
+      <tr><td><strong>Close every tag</strong></td><td>Even self-closing ones: <code>&lt;img /&gt;</code>, <code>&lt;br /&gt;</code>, <code>&lt;input /&gt;</code>.</td></tr>
+      <tr><td><strong>camelCase attributes</strong></td><td><code>onclick</code> → <code>onClick</code>, <code>tabindex</code> → <code>tabIndex</code>.</td></tr>
+      <tr><td><strong><code>{ }</code> for JS</strong></td><td>Embed expressions: <code>{count}</code>, <code>{user.name}</code>, <code>{price * 2}</code>.</td></tr>
+    </table>
+    <div class="callout warning">
+      <div class="label">⚠️ JSX is not HTML</div>
+      It's JavaScript that <em>looks</em> like HTML. That's why <code>class</code> becomes <code>className</code> and why you can write <code>{anyExpression}</code> right in the middle of your markup. Mixing up the two is the most common beginner stumble — when in doubt, remember: it's JS.
+    </div>
+  </section>
+
+  <section>
+    <h2>7. How a component reaches the screen</h2>
+    <p>Putting it together, here is the full path from a file to a pixel:</p>
+    <ol>
+      <li>The browser loads <code>index.html</code> and runs <code>&lt;script src="/src/main.jsx"&gt;</code>.</li>
+      <li><code>main.jsx</code> calls <code>createRoot(...).render(&lt;App /&gt;)</code>.</li>
+      <li>React calls your <code>App()</code> function, gets the JSX it returns, and turns it into real DOM nodes inside <code>#root</code>.</li>
+      <li>Later, when data (state) changes, React calls <code>App()</code> again, compares the new result with the old one, and updates only what differs.</li>
+    </ol>
+    <p>You write components; React owns the DOM. That trade is the whole point.</p>
+  </section>
+
+  <section>
+    <h2>8. Editing your first component</h2>
+    <p>With <code>npm run dev</code> running, open <code>src/App.jsx</code>, delete the generated boilerplate, and replace it with something of your own:</p>
+    <pre><code>function App() {
+  const projectName = "Recipe Box";
+  return (
+    &lt;main&gt;
+      &lt;h1&gt;🍳 {projectName}&lt;/h1&gt;
+      &lt;p&gt;A React app I'm building in Module 4.&lt;/p&gt;
+    &lt;/main&gt;
+  );
+}
+
+export default App;</code></pre>
+    <p>Save the file. Thanks to HMR, the browser updates the instant you hit save — no refresh, no rebuild. That tight feedback loop is what makes React development feel fast.</p>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li>React lets you write <strong>declarative</strong> UI: describe the result for given data, and React updates the DOM for you.</li>
+      <li>Apps are built from <strong>components</strong> — functions that return <strong>JSX</strong>.</li>
+      <li><strong>Vite</strong> is the build tool: <code>npm create vite@latest</code> scaffolds, <code>npm run dev</code> serves with instant Hot Module Replacement.</li>
+      <li>An SPA loads one near-empty <code>index.html</code>; <code>main.jsx</code> mounts <code>&lt;App /&gt;</code> into <code>#root</code>.</li>
+      <li>JSX rules: one root element, <code>className</code>, close all tags, camelCase attributes, <code>{ }</code> for JavaScript.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and scaffold your own React app.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>
