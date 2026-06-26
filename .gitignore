@@ -1,0 +1,26 @@
+# macOS
+.DS_Store
+
+# Node / frontend
+node_modules/
+dist/
+.vite/
+*.log
+
+# Python / backend
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.sqlite3
+*.db
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Editor
+.vscode/
+.idea/

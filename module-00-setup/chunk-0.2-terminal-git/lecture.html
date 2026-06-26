@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 0.2 — Terminal &amp; Git Basics</title>
+<style>
+  :root{
+    --bg:#0f172a; --panel:#ffffff; --ink:#1e293b; --muted:#64748b;
+    --accent:#2563eb; --accent-soft:#dbeafe; --line:#e2e8f0;
+    --code-bg:#0f172a; --code-ink:#e2e8f0;
+    --note:#0ea5e9; --tip:#16a34a; --warn:#d97706; --task:#7c3aed;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{margin:0; background:#f1f5f9; color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.65; font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb); color:#fff; padding:28px 24px;}
+  .banner .wrap{max-width:860px; margin:0 auto;}
+  .crumbs{font-size:13px; letter-spacing:.04em; text-transform:uppercase; opacity:.85;}
+  .banner h1{margin:6px 0 4px; font-size:28px;}
+  .badge{display:inline-block; background:rgba(255,255,255,.18); padding:3px 12px; border-radius:999px; font-size:13px; font-weight:600;}
+  main{max-width:860px; margin:0 auto; padding:32px 24px 80px;}
+  section{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:24px 28px; margin-bottom:22px;}
+  h2{margin-top:4px; font-size:22px; color:#0f172a; border-bottom:2px solid var(--accent-soft); padding-bottom:8px;}
+  h3{font-size:18px; color:#1e293b; margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff; color:#3730a3; padding:1px 6px; border-radius:5px; font-family:"SF Mono",Menlo,Consolas,monospace; font-size:14.5px;}
+  pre{background:var(--code-bg); color:var(--code-ink); padding:16px 18px; border-radius:10px; overflow:auto; font-size:14px; line-height:1.5;}
+  pre code{background:none; color:inherit; padding:0;}
+  .callout{border-left:5px solid var(--note); background:#f8fafc; border-radius:8px; padding:12px 16px; margin:16px 0;}
+  .callout .label{font-weight:700; font-size:13px; letter-spacing:.03em; text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .task{border-color:var(--task);} .task .label{color:var(--task);}
+  .flow{display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:18px 0; justify-content:center;}
+  .node{background:var(--accent-soft); color:#1e3a8a; border:1px solid #bfdbfe; border-radius:10px; padding:10px 16px; font-weight:600; text-align:center; font-size:15px;}
+  .arrow{color:var(--accent); font-weight:700; font-size:20px;}
+  table{border-collapse:collapse; width:100%; margin:14px 0; font-size:15px;}
+  th,td{border:1px solid var(--line); padding:9px 12px; text-align:left; vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft); border:none; border-radius:12px; padding:18px 22px;}
+  .objective h2{border:none; margin-top:0; color:#1e3a8a;}
+  footer{max-width:860px; margin:0 auto; padding:0 24px 60px;}
+  .nav{display:flex; gap:12px; flex-wrap:wrap;}
+  .nav a{flex:1; min-width:200px; text-align:center; text-decoration:none; background:#fff; border:1px solid var(--line); border-radius:10px; padding:14px; color:var(--accent); font-weight:600;}
+  .nav a:hover{background:var(--accent); color:#fff;}
+  .nav a.current{background:#1e293b; color:#fff; border-color:#1e293b;}
+  .recap{background:#ecfdf5; border:1px solid #a7f3d0;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 0 — Setup &amp; Tooling</div>
+    <h1>Chunk 0.2 — Terminal &amp; Git Basics</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>How to <strong>navigate the filesystem</strong> from the terminal (<code>pwd</code>, <code>ls</code>, <code>cd</code>, <code>mkdir</code>).</li>
+      <li>The difference between <strong>absolute</strong> and <strong>relative</strong> paths.</li>
+      <li>What <strong>Git</strong> is and the mental model: <em>working directory → staging → commit</em>.</li>
+      <li>What <strong>GitHub</strong> is and how <code>push</code> connects your computer to the cloud.</li>
+    </ul>
+    <p>In the lab you'll put your <code>webdev-course</code> folder under version control and push it to GitHub.</p>
+  </section>
+
+  <section>
+    <h2>1. The terminal: talking to your computer with text</h2>
+    <p>The terminal (a.k.a. the command line or shell) lets you tell the computer what to do by typing commands instead of clicking. Developers live here because it's fast, scriptable, and many tools <em>only</em> have a command-line interface.</p>
+    <p>Your shell on macOS is <strong>zsh</strong>. At all times you are "standing" in some folder — your <strong>current working directory</strong>. The core navigation commands:</p>
+    <table>
+      <tr><th>Command</th><th>Stands for</th><th>What it does</th></tr>
+      <tr><td><code>pwd</code></td><td>print working directory</td><td>Shows the folder you're currently in.</td></tr>
+      <tr><td><code>ls</code></td><td>list</td><td>Lists files &amp; folders here. <code>ls -la</code> shows hidden files too.</td></tr>
+      <tr><td><code>cd folder</code></td><td>change directory</td><td>Move into <code>folder</code>.</td></tr>
+      <tr><td><code>cd ..</code></td><td>—</td><td>Move <em>up</em> one level to the parent folder.</td></tr>
+      <tr><td><code>mkdir name</code></td><td>make directory</td><td>Create a new folder called <code>name</code>.</td></tr>
+      <tr><td><code>touch file.txt</code></td><td>—</td><td>Create an empty file.</td></tr>
+      <tr><td><code>mv</code> / <code>cp</code> / <code>rm</code></td><td>move / copy / remove</td><td>Move (or rename), copy, or delete files.</td></tr>
+    </table>
+    <div class="callout warning">
+      <div class="label">⚠️ rm is forever</div>
+      <code>rm</code> deletes immediately — there's no Trash/Recycle Bin to recover from. Double-check before you delete anything, especially with <code>rm -r</code> (which deletes a whole folder).
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Paths: absolute vs relative</h2>
+    <p>A <strong>path</strong> is an address for a file or folder.</p>
+    <ul>
+      <li><strong>Absolute path</strong> — starts from the root of the disk. On macOS it begins with <code>/</code>, e.g. <code>/Users/you/Desktop/webdev-course</code>. <code>~</code> is shorthand for your home folder.</li>
+      <li><strong>Relative path</strong> — starts from wherever you currently are. <code>.</code> means "here", <code>..</code> means "one level up", and <code>subfolder/file.txt</code> means "into subfolder from here".</li>
+    </ul>
+    <pre><code>cd ~/Desktop/webdev-course   # absolute-ish (~ = home)
+cd ..                        # go up one level
+cd ./notes                   # relative: into "notes" from here</code></pre>
+  </section>
+
+  <section>
+    <h2>3. What is Git?</h2>
+    <p><strong>Git</strong> is a <em>version control system</em>. It takes snapshots of your project so you can: see exactly what changed and when, go back to an earlier working version, and collaborate without overwriting each other's work. Think of it as an infinite, organized "undo history" for your whole project.</p>
+    <p>The key idea is the <strong>three areas</strong> a file moves through:</p>
+    <div class="flow">
+      <div class="node">Working Directory<br><small>your edited files</small></div>
+      <div class="arrow">— git add →</div>
+      <div class="node">Staging Area<br><small>changes to include</small></div>
+      <div class="arrow">— git commit →</div>
+      <div class="node">Repository<br><small>saved snapshot</small></div>
+    </div>
+    <ol>
+      <li>You edit files in your <strong>working directory</strong>.</li>
+      <li><code>git add</code> moves the changes you choose into the <strong>staging area</strong> ("I want these in my next snapshot").</li>
+      <li><code>git commit</code> permanently records the staged changes as a snapshot with a message.</li>
+    </ol>
+    <p>The everyday Git commands:</p>
+    <table>
+      <tr><th>Command</th><th>What it does</th></tr>
+      <tr><td><code>git init</code></td><td>Start tracking the current folder with Git.</td></tr>
+      <tr><td><code>git status</code></td><td>Show what's changed / staged. Run this constantly.</td></tr>
+      <tr><td><code>git add .</code></td><td>Stage all changed files.</td></tr>
+      <tr><td><code>git commit -m "message"</code></td><td>Save a snapshot with a description.</td></tr>
+      <tr><td><code>git log</code></td><td>Show the history of commits.</td></tr>
+    </table>
+    <div class="callout tip">
+      <div class="label">💡 Good commit messages</div>
+      Write what the change does, in the present tense: <code>"Add contact form"</code>, not <code>"stuff"</code>. Your future self will thank you.
+    </div>
+  </section>
+
+  <section>
+    <h2>4. Branches (the mental model)</h2>
+    <p>A <strong>branch</strong> is an independent line of work. The default branch is usually called <code>main</code>. You can create a branch to build a feature without disturbing <code>main</code>, then merge it back when it's ready. We'll keep it simple for now and work mostly on <code>main</code> — full branching strategy comes in the <strong>Bonus Track (B.1)</strong>. For today, just know branches exist and that <code>main</code> is your primary line.</p>
+  </section>
+
+  <section>
+    <h2>5. GitHub: Git in the cloud</h2>
+    <p><strong>Git</strong> runs on your computer. <strong>GitHub</strong> is a website that hosts Git repositories online — a backup, a portfolio, and a place to collaborate. The link between them:</p>
+    <div class="flow">
+      <div class="node">Your computer<br><small>local repo</small></div>
+      <div class="arrow">— git push →</div>
+      <div class="node">GitHub<br><small>remote repo</small></div>
+      <div class="arrow">← git pull —</div>
+      <div class="node">Your computer</div>
+    </div>
+    <ul>
+      <li><code>git push</code> uploads your local commits to GitHub.</li>
+      <li><code>git pull</code> downloads commits from GitHub to your computer.</li>
+      <li>A <strong>remote</strong> named <code>origin</code> is the connection to your GitHub repo.</li>
+    </ul>
+    <div class="callout note">
+      <div class="label">📝 Note</div>
+      GitHub no longer accepts your account password for pushing over HTTPS. You'll authenticate with a <strong>Personal Access Token</strong> or SSH key — the solution walks you through it.
+    </div>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li>Navigate with <code>pwd</code>, <code>ls</code>, <code>cd</code>, <code>mkdir</code>; understand absolute vs relative paths.</li>
+      <li>Git tracks snapshots through three areas: <strong>working dir → staging (<code>add</code>) → commit</strong>.</li>
+      <li>Daily flow: <code>git status</code> → <code>git add .</code> → <code>git commit -m "…"</code>.</li>
+      <li><strong>GitHub</strong> hosts your repo online; <code>git push</code> uploads, <code>git pull</code> downloads.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and put your course folder on GitHub. Stuck? <code>solution.html</code> has every command.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

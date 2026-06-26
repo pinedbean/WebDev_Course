@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk 0.1 — Your Development Environment</title>
+<style>
+  :root{
+    --bg:#0f172a; --panel:#ffffff; --ink:#1e293b; --muted:#64748b;
+    --accent:#2563eb; --accent-soft:#dbeafe; --line:#e2e8f0;
+    --code-bg:#0f172a; --code-ink:#e2e8f0;
+    --note:#0ea5e9; --tip:#16a34a; --warn:#d97706; --task:#7c3aed; --ok:#16a34a;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{margin:0; background:#f1f5f9; color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.65; font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a); color:#fff; padding:28px 24px;}
+  .banner .wrap{max-width:860px; margin:0 auto;}
+  .crumbs{font-size:13px; letter-spacing:.04em; text-transform:uppercase; opacity:.85;}
+  .banner h1{margin:6px 0 4px; font-size:28px;}
+  .badge{display:inline-block; background:rgba(255,255,255,.18); padding:3px 12px; border-radius:999px; font-size:13px; font-weight:600;}
+  main{max-width:860px; margin:0 auto; padding:32px 24px 80px;}
+  section{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:24px 28px; margin-bottom:22px;}
+  h2{margin-top:4px; font-size:22px; color:#0f172a; border-bottom:2px solid #d1fae5; padding-bottom:8px;}
+  h3{font-size:18px; color:#1e293b; margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff; color:#3730a3; padding:1px 6px; border-radius:5px; font-family:"SF Mono",Menlo,Consolas,monospace; font-size:14.5px;}
+  pre{background:var(--code-bg); color:var(--code-ink); padding:16px 18px; border-radius:10px; overflow:auto; font-size:14px; line-height:1.5;}
+  pre code{background:none; color:inherit; padding:0;}
+  .out{background:#052e16; border-left:4px solid var(--ok);}
+  .callout{border-left:5px solid var(--note); background:#f8fafc; border-radius:8px; padding:12px 16px; margin:16px 0;}
+  .callout .label{font-weight:700; font-size:13px; letter-spacing:.03em; text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .step{border:1px solid var(--line); border-radius:12px; padding:4px 22px 16px; margin:18px 0;}
+  .step h3{display:flex; align-items:center; gap:10px;}
+  .num{background:var(--ok); color:#fff; border-radius:50%; width:30px; height:30px; display:inline-flex; align-items:center; justify-content:center; font-size:15px; flex:none;}
+  .os{display:inline-block; font-size:12px; font-weight:700; padding:2px 9px; border-radius:6px; margin-right:6px; text-transform:uppercase; letter-spacing:.03em;}
+  .mac{background:#dbeafe; color:#1e3a8a;} .win{background:#fef3c7; color:#92400e;} .linux{background:#dcfce7; color:#166534;}
+  .expect{font-weight:600; color:#065f46; margin-top:10px;}
+  table{border-collapse:collapse; width:100%; margin:14px 0; font-size:15px;}
+  th,td{border:1px solid var(--line); padding:9px 12px; text-align:left; vertical-align:top;}
+  th{background:#f1f5f9;}
+  footer{max-width:860px; margin:0 auto; padding:0 24px 60px;}
+  .nav{display:flex; gap:12px; flex-wrap:wrap;}
+  .nav a{flex:1; min-width:200px; text-align:center; text-decoration:none; background:#fff; border:1px solid var(--line); border-radius:10px; padding:14px; color:var(--accent); font-weight:600;}
+  .nav a:hover{background:var(--accent); color:#fff;}
+  .nav a.current{background:#1e293b; color:#fff; border-color:#1e293b;}
+  .done{background:#ecfdf5; border:1px solid #a7f3d0;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 0 — Setup &amp; Tooling</div>
+    <h1>Chunk 0.1 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+    <span class="badge">macOS-first, with Windows/Linux notes</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>Follow the steps in order. Each step shows the <strong>command to run</strong>, the <strong>expected output</strong> (in green), and <strong>troubleshooting</strong> if it goes wrong. Your version numbers will differ slightly — that's fine, as long as they meet the minimums.</p>
+    <div class="callout tip">
+      <div class="label">💡 Open a terminal</div>
+      <span class="os mac">macOS</span> Press <code>⌘ + Space</code>, type "Terminal", press Enter. (Your shell is <code>zsh</code>.)<br>
+      <span class="os win">Windows</span> Open <strong>PowerShell</strong> or <strong>Windows Terminal</strong> from the Start menu.<br>
+      <span class="os linux">Linux</span> Open your <strong>Terminal</strong> app.
+    </div>
+  </section>
+
+  <section>
+    <div class="step">
+      <h3><span class="num">1</span> Install Node.js (LTS)</h3>
+      <p><span class="os mac">macOS</span> The simplest route is the official installer, but if you have <strong>Homebrew</strong> it's one command. To install Homebrew first (optional):</p>
+      <pre><code>/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"</code></pre>
+      <p>Then install Node LTS:</p>
+      <pre><code># With Homebrew:
+brew install node
+
+# Or download the macOS "LTS" .pkg installer from:
+# https://nodejs.org  → run it → click through</code></pre>
+      <p><span class="os win">Windows</span> Download the <strong>LTS</strong> Windows Installer (.msi) from <code>https://nodejs.org</code> and run it (keep all defaults — it adds Node to your PATH).</p>
+      <p><span class="os linux">Linux</span> Use <a href="https://github.com/nvm-sh/nvm">nvm</a>: <code>nvm install --lts</code>, or your distro's package manager.</p>
+      <p class="expect">Verify:</p>
+      <pre><code>node --version
+npm --version</code></pre>
+      <pre class="out"><code>v20.11.1
+10.2.4</code></pre>
+      <div class="callout warning">
+        <div class="label">⚠️ "command not found: node"</div>
+        Close and reopen the terminal so it picks up the new PATH. Still failing on macOS after a .pkg install? Try <code>brew install node</code> instead, or reopen Terminal.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Install Python 3.11+</h3>
+      <p><span class="os mac">macOS</span> macOS ships with an old Python. Install a fresh one:</p>
+      <pre><code># With Homebrew:
+brew install python@3.12
+
+# Or download the macOS installer from:
+# https://www.python.org/downloads/  → run it</code></pre>
+      <p><span class="os win">Windows</span> Download from <code>https://www.python.org/downloads/</code> and run the installer. <strong>Important:</strong> tick <em>"Add python.exe to PATH"</em> on the first screen.</p>
+      <p><span class="os linux">Linux</span> <code>sudo apt install python3 python3-pip</code> (Debian/Ubuntu) or your distro's equivalent.</p>
+      <p class="expect">Verify:</p>
+      <pre><code>python3 --version
+pip3 --version</code></pre>
+      <pre class="out"><code>Python 3.12.2
+pip 24.0 from /usr/local/lib/python3.12/site-packages/pip (python 3.12)</code></pre>
+      <div class="callout note">
+        <div class="label">📝 Note (Windows)</div>
+        On Windows the commands are often <code>python --version</code> and <code>pip --version</code> (no "3"). Both are fine.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Install VS Code + 3 extensions</h3>
+      <p>Download VS Code from <code>https://code.visualstudio.com</code> and install it.</p>
+      <p><span class="os mac">macOS</span> Drag <strong>Visual Studio Code</strong> into your <strong>Applications</strong> folder, then open it.</p>
+      <p><strong>Add the extensions:</strong> click the Extensions icon in the left sidebar (□ stacked icon, or <code>⌘ + Shift + X</code>). Search and install each:</p>
+      <ul>
+        <li><strong>Prettier - Code formatter</strong> (by Prettier)</li>
+        <li><strong>ESLint</strong> (by Microsoft)</li>
+        <li><strong>Python</strong> (by Microsoft)</li>
+      </ul>
+      <p><strong>Enable the <code>code</code> terminal command</strong> (very handy): open the Command Palette with <code>⌘ + Shift + P</code>, type <em>"Shell Command: Install 'code' command in PATH"</em>, and select it. Now you can run:</p>
+      <pre><code>code .</code></pre>
+      <p class="expect">…from any folder to open it in VS Code.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Browser + DevTools</h3>
+      <p>Install <strong>Chrome</strong> (<code>https://www.google.com/chrome</code>) or use Firefox. Open any website, then:</p>
+      <ul>
+        <li><span class="os mac">macOS</span> Open DevTools with <code>⌥ + ⌘ + I</code>, or right-click → <strong>Inspect</strong>.</li>
+        <li><span class="os win">Windows</span> / <span class="os linux">Linux</span> Press <code>F12</code>, or right-click → <strong>Inspect</strong>.</li>
+      </ul>
+      <p>Click through the three tabs you'll use most:</p>
+      <table>
+        <tr><th>Tab</th><th>What it's for</th></tr>
+        <tr><td><strong>Elements</strong></td><td>Inspect &amp; tweak the HTML/CSS of the page live.</td></tr>
+        <tr><td><strong>Console</strong></td><td>See errors and run JavaScript. Try typing <code>2 + 2</code> and Enter.</td></tr>
+        <tr><td><strong>Network</strong></td><td>Watch the requests the page makes (you'll use this for APIs).</td></tr>
+      </table>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Create your project folder</h3>
+      <p>From the terminal, create the folder and open it in VS Code:</p>
+      <pre><code># macOS / Linux
+mkdir -p ~/Desktop/webdev-course
+cd ~/Desktop/webdev-course
+code .</code></pre>
+      <pre><code># Windows (PowerShell)
+mkdir $HOME\Desktop\webdev-course
+cd $HOME\Desktop\webdev-course
+code .</code></pre>
+      <div class="callout tip">
+        <div class="label">💡 Tip</div>
+        <code>mkdir</code> makes a directory, <code>cd</code> changes into it, and <code>code .</code> opens the current folder ("<code>.</code>") in VS Code. You'll use this trio constantly.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Create <code>versions.txt</code></h3>
+      <p>Easiest way: create the file in VS Code (File → New File → save as <code>versions.txt</code>) and paste your version outputs. Or generate it from the terminal in one go:</p>
+      <pre><code># macOS / Linux — writes everything into versions.txt
+{
+  echo "Node.js: $(node --version)"
+  echo "npm: $(npm --version)"
+  echo "Python: $(python3 --version)"
+  echo "pip: $(pip3 --version)"
+} > versions.txt
+
+cat versions.txt</code></pre>
+      <p class="expect">Expected contents of <code>versions.txt</code>:</p>
+      <pre class="out"><code>Node.js: v20.11.1
+npm: 10.2.4
+Python: Python 3.12.2
+pip: pip 24.0 from /usr/local/lib/python3.12/site-packages/pip (python 3.12)</code></pre>
+      <p>Then add two manual lines for your editor and browser:</p>
+      <pre><code>VS Code: 1.89.0
+Browser: Chrome 125</code></pre>
+      <div class="callout note">
+        <div class="label">📝 Note</div>
+        The <code>{ … } > versions.txt</code> trick runs several commands and writes their combined output into the file. The <code>></code> means "send output to this file (overwrite)". You'll learn more shell in Chunk 0.2.
+      </div>
+    </div>
+  </section>
+
+  <section class="done">
+    <h2>🎉 You're done</h2>
+    <p>Re-check the acceptance list from the assignment — every box should now be tickable:</p>
+    <ul>
+      <li>✅ Node, npm, Python, pip all print versions that meet the minimums.</li>
+      <li>✅ VS Code installed with Prettier, ESLint, Python extensions.</li>
+      <li>✅ DevTools opened; Elements / Console / Network located.</li>
+      <li>✅ <code>versions.txt</code> exists in <code>~/Desktop/webdev-course</code>.</li>
+    </ul>
+    <p><strong>Up next → Chunk 0.2: Terminal &amp; Git Basics.</strong> You'll learn to navigate the filesystem and start version-controlling this exact folder with Git.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>
