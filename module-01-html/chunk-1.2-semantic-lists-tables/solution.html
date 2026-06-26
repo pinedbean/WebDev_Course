@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk 1.2 — Semantic HTML, Lists &amp; Tables</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .full{border:2px solid #16a34a;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 1 — HTML Foundations</div>
+    <h1>Chunk 1.2 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>We restructure <code>about.html</code> step by step into a clean, semantic page. The full file is at the bottom.</p>
+  </section>
+
+  <section>
+    <div class="step">
+      <h3><span class="num">1</span> Header &amp; nav</h3>
+      <pre><code>&lt;header&gt;
+  &lt;h1&gt;Jane Doe&lt;/h1&gt;
+  &lt;nav&gt;
+    &lt;a href="index.html"&gt;Home&lt;/a&gt; |
+    &lt;a href="about.html"&gt;About&lt;/a&gt; |
+    &lt;a href="contact.html"&gt;Contact&lt;/a&gt;
+  &lt;/nav&gt;
+&lt;/header&gt;</code></pre>
+      <p>The <code>|</code> separators are temporary — CSS will style the nav properly in Module 2.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Wrap content in <code>&lt;main&gt;</code> + sections</h3>
+      <pre><code>&lt;main&gt;
+  &lt;section&gt;
+    &lt;h2&gt;About Me&lt;/h2&gt;
+    &lt;p&gt;Hi! I'm Jane, an aspiring full-stack developer...&lt;/p&gt;
+  &lt;/section&gt;
+
+  &lt;section&gt;
+    &lt;h2&gt;What I'm Learning&lt;/h2&gt;
+    &lt;p&gt;HTML, CSS, JavaScript, React, and FastAPI.&lt;/p&gt;
+  &lt;/section&gt;
+&lt;/main&gt;</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Skills list (with a nested sub-list)</h3>
+      <pre><code>&lt;section&gt;
+  &lt;h2&gt;Skills&lt;/h2&gt;
+  &lt;ul&gt;
+    &lt;li&gt;HTML&lt;/li&gt;
+    &lt;li&gt;CSS&lt;/li&gt;
+    &lt;li&gt;JavaScript
+      &lt;ul&gt;
+        &lt;li&gt;DOM basics&lt;/li&gt;
+        &lt;li&gt;Fetch &amp; APIs&lt;/li&gt;
+      &lt;/ul&gt;
+    &lt;/li&gt;
+    &lt;li&gt;Git &amp; GitHub&lt;/li&gt;
+    &lt;li&gt;Problem solving&lt;/li&gt;
+  &lt;/ul&gt;
+&lt;/section&gt;</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Experience table</h3>
+      <pre><code>&lt;section&gt;
+  &lt;h2&gt;Experience&lt;/h2&gt;
+  &lt;table&gt;
+    &lt;caption&gt;Work &amp; project history&lt;/caption&gt;
+    &lt;thead&gt;
+      &lt;tr&gt;
+        &lt;th&gt;Year&lt;/th&gt;
+        &lt;th&gt;Role&lt;/th&gt;
+        &lt;th&gt;Organisation&lt;/th&gt;
+      &lt;/tr&gt;
+    &lt;/thead&gt;
+    &lt;tbody&gt;
+      &lt;tr&gt;
+        &lt;td&gt;2025&lt;/td&gt;
+        &lt;td&gt;Web Dev Student&lt;/td&gt;
+        &lt;td&gt;Self-taught&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+        &lt;td&gt;2024&lt;/td&gt;
+        &lt;td&gt;Volunteer&lt;/td&gt;
+        &lt;td&gt;Local Library&lt;/td&gt;
+      &lt;/tr&gt;
+    &lt;/tbody&gt;
+  &lt;/table&gt;
+&lt;/section&gt;</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Footer</h3>
+      <pre><code>&lt;footer&gt;
+  &lt;p&gt;© 2026 Jane Doe ·
+    &lt;a href="mailto:jane@example.com"&gt;jane@example.com&lt;/a&gt;
+  &lt;/p&gt;
+&lt;/footer&gt;</code></pre>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Validate</h3>
+      <p>Go to <a href="https://validator.w3.org/#validate_by_input">validator.w3.org</a>, paste your whole file, and click Check. Common fixes: a missing closing tag, a stray <code>&lt;/section&gt;</code>, or forgetting <code>alt</code> on the image. Aim for the green "No errors" banner.</p>
+    </div>
+  </section>
+
+  <section class="full">
+    <h2>📄 Complete <code>about.html</code></h2>
+    <pre><code>&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+  &lt;meta charset="UTF-8"&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+  &lt;title&gt;Jane Doe — About&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;header&gt;
+    &lt;h1&gt;Jane Doe&lt;/h1&gt;
+    &lt;nav&gt;
+      &lt;a href="index.html"&gt;Home&lt;/a&gt; |
+      &lt;a href="about.html"&gt;About&lt;/a&gt; |
+      &lt;a href="contact.html"&gt;Contact&lt;/a&gt;
+    &lt;/nav&gt;
+  &lt;/header&gt;
+
+  &lt;main&gt;
+    &lt;img src="profile.jpg" alt="Portrait of Jane Doe smiling"&gt;
+
+    &lt;section&gt;
+      &lt;h2&gt;About Me&lt;/h2&gt;
+      &lt;p&gt;Hi! I'm Jane, an aspiring full-stack developer based in Bangkok.&lt;/p&gt;
+    &lt;/section&gt;
+
+    &lt;section&gt;
+      &lt;h2&gt;What I'm Learning&lt;/h2&gt;
+      &lt;p&gt;HTML, CSS, JavaScript, React, and FastAPI.&lt;/p&gt;
+    &lt;/section&gt;
+
+    &lt;section&gt;
+      &lt;h2&gt;Skills&lt;/h2&gt;
+      &lt;ul&gt;
+        &lt;li&gt;HTML&lt;/li&gt;
+        &lt;li&gt;CSS&lt;/li&gt;
+        &lt;li&gt;JavaScript
+          &lt;ul&gt;
+            &lt;li&gt;DOM basics&lt;/li&gt;
+            &lt;li&gt;Fetch &amp; APIs&lt;/li&gt;
+          &lt;/ul&gt;
+        &lt;/li&gt;
+        &lt;li&gt;Git &amp; GitHub&lt;/li&gt;
+        &lt;li&gt;Problem solving&lt;/li&gt;
+      &lt;/ul&gt;
+    &lt;/section&gt;
+
+    &lt;section&gt;
+      &lt;h2&gt;Experience&lt;/h2&gt;
+      &lt;table&gt;
+        &lt;caption&gt;Work &amp; project history&lt;/caption&gt;
+        &lt;thead&gt;
+          &lt;tr&gt;&lt;th&gt;Year&lt;/th&gt;&lt;th&gt;Role&lt;/th&gt;&lt;th&gt;Organisation&lt;/th&gt;&lt;/tr&gt;
+        &lt;/thead&gt;
+        &lt;tbody&gt;
+          &lt;tr&gt;&lt;td&gt;2025&lt;/td&gt;&lt;td&gt;Web Dev Student&lt;/td&gt;&lt;td&gt;Self-taught&lt;/td&gt;&lt;/tr&gt;
+          &lt;tr&gt;&lt;td&gt;2024&lt;/td&gt;&lt;td&gt;Volunteer&lt;/td&gt;&lt;td&gt;Local Library&lt;/td&gt;&lt;/tr&gt;
+        &lt;/tbody&gt;
+      &lt;/table&gt;
+    &lt;/section&gt;
+  &lt;/main&gt;
+
+  &lt;footer&gt;
+    &lt;p&gt;© 2026 Jane Doe ·
+      &lt;a href="mailto:jane@example.com"&gt;jane@example.com&lt;/a&gt;
+    &lt;/p&gt;
+  &lt;/footer&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+  </section>
+
+  <section class="done">
+    <h2>🎉 You're done</h2>
+    <p>Your page now has a meaningful, accessible structure that screen readers and search engines understand — even though it still looks plain. That structure is exactly what CSS will hook into next module.</p>
+    <p><strong>Up next → Chunk 1.3: Forms &amp; Inputs</strong>, where you build the Contact page and complete the 3-page personal site (the Module 1 checkpoint).</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

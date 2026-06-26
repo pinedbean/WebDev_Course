@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 1.2 — Semantic HTML, Lists &amp; Tables</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .layout{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:13px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:0;overflow:hidden;}
+  .layout div{border:1px dashed #94a3b8;padding:8px 10px;margin:4px;border-radius:4px;background:#fff;}
+  .layout .hd{background:#dbeafe;} .layout .nv{background:#ede9fe;} .layout .ft{background:#dcfce7;} .layout .mn{background:#fef9c3;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 1 — HTML Foundations</div>
+    <h1>Chunk 1.2 — Semantic HTML, Lists &amp; Tables</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>What <strong>semantic HTML</strong> means and why it matters (accessibility &amp; SEO).</li>
+      <li>The page-structure elements: <code>header</code>, <code>nav</code>, <code>main</code>, <code>section</code>, <code>article</code>, <code>aside</code>, <code>footer</code>.</li>
+      <li>Lists: unordered, ordered, and description lists.</li>
+      <li>Tables for tabular data, done accessibly.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>1. What "semantic" means</h2>
+    <p>A <code>&lt;div&gt;</code> is a generic box with no meaning. <strong>Semantic</strong> elements describe the <em>purpose</em> of their content. Compare:</p>
+    <pre><code>&lt;!-- Non-semantic: what is this? --&gt;
+&lt;div class="top"&gt;...&lt;/div&gt;
+
+&lt;!-- Semantic: clearly the page header --&gt;
+&lt;header&gt;...&lt;/header&gt;</code></pre>
+    <p>They can look identical on screen, but semantics matter to three audiences:</p>
+    <ul>
+      <li><strong>Screen readers</strong> announce landmarks ("navigation", "main content") so blind users can jump around.</li>
+      <li><strong>Search engines</strong> understand your page better, helping SEO.</li>
+      <li><strong>Other developers</strong> (and future you) read the structure at a glance.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>2. The page-structure elements</h2>
+    <p>A typical page is laid out with these landmark elements:</p>
+    <div class="layout">
+      <div class="hd">&lt;header&gt; — site title / logo
+        <div class="nv">&lt;nav&gt; — main navigation links</div>
+      </div>
+      <div class="mn">&lt;main&gt; — the unique content of this page
+        <div>&lt;section&gt; — a thematic grouping</div>
+        <div>&lt;article&gt; — a self-contained piece (e.g. a blog post)</div>
+        <div>&lt;aside&gt; — side content (related links, ads)</div>
+      </div>
+      <div class="ft">&lt;footer&gt; — copyright, contact, small print</div>
+    </div>
+    <table>
+      <tr><th>Element</th><th>Use it for</th></tr>
+      <tr><td><code>&lt;header&gt;</code></td><td>Top of the page or a section: title, logo, intro.</td></tr>
+      <tr><td><code>&lt;nav&gt;</code></td><td>A block of navigation links.</td></tr>
+      <tr><td><code>&lt;main&gt;</code></td><td>The primary, unique content. <strong>One per page.</strong></td></tr>
+      <tr><td><code>&lt;section&gt;</code></td><td>A thematic group of content, usually with a heading.</td></tr>
+      <tr><td><code>&lt;article&gt;</code></td><td>A self-contained item that could stand alone (post, card, comment).</td></tr>
+      <tr><td><code>&lt;aside&gt;</code></td><td>Tangentially related content (sidebar, callouts).</td></tr>
+      <tr><td><code>&lt;footer&gt;</code></td><td>Bottom matter: copyright, links, contact.</td></tr>
+    </table>
+    <div class="callout tip">
+      <div class="label">💡 section vs div</div>
+      Use a <code>&lt;section&gt;</code> when the content is a meaningful group (it usually deserves a heading). Use a plain <code>&lt;div&gt;</code> only when you need a box purely for styling with no semantic meaning.
+    </div>
+  </section>
+
+  <section>
+    <h2>3. Lists</h2>
+    <h3>Unordered list — <code>&lt;ul&gt;</code></h3>
+    <p>For items where order doesn't matter (bullets):</p>
+    <pre><code>&lt;ul&gt;
+  &lt;li&gt;HTML&lt;/li&gt;
+  &lt;li&gt;CSS&lt;/li&gt;
+  &lt;li&gt;JavaScript&lt;/li&gt;
+&lt;/ul&gt;</code></pre>
+
+    <h3>Ordered list — <code>&lt;ol&gt;</code></h3>
+    <p>For steps or rankings (numbered automatically):</p>
+    <pre><code>&lt;ol&gt;
+  &lt;li&gt;Learn HTML&lt;/li&gt;
+  &lt;li&gt;Learn CSS&lt;/li&gt;
+  &lt;li&gt;Learn JavaScript&lt;/li&gt;
+&lt;/ol&gt;</code></pre>
+
+    <h3>Description list — <code>&lt;dl&gt;</code></h3>
+    <p>For term/definition pairs:</p>
+    <pre><code>&lt;dl&gt;
+  &lt;dt&gt;HTML&lt;/dt&gt;
+  &lt;dd&gt;The structure of a web page.&lt;/dd&gt;
+  &lt;dt&gt;CSS&lt;/dt&gt;
+  &lt;dd&gt;The styling of a web page.&lt;/dd&gt;
+&lt;/dl&gt;</code></pre>
+    <p>Lists also <strong>nest</strong> — put a <code>&lt;ul&gt;</code> inside an <code>&lt;li&gt;</code> for sub-items.</p>
+  </section>
+
+  <section>
+    <h2>4. Tables</h2>
+    <p>Tables are for <strong>tabular data</strong> (rows &amp; columns that relate) — <em>not</em> for page layout. The key tags:</p>
+    <table>
+      <tr><th>Tag</th><th>Meaning</th></tr>
+      <tr><td><code>&lt;table&gt;</code></td><td>The whole table.</td></tr>
+      <tr><td><code>&lt;caption&gt;</code></td><td>A title/description of the table.</td></tr>
+      <tr><td><code>&lt;thead&gt;</code> / <code>&lt;tbody&gt;</code></td><td>Group the header rows vs the body rows.</td></tr>
+      <tr><td><code>&lt;tr&gt;</code></td><td>Table row.</td></tr>
+      <tr><td><code>&lt;th&gt;</code></td><td>Header cell (bold, and announced as a header).</td></tr>
+      <tr><td><code>&lt;td&gt;</code></td><td>Data cell.</td></tr>
+    </table>
+    <pre><code>&lt;table&gt;
+  &lt;caption&gt;Work Experience&lt;/caption&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;Year&lt;/th&gt;
+      &lt;th&gt;Role&lt;/th&gt;
+      &lt;th&gt;Company&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;2024&lt;/td&gt;
+      &lt;td&gt;Junior Developer&lt;/td&gt;
+      &lt;td&gt;Acme Inc.&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;</code></pre>
+    <div class="callout warning">
+      <div class="label">⚠️ Don't use tables for layout</div>
+      In the early web, people built page layouts with tables. Don't — it breaks accessibility and responsiveness. Use tables only for genuine data grids. Layout is CSS's job (Module 2).
+    </div>
+  </section>
+
+  <section>
+    <h2>5. Accessibility recap</h2>
+    <ul>
+      <li>Use semantic landmarks so assistive tech can navigate (<code>header</code>, <code>nav</code>, <code>main</code>, <code>footer</code>).</li>
+      <li>Keep one <code>&lt;h1&gt;</code> and a logical heading order (don't skip levels for looks).</li>
+      <li>Every <code>&lt;img&gt;</code> needs <code>alt</code>.</li>
+      <li>Use <code>&lt;th&gt;</code> for table headers so cells are associated with their column.</li>
+    </ul>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li><strong>Semantic HTML</strong> describes <em>purpose</em>, helping accessibility, SEO, and readability.</li>
+      <li>Structure pages with <code>header</code>, <code>nav</code>, <code>main</code>, <code>section</code>, <code>article</code>, <code>aside</code>, <code>footer</code>.</li>
+      <li>Lists: <code>&lt;ul&gt;</code> (bullets), <code>&lt;ol&gt;</code> (numbered), <code>&lt;dl&gt;</code> (term/definition).</li>
+      <li>Tables for <em>data</em>: <code>table</code> → <code>thead</code>/<code>tbody</code> → <code>tr</code> → <code>th</code>/<code>td</code>.</li>
+    </ul>
+    <p><strong>Next:</strong> in the lab you'll restructure your About Me page semantically and add a skills list + experience table.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

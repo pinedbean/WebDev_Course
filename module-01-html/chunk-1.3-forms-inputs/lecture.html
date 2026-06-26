@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 1.3 — Forms &amp; Inputs</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  .demo{background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;padding:16px 18px;}
+  .demo label{display:block;font-weight:600;margin:10px 0 4px;}
+  .demo input,.demo select,.demo textarea{width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:15px;font-family:inherit;}
+  .demo button{margin-top:12px;background:var(--accent);color:#fff;border:none;padding:9px 18px;border-radius:6px;font-weight:600;cursor:pointer;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 1 — HTML Foundations</div>
+    <h1>Chunk 1.3 — Forms &amp; Inputs</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>How <code>&lt;form&gt;</code> collects user input and where it goes.</li>
+      <li>The common input types and how to label them properly.</li>
+      <li><code>&lt;select&gt;</code>, <code>&lt;textarea&gt;</code>, checkboxes, and radio buttons.</li>
+      <li>Native browser <strong>validation</strong> (no JavaScript needed yet).</li>
+    </ul>
+    <p>Forms are how users <em>send data to a server</em> — the gateway to logins, search boxes, comments, and your capstone later. This chunk's lab builds the Contact page and finishes your 3-page personal site (the Module 1 checkpoint).</p>
+  </section>
+
+  <section>
+    <h2>1. The <code>&lt;form&gt;</code> element</h2>
+    <p>A form wraps a group of inputs. Two key attributes:</p>
+    <ul>
+      <li><code>action</code> — the URL the data is sent to.</li>
+      <li><code>method</code> — how it's sent: <code>get</code> (data in the URL, for searches) or <code>post</code> (data in the request body, for creating things).</li>
+    </ul>
+    <pre><code>&lt;form action="/submit" method="post"&gt;
+  &lt;!-- inputs go here --&gt;
+  &lt;button type="submit"&gt;Send&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+    <div class="callout note">
+      <div class="label">📝 For now</div>
+      We have no server yet, so submitting won't save anything. That's fine — this chunk is about building the form's structure. In Module 5 (FastAPI) your forms will talk to a real backend.
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Inputs &amp; labels</h2>
+    <p>The workhorse is <code>&lt;input&gt;</code>. Its <code>type</code> attribute changes its behavior and on-screen keyboard. Always pair an input with a <code>&lt;label&gt;</code> — clicking the label focuses the input, and screen readers read them together.</p>
+    <pre><code>&lt;label for="email"&gt;Email&lt;/label&gt;
+&lt;input type="email" id="email" name="email"&gt;</code></pre>
+    <ul>
+      <li><code>for</code> on the label must match the input's <code>id</code>.</li>
+      <li><code>name</code> is the key the server receives (e.g. <code>email=jane@x.com</code>).</li>
+    </ul>
+    <p>Common input types:</p>
+    <table>
+      <tr><th>type</th><th>For</th></tr>
+      <tr><td><code>text</code></td><td>Single-line text (default).</td></tr>
+      <tr><td><code>email</code></td><td>Email — validates the @ format, email keyboard on mobile.</td></tr>
+      <tr><td><code>password</code></td><td>Hidden characters.</td></tr>
+      <tr><td><code>number</code></td><td>Numeric input with steppers.</td></tr>
+      <tr><td><code>tel</code> / <code>url</code></td><td>Phone numbers / web addresses.</td></tr>
+      <tr><td><code>date</code></td><td>A date picker.</td></tr>
+      <tr><td><code>checkbox</code></td><td>On/off, multiple selectable.</td></tr>
+      <tr><td><code>radio</code></td><td>Pick exactly one from a group (same <code>name</code>).</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>3. Select, textarea, checkboxes &amp; radios</h2>
+    <h3>Dropdown — <code>&lt;select&gt;</code></h3>
+    <pre><code>&lt;label for="topic"&gt;Topic&lt;/label&gt;
+&lt;select id="topic" name="topic"&gt;
+  &lt;option value="general"&gt;General&lt;/option&gt;
+  &lt;option value="support"&gt;Support&lt;/option&gt;
+  &lt;option value="hello"&gt;Just saying hi&lt;/option&gt;
+&lt;/select&gt;</code></pre>
+
+    <h3>Multi-line text — <code>&lt;textarea&gt;</code></h3>
+    <pre><code>&lt;label for="message"&gt;Message&lt;/label&gt;
+&lt;textarea id="message" name="message" rows="5"&gt;&lt;/textarea&gt;</code></pre>
+
+    <h3>Radio buttons (choose one)</h3>
+    <p>Group them by giving the same <code>name</code>:</p>
+    <pre><code>&lt;input type="radio" id="email-c" name="contact" value="email"&gt;
+&lt;label for="email-c"&gt;Email&lt;/label&gt;
+&lt;input type="radio" id="phone-c" name="contact" value="phone"&gt;
+&lt;label for="phone-c"&gt;Phone&lt;/label&gt;</code></pre>
+
+    <h3>Checkbox (on/off)</h3>
+    <pre><code>&lt;input type="checkbox" id="subscribe" name="subscribe"&gt;
+&lt;label for="subscribe"&gt;Subscribe to updates&lt;/label&gt;</code></pre>
+  </section>
+
+  <section>
+    <h2>4. Native validation</h2>
+    <p>The browser can validate inputs <em>before</em> submitting — free, no JavaScript. Add these attributes:</p>
+    <table>
+      <tr><th>Attribute</th><th>Effect</th></tr>
+      <tr><td><code>required</code></td><td>Field can't be empty.</td></tr>
+      <tr><td><code>type="email"</code></td><td>Must look like an email.</td></tr>
+      <tr><td><code>minlength</code> / <code>maxlength</code></td><td>Limit text length.</td></tr>
+      <tr><td><code>min</code> / <code>max</code></td><td>Limit numeric/date range.</td></tr>
+      <tr><td><code>pattern</code></td><td>Must match a regular expression.</td></tr>
+      <tr><td><code>placeholder</code></td><td>Hint text (not validation, but helpful).</td></tr>
+    </table>
+    <pre><code>&lt;input type="email" id="email" name="email"
+       required placeholder="you@example.com"&gt;</code></pre>
+    <p>If a required field is empty on submit, the browser blocks it and shows a message automatically.</p>
+    <div class="callout warning">
+      <div class="label">⚠️ Validation ≠ security</div>
+      Browser validation improves the <em>user experience</em>, but users can bypass it. Real safety happens on the <strong>server</strong> — you'll re-validate everything in FastAPI (Module 5). Never trust the client alone.
+    </div>
+  </section>
+
+  <section>
+    <h2>5. A complete contact form (live preview)</h2>
+    <p>Here's a real, working form rendered below — try clicking labels, and pressing "Send" with the email empty to see native validation:</p>
+    <div class="demo">
+      <form onsubmit="return false">
+        <label for="d-name">Name</label>
+        <input type="text" id="d-name" name="name" required placeholder="Your name">
+        <label for="d-email">Email</label>
+        <input type="email" id="d-email" name="email" required placeholder="you@example.com">
+        <label for="d-topic">Topic</label>
+        <select id="d-topic" name="topic">
+          <option>General</option><option>Support</option><option>Feedback</option>
+        </select>
+        <label for="d-msg">Message</label>
+        <textarea id="d-msg" name="message" rows="3" placeholder="Say hello..."></textarea>
+        <button type="submit">Send</button>
+      </form>
+    </div>
+    <p>The code that produces it is exactly what you'll write in the lab.</p>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li><code>&lt;form&gt;</code> groups inputs; <code>action</code> + <code>method</code> say where/how data is sent.</li>
+      <li>Pair every input with a <code>&lt;label for&gt;</code> matching its <code>id</code>; <code>name</code> is the server key.</li>
+      <li>Pick the right <code>type</code> (<code>email</code>, <code>number</code>, <code>date</code>…), and use <code>&lt;select&gt;</code>, <code>&lt;textarea&gt;</code>, radios, checkboxes.</li>
+      <li>Add <code>required</code> and friends for native validation — but always re-validate on the server.</li>
+    </ul>
+    <p><strong>Next:</strong> build <code>contact.html</code> and assemble your 3-page site in <code>assignment.html</code>.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture · Chunk 1.1 — HTML Document Structure</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid var(--accent-soft);padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:6px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px;}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top;}
+  th{background:#f1f5f9;}
+  .objective{background:var(--accent-soft);border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#1e3a8a;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .recap{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .anatomy{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:15px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px 16px;}
+  .tag{color:#7c3aed;} .attr{color:#0e7490;} .val{color:#b45309;} .txt{color:#334155;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 1 — HTML Foundations</div>
+    <h1>Chunk 1.1 — HTML Document Structure</h1>
+    <span class="badge">📖 LECTURE</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 What you'll learn</h2>
+    <ul>
+      <li>What HTML is and the anatomy of an <strong>element</strong> (tags + attributes).</li>
+      <li>The required skeleton of every HTML page.</li>
+      <li>Core content elements: headings, paragraphs, <strong>links</strong>, and <strong>images</strong>.</li>
+      <li>How nesting and indentation keep your markup readable.</li>
+    </ul>
+    <p>In the lab you'll build an "About Me" page from a blank file.</p>
+  </section>
+
+  <section>
+    <h2>1. What is HTML?</h2>
+    <p><strong>HTML</strong> (HyperText Markup Language) is how we describe the <em>structure and content</em> of a web page. It is not a programming language — there's no logic or math. You "mark up" text by wrapping it in <strong>tags</strong> that tell the browser what each piece <em>is</em>: a heading, a paragraph, a link, an image.</p>
+    <p>HTML is one of three frontend languages, each with a job:</p>
+    <table>
+      <tr><th>Language</th><th>Role</th><th>Analogy</th></tr>
+      <tr><td><strong>HTML</strong></td><td>Structure &amp; content</td><td>The skeleton</td></tr>
+      <tr><td>CSS</td><td>Styling &amp; layout</td><td>The skin &amp; clothes</td></tr>
+      <tr><td>JavaScript</td><td>Behavior &amp; interactivity</td><td>The muscles</td></tr>
+    </table>
+    <p>This module is all about the skeleton. CSS comes in Module 2.</p>
+  </section>
+
+  <section>
+    <h2>2. Anatomy of an element</h2>
+    <p>Most elements have an <strong>opening tag</strong>, some <strong>content</strong>, and a <strong>closing tag</strong>:</p>
+    <div class="anatomy">
+      <span class="tag">&lt;p&gt;</span><span class="txt">Hello world</span><span class="tag">&lt;/p&gt;</span>
+    </div>
+    <ul>
+      <li><code>&lt;p&gt;</code> — the opening tag (here, a paragraph).</li>
+      <li><code>Hello world</code> — the content.</li>
+      <li><code>&lt;/p&gt;</code> — the closing tag (note the slash).</li>
+    </ul>
+    <p>Tags can carry <strong>attributes</strong> — extra info written as <code>name="value"</code> inside the opening tag:</p>
+    <div class="anatomy">
+      <span class="tag">&lt;a </span><span class="attr">href</span>=<span class="val">"https://example.com"</span><span class="tag">&gt;</span><span class="txt">Visit</span><span class="tag">&lt;/a&gt;</span>
+    </div>
+    <p>Here <code>href</code> is the attribute name and the URL is its value. A few elements are <strong>self-closing</strong> (no content, no closing tag), like images: <code>&lt;img src="cat.jpg" alt="A cat"&gt;</code>.</p>
+    <div class="callout tip">
+      <div class="label">💡 Tip</div>
+      Tag names are lowercase, attribute values go in quotes, and every opening tag (except self-closing ones) needs a matching closing tag.
+    </div>
+  </section>
+
+  <section>
+    <h2>3. The document skeleton</h2>
+    <p>Every HTML page starts from the same boilerplate. Memorize this shape — you'll type it constantly:</p>
+    <pre><code>&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+  &lt;meta charset="UTF-8"&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+  &lt;title&gt;My Page&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;h1&gt;Hello!&lt;/h1&gt;
+  &lt;p&gt;This is my first page.&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+    <table>
+      <tr><th>Part</th><th>What it's for</th></tr>
+      <tr><td><code>&lt;!DOCTYPE html&gt;</code></td><td>Tells the browser "this is modern HTML5". Always first.</td></tr>
+      <tr><td><code>&lt;html lang="en"&gt;</code></td><td>The root element; <code>lang</code> helps screen readers &amp; search engines.</td></tr>
+      <tr><td><code>&lt;head&gt;</code></td><td>Info <em>about</em> the page (not shown on screen): title, character set, viewport, links to CSS.</td></tr>
+      <tr><td><code>&lt;meta charset="UTF-8"&gt;</code></td><td>Lets the page show any character/emoji correctly.</td></tr>
+      <tr><td>viewport meta</td><td>Makes the page scale properly on phones (vital for responsive design later).</td></tr>
+      <tr><td><code>&lt;title&gt;</code></td><td>The text in the browser tab.</td></tr>
+      <tr><td><code>&lt;body&gt;</code></td><td>Everything the user actually sees on the page.</td></tr>
+    </table>
+    <div class="callout note">
+      <div class="label">📝 head vs body</div>
+      If you can <em>see</em> it on the page, it goes in the <code>&lt;body&gt;</code>. If it's information <em>about</em> the page, it goes in the <code>&lt;head&gt;</code>.
+    </div>
+  </section>
+
+  <section>
+    <h2>4. Core content elements</h2>
+    <h3>Headings</h3>
+    <p>Six levels, <code>&lt;h1&gt;</code> (most important) to <code>&lt;h6&gt;</code> (least). Use them to create an outline — <strong>one</strong> <code>&lt;h1&gt;</code> per page, then nest down logically. Don't pick a heading just because of its size (that's CSS's job).</p>
+    <pre><code>&lt;h1&gt;Jane Doe&lt;/h1&gt;
+&lt;h2&gt;About Me&lt;/h2&gt;
+&lt;h3&gt;Hobbies&lt;/h3&gt;</code></pre>
+
+    <h3>Paragraphs &amp; line breaks</h3>
+    <pre><code>&lt;p&gt;I'm learning full-stack web development.&lt;/p&gt;</code></pre>
+
+    <h3>Links — <code>&lt;a&gt;</code></h3>
+    <p>The "hyper" in HyperText. The <code>href</code> attribute is the destination:</p>
+    <pre><code>&lt;a href="https://developer.mozilla.org"&gt;MDN docs&lt;/a&gt;     &lt;!-- external --&gt;
+&lt;a href="about.html"&gt;About page&lt;/a&gt;                       &lt;!-- another page in your site --&gt;
+&lt;a href="mailto:you@example.com"&gt;Email me&lt;/a&gt;             &lt;!-- opens email app --&gt;</code></pre>
+
+    <h3>Images — <code>&lt;img&gt;</code></h3>
+    <p>Self-closing. <code>src</code> is the file/URL; <code>alt</code> is text shown if the image fails and read aloud by screen readers — never skip it.</p>
+    <pre><code>&lt;img src="profile.jpg" alt="Portrait of Jane Doe"&gt;</code></pre>
+    <div class="callout warning">
+      <div class="label">⚠️ Always write alt text</div>
+      <code>alt</code> is required for accessibility. Describe the image's meaning. If it's purely decorative, use an empty <code>alt=""</code>.
+    </div>
+  </section>
+
+  <section>
+    <h2>5. Nesting &amp; indentation</h2>
+    <p>Elements live inside other elements, forming a tree. Indent nested elements so the structure is obvious, and always close tags in the reverse order you opened them:</p>
+    <pre><code>&lt;body&gt;
+  &lt;h1&gt;My Site&lt;/h1&gt;
+  &lt;p&gt;Read the &lt;a href="docs.html"&gt;docs&lt;/a&gt; to begin.&lt;/p&gt;
+&lt;/body&gt;</code></pre>
+    <p>Here <code>&lt;a&gt;</code> is nested inside <code>&lt;p&gt;</code>, which is nested inside <code>&lt;body&gt;</code>. Browsers forgive sloppy nesting sometimes, but clean nesting prevents weird bugs.</p>
+  </section>
+
+  <section class="recap">
+    <h2>✅ Recap</h2>
+    <ul>
+      <li>HTML marks up <strong>content &amp; structure</strong> with tags; attributes add info as <code>name="value"</code>.</li>
+      <li>Every page uses the same skeleton: <code>&lt;!DOCTYPE&gt;</code> → <code>&lt;html&gt;</code> → <code>&lt;head&gt;</code> (about the page) + <code>&lt;body&gt;</code> (the visible page).</li>
+      <li>Core elements: headings <code>h1–h6</code>, <code>&lt;p&gt;</code>, links <code>&lt;a href&gt;</code>, images <code>&lt;img src alt&gt;</code>.</li>
+      <li>Nest neatly and always include <code>alt</code> text.</li>
+    </ul>
+    <p><strong>Next:</strong> open <code>assignment.html</code> and build your About Me page.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a class="current">📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment →</a>
+    <a href="solution.html">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>

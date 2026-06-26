@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment · Chunk 1.3 — Forms &amp; Inputs</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #ede9fe;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .objective{background:#ede9fe;border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#5b21b6;}
+  .checkpoint{background:#fff7ed;border:2px solid #fdba74;}
+  .checkpoint h2{border-color:#fdba74;color:#9a3412;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--task);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .deliverable{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .deliverable h2{border-color:#a7f3d0;color:#065f46;}
+  .check{list-style:none;padding-left:0;} .check li{padding-left:30px;position:relative;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:18px;color:var(--task);}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 1 — HTML Foundations</div>
+    <h1>Chunk 1.3 — Lab: Contact Form + 3-Page Site</h1>
+    <span class="badge">🧪 ASSIGNMENT</span>
+    <span class="badge">⏱️ 60–90 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 Your mission</h2>
+    <p>Build <code>contact.html</code> with a validating contact form, then create <code>index.html</code> (home), and link all three pages together into a working personal site. This is the <strong>Module 1 checkpoint</strong>.</p>
+  </section>
+
+  <section>
+    <h2>Part A — Build the contact form</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Create <code>contact.html</code></h3>
+      <p>Start from the skeleton, and reuse the same <code>&lt;header&gt;</code> + <code>&lt;nav&gt;</code> as your About page so navigation is consistent.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Add a form inside <code>&lt;main&gt;</code></h3>
+      <p>Inside a <code>&lt;section&gt;</code> with an <code>&lt;h2&gt;Contact Me&lt;/h2&gt;</code>, add a <code>&lt;form&gt;</code> containing, each with a proper <code>&lt;label&gt;</code>:</p>
+      <ul>
+        <li>A <strong>Name</strong> text input (<code>required</code>).</li>
+        <li>An <strong>Email</strong> input (<code>type="email"</code>, <code>required</code>).</li>
+        <li>A <strong>Topic</strong> <code>&lt;select&gt;</code> with at least 3 options.</li>
+        <li>A <strong>preferred contact method</strong> using radio buttons (Email / Phone).</li>
+        <li>A <strong>Message</strong> <code>&lt;textarea&gt;</code> (<code>required</code>, <code>minlength="10"</code>).</li>
+        <li>A "subscribe to updates" <strong>checkbox</strong>.</li>
+        <li>A submit <code>&lt;button&gt;</code>.</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Test validation</h3>
+      <p>Open <code>contact.html</code> and try to submit with the email empty or invalid — the browser should block it and show a message. Fix anything that doesn't behave.</p>
+    </div>
+  </section>
+
+  <section class="checkpoint">
+    <h2>🏁 Part B — Module 1 Checkpoint: the 3-page site</h2>
+    <p>Tie everything together into a real (if unstyled) personal website.</p>
+    <div class="step">
+      <h3><span class="num">4</span> Create <code>index.html</code> (Home)</h3>
+      <p>A welcome page with the shared header/nav, a short intro paragraph, and a link inviting visitors to your About and Contact pages.</p>
+    </div>
+    <div class="step">
+      <h3><span class="num">5</span> Wire up the navigation</h3>
+      <p>Ensure the <code>&lt;nav&gt;</code> on all three pages links correctly to <code>index.html</code>, <code>about.html</code>, and <code>contact.html</code>. Click through every link in the browser — no dead ends.</p>
+    </div>
+    <div class="step">
+      <h3><span class="num">6</span> Validate all three pages</h3>
+      <p>Run each page through the W3C validator and clear all errors.</p>
+    </div>
+  </section>
+
+  <section class="deliverable">
+    <h2>✅ Deliverable — acceptance checklist</h2>
+    <ul class="check">
+      <li>Three files exist: <code>index.html</code>, <code>about.html</code>, <code>contact.html</code>.</li>
+      <li>Each page shares the same semantic <code>&lt;header&gt;</code> + <code>&lt;nav&gt;</code>.</li>
+      <li>The contact form has labelled inputs covering: text, email, select, radio group, textarea, checkbox, submit.</li>
+      <li>Email and message are <code>required</code>; submitting empty is blocked by the browser.</li>
+      <li>All nav links work in the browser (you can click between all 3 pages).</li>
+      <li>All three pages pass the W3C validator.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🚀 Stretch goals (optional)</h2>
+    <ul>
+      <li>Group related fields with <code>&lt;fieldset&gt;</code> + <code>&lt;legend&gt;</code> (e.g. wrap the radio buttons).</li>
+      <li>Add a <code>pattern</code> to a phone field, e.g. <code>pattern="[0-9]{10}"</code>.</li>
+      <li>Add the page name to each <code>&lt;title&gt;</code> (e.g. "Jane Doe — Contact").</li>
+      <li>Commit &amp; push: <code>git add . &amp;&amp; git commit -m "Add contact form and 3-page site" &amp;&amp; git push</code>.</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a class="current">🧪 Assignment</a>
+    <a href="solution.html">✅ Solution →</a>
+  </div>
+</footer>
+</body>
+</html>

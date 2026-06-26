@@ -15,9 +15,9 @@ Track the build & learning status of every chunk. Each chunk has three HTML deli
 | Metric | Count |
 |--------|------:|
 | Total chunks | 52 |
-| Modules built | 1 of 11 (Module 0 ✅) |
-| Chunks built | 2 |
-| Chunks remaining | 50 |
+| Modules built | 2 of 11 (Modules 0–1 ✅) |
+| Chunks built | 5 |
+| Chunks remaining | 47 |
 | Chunks learned | 0 |
 
 > Last updated: 2026-06-26
@@ -35,9 +35,9 @@ Track the build & learning status of every chunk. Each chunk has three HTML deli
 
 | Chunk | Title | Lecture | Assignment | Solution | Build | Learned |
 |------|-------|:------:|:----------:|:--------:|:-----:|:-------:|
-| 1.1 | HTML Document Structure | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 1.2 | Semantic HTML, Lists & Tables | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
-| 1.3 | Forms & Inputs | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 1.1 | HTML Document Structure | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| 1.2 | Semantic HTML, Lists & Tables | ✅ | ✅ | ✅ | ✅ | ⬜ |
+| 1.3 | Forms & Inputs | ✅ | ✅ | ✅ | ✅ | ⬜ |
 
 ## Module 2 — CSS & Layout
 
@@ -144,3 +144,4 @@ Track the build & learning status of every chunk. Each chunk has three HTML deli
 |------|-------|-------|
 | 2026-06-26 | 0.1 | Built lecture, assignment, and solution HTML files. |
 | 2026-06-26 | 0.2 | Built lecture, assignment, and solution HTML files. **Module 0 complete.** |
+| 2026-06-26 | 1.1–1.3 | Built Module 1 (HTML Foundations): document structure, semantic/lists/tables, forms. Personal-site project threads through; ends with 3-page checkpoint. **Module 1 complete.** |

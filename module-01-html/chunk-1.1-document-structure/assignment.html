@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment · Chunk 1.1 — HTML Document Structure</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #ede9fe;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .objective{background:#ede9fe;border:none;border-radius:12px;padding:18px 22px;}
+  .objective h2{border:none;margin-top:0;color:#5b21b6;}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 14px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--task);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  .deliverable{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .deliverable h2{border-color:#a7f3d0;color:#065f46;}
+  .check{list-style:none;padding-left:0;} .check li{padding-left:30px;position:relative;}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:18px;color:var(--task);}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 1 — HTML Foundations</div>
+    <h1>Chunk 1.1 — Lab: Build Your "About Me" Page</h1>
+    <span class="badge">🧪 ASSIGNMENT</span>
+    <span class="badge">⏱️ 45–75 min</span>
+  </div>
+</div>
+
+<main>
+  <section class="objective">
+    <h2>🎯 Your mission</h2>
+    <p>Create a single web page, <code>about.html</code>, that introduces you. You'll use headings, paragraphs, links, and an image — and open it in your browser to see it render. This page becomes part of your personal site that grows across Module 1.</p>
+  </section>
+
+  <section>
+    <h2>Before you start</h2>
+    <ul>
+      <li>Make a folder for this project, e.g. <code>~/Desktop/webdev-course/module-01-html/personal-site/</code>.</li>
+      <li>Open it in VS Code (<code>code .</code>).</li>
+      <li>Have one image ready (a photo, an avatar, or any <code>.jpg</code>/<code>.png</code>) saved in that folder. No image handy? Use a placeholder URL like <code>https://placehold.co/300x300</code>.</li>
+    </ul>
+    <div class="callout warning">
+      <div class="label">⚠️ Try it yourself first</div>
+      Build as much as you can from memory and the lecture. Only open <code>solution.html</code> when you're stuck or to compare at the end.
+    </div>
+  </section>
+
+  <section>
+    <h2>Tasks</h2>
+
+    <div class="step">
+      <h3><span class="num">1</span> Create the file &amp; skeleton</h3>
+      <p>Create <code>about.html</code> and type out the full HTML skeleton (DOCTYPE, html, head with charset + viewport + title, body). Set the <code>&lt;title&gt;</code> to your name.</p>
+      <div class="callout tip">
+        <div class="label">💡 Shortcut</div>
+        In VS Code, type <code>!</code> then press <kbd>Tab</kbd> in an HTML file — it expands a full skeleton for you (Emmet). Try it, then read what it generated.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Add a main heading</h3>
+      <p>Inside the <code>&lt;body&gt;</code>, add a single <code>&lt;h1&gt;</code> with your name.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">3</span> Add an intro &amp; sections</h3>
+      <p>Add an <code>&lt;h2&gt;About Me&lt;/h2&gt;</code> followed by 1–2 <code>&lt;p&gt;</code> paragraphs about yourself. Then add a second <code>&lt;h2&gt;</code> (e.g. "What I'm Learning") with another paragraph.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">4</span> Add your photo</h3>
+      <p>Add an <code>&lt;img&gt;</code> with a meaningful <code>alt</code> describing the picture.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">5</span> Add at least two links</h3>
+      <p>Add a paragraph with links — for example, an external link to something you like (opens a website) and a <code>mailto:</code> link to email you.</p>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">6</span> Open it in the browser</h3>
+      <p>Double-click <code>about.html</code> (or right-click → Open With → your browser). Confirm everything renders: heading, text, image, and clickable links.</p>
+    </div>
+  </section>
+
+  <section class="deliverable">
+    <h2>✅ Deliverable — acceptance checklist</h2>
+    <ul class="check">
+      <li><code>about.html</code> exists and opens in a browser.</li>
+      <li>It has a complete, valid skeleton (DOCTYPE, html lang, head, body).</li>
+      <li>Exactly one <code>&lt;h1&gt;</code>, plus at least two <code>&lt;h2&gt;</code> sections.</li>
+      <li>At least two paragraphs of real text.</li>
+      <li>One <code>&lt;img&gt;</code> with descriptive <code>alt</code> text that actually displays.</li>
+      <li>At least two working <code>&lt;a&gt;</code> links (one external, one <code>mailto:</code>).</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🚀 Stretch goals (optional)</h2>
+    <ul>
+      <li>Validate your page at <a href="https://validator.w3.org/#validate_by_input">validator.w3.org</a> (paste your code). Fix any errors.</li>
+      <li>Add a horizontal rule <code>&lt;hr&gt;</code> between sections and a bold/italic word with <code>&lt;strong&gt;</code>/<code>&lt;em&gt;</code>.</li>
+      <li>Add a link that opens in a new tab using <code>target="_blank"</code>.</li>
+      <li>Commit your work: <code>git add . &amp;&amp; git commit -m "Add about page"</code>.</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a class="current">🧪 Assignment</a>
+    <a href="solution.html">✅ Solution →</a>
+  </div>
+</footer>
+</body>
+</html>

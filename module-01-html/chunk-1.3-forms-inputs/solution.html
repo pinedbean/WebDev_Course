@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution · Chunk 1.3 — Forms &amp; Inputs</title>
+<style>
+  :root{--panel:#fff;--ink:#1e293b;--accent:#2563eb;--accent-soft:#dbeafe;--line:#e2e8f0;--code-bg:#0f172a;--code-ink:#e2e8f0;--note:#0ea5e9;--tip:#16a34a;--warn:#d97706;--task:#7c3aed;--ok:#16a34a;}
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:17px;}
+  .banner{background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:28px 24px;}
+  .banner .wrap{max-width:860px;margin:0 auto;}
+  .crumbs{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.85;}
+  .banner h1{margin:6px 0 4px;font-size:28px;}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);padding:3px 12px;border-radius:999px;font-size:13px;font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 80px;}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-bottom:22px;}
+  h2{margin-top:4px;font-size:22px;color:#0f172a;border-bottom:2px solid #d1fae5;padding-bottom:8px;}
+  h3{font-size:18px;color:#1e293b;margin-bottom:6px;}
+  p{margin:10px 0;} ul,ol{padding-left:22px;} li{margin:7px 0;}
+  code{background:#eef2ff;color:#3730a3;padding:1px 6px;border-radius:5px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;}
+  pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow:auto;font-size:14px;line-height:1.5;}
+  pre code{background:none;color:inherit;padding:0;}
+  .callout{border-left:5px solid var(--note);background:#f8fafc;border-radius:8px;padding:12px 16px;margin:16px 0;}
+  .callout .label{font-weight:700;font-size:13px;letter-spacing:.03em;text-transform:uppercase;}
+  .note{border-color:var(--note);} .note .label{color:var(--note);}
+  .tip{border-color:var(--tip);} .tip .label{color:var(--tip);}
+  .warning{border-color:var(--warn);} .warning .label{color:var(--warn);}
+  .step{border:1px solid var(--line);border-radius:12px;padding:4px 22px 16px;margin:18px 0;}
+  .step h3{display:flex;align-items:center;gap:10px;}
+  .num{background:var(--ok);color:#fff;border-radius:50%;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex:none;}
+  footer{max-width:860px;margin:0 auto;padding:0 24px 60px;}
+  .nav{display:flex;gap:12px;flex-wrap:wrap;}
+  .nav a{flex:1;min-width:200px;text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--accent);font-weight:600;}
+  .nav a:hover{background:var(--accent);color:#fff;}
+  .nav a.current{background:#1e293b;color:#fff;border-color:#1e293b;}
+  .done{background:#ecfdf5;border:1px solid #a7f3d0;}
+  .full{border:2px solid #16a34a;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="wrap">
+    <div class="crumbs">Full-Stack Web Dev · Module 1 — HTML Foundations</div>
+    <h1>Chunk 1.3 — Solution (Step-by-Step)</h1>
+    <span class="badge">✅ SOLUTION</span>
+    <span class="badge">+ Module 1 Checkpoint</span>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2>How to use this page</h2>
+    <p>First we build the contact form, then assemble the 3-page site. Full files for <code>contact.html</code> and <code>index.html</code> are at the bottom.</p>
+  </section>
+
+  <section>
+    <div class="step">
+      <h3><span class="num">1</span> The form fields</h3>
+      <p>Each control is paired with a <code>&lt;label for&gt;</code> that matches its <code>id</code>. Note the radio buttons share <code>name="contact"</code> so only one can be chosen.</p>
+      <pre><code>&lt;form action="#" method="post"&gt;
+  &lt;label for="name"&gt;Name&lt;/label&gt;
+  &lt;input type="text" id="name" name="name" required&gt;
+
+  &lt;label for="email"&gt;Email&lt;/label&gt;
+  &lt;input type="email" id="email" name="email" required
+         placeholder="you@example.com"&gt;
+
+  &lt;label for="topic"&gt;Topic&lt;/label&gt;
+  &lt;select id="topic" name="topic"&gt;
+    &lt;option value="general"&gt;General&lt;/option&gt;
+    &lt;option value="support"&gt;Support&lt;/option&gt;
+    &lt;option value="feedback"&gt;Feedback&lt;/option&gt;
+  &lt;/select&gt;
+
+  &lt;fieldset&gt;
+    &lt;legend&gt;Preferred contact method&lt;/legend&gt;
+    &lt;input type="radio" id="by-email" name="contact" value="email" checked&gt;
+    &lt;label for="by-email"&gt;Email&lt;/label&gt;
+    &lt;input type="radio" id="by-phone" name="contact" value="phone"&gt;
+    &lt;label for="by-phone"&gt;Phone&lt;/label&gt;
+  &lt;/fieldset&gt;
+
+  &lt;label for="message"&gt;Message&lt;/label&gt;
+  &lt;textarea id="message" name="message" rows="5"
+            minlength="10" required&gt;&lt;/textarea&gt;
+
+  &lt;input type="checkbox" id="subscribe" name="subscribe"&gt;
+  &lt;label for="subscribe"&gt;Subscribe to updates&lt;/label&gt;
+
+  &lt;button type="submit"&gt;Send message&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+      <div class="callout tip">
+        <div class="label">💡 fieldset + legend</div>
+        Wrapping the radio group in <code>&lt;fieldset&gt;</code> with a <code>&lt;legend&gt;</code> tells assistive tech "these options belong together" — exactly the stretch goal.
+      </div>
+    </div>
+
+    <div class="step">
+      <h3><span class="num">2</span> Why submitting does nothing (yet)</h3>
+      <p><code>action="#"</code> just points back at the page, and there's no server to receive the data. When you press Send with valid input, the page reloads — that's expected for now. In Module 5 you'll point <code>action</code> at a FastAPI endpoint that actually stores the message.</p>
+    </div>
+  </section>
+
+  <section class="full">
+    <h2>📄 Complete <code>contact.html</code></h2>
+    <pre><code>&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+  &lt;meta charset="UTF-8"&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+  &lt;title&gt;Jane Doe — Contact&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;header&gt;
+    &lt;h1&gt;Jane Doe&lt;/h1&gt;
+    &lt;nav&gt;
+      &lt;a href="index.html"&gt;Home&lt;/a&gt; |
+      &lt;a href="about.html"&gt;About&lt;/a&gt; |
+      &lt;a href="contact.html"&gt;Contact&lt;/a&gt;
+    &lt;/nav&gt;
+  &lt;/header&gt;
+
+  &lt;main&gt;
+    &lt;section&gt;
+      &lt;h2&gt;Contact Me&lt;/h2&gt;
+      &lt;form action="#" method="post"&gt;
+        &lt;label for="name"&gt;Name&lt;/label&gt;
+        &lt;input type="text" id="name" name="name" required&gt;
+
+        &lt;label for="email"&gt;Email&lt;/label&gt;
+        &lt;input type="email" id="email" name="email" required
+               placeholder="you@example.com"&gt;
+
+        &lt;label for="topic"&gt;Topic&lt;/label&gt;
+        &lt;select id="topic" name="topic"&gt;
+          &lt;option value="general"&gt;General&lt;/option&gt;
+          &lt;option value="support"&gt;Support&lt;/option&gt;
+          &lt;option value="feedback"&gt;Feedback&lt;/option&gt;
+        &lt;/select&gt;
+
+        &lt;fieldset&gt;
+          &lt;legend&gt;Preferred contact method&lt;/legend&gt;
+          &lt;input type="radio" id="by-email" name="contact" value="email" checked&gt;
+          &lt;label for="by-email"&gt;Email&lt;/label&gt;
+          &lt;input type="radio" id="by-phone" name="contact" value="phone"&gt;
+          &lt;label for="by-phone"&gt;Phone&lt;/label&gt;
+        &lt;/fieldset&gt;
+
+        &lt;label for="message"&gt;Message&lt;/label&gt;
+        &lt;textarea id="message" name="message" rows="5" minlength="10" required&gt;&lt;/textarea&gt;
+
+        &lt;p&gt;
+          &lt;input type="checkbox" id="subscribe" name="subscribe"&gt;
+          &lt;label for="subscribe"&gt;Subscribe to updates&lt;/label&gt;
+        &lt;/p&gt;
+
+        &lt;button type="submit"&gt;Send message&lt;/button&gt;
+      &lt;/form&gt;
+    &lt;/section&gt;
+  &lt;/main&gt;
+
+  &lt;footer&gt;
+    &lt;p&gt;© 2026 Jane Doe&lt;/p&gt;
+  &lt;/footer&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+  </section>
+
+  <section class="full">
+    <h2>📄 Complete <code>index.html</code> (Home)</h2>
+    <pre><code>&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+  &lt;meta charset="UTF-8"&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+  &lt;title&gt;Jane Doe — Home&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;header&gt;
+    &lt;h1&gt;Jane Doe&lt;/h1&gt;
+    &lt;nav&gt;
+      &lt;a href="index.html"&gt;Home&lt;/a&gt; |
+      &lt;a href="about.html"&gt;About&lt;/a&gt; |
+      &lt;a href="contact.html"&gt;Contact&lt;/a&gt;
+    &lt;/nav&gt;
+  &lt;/header&gt;
+
+  &lt;main&gt;
+    &lt;section&gt;
+      &lt;h2&gt;Welcome&lt;/h2&gt;
+      &lt;p&gt;Hi, I'm Jane — an aspiring full-stack developer. This little
+         site is where I'm learning to build for the web.&lt;/p&gt;
+      &lt;p&gt;Learn more &lt;a href="about.html"&gt;about me&lt;/a&gt;,
+         or &lt;a href="contact.html"&gt;get in touch&lt;/a&gt;.&lt;/p&gt;
+    &lt;/section&gt;
+  &lt;/main&gt;
+
+  &lt;footer&gt;
+    &lt;p&gt;© 2026 Jane Doe&lt;/p&gt;
+  &lt;/footer&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+  </section>
+
+  <section>
+    <h2>Wiring &amp; validating</h2>
+    <ul>
+      <li>Keep the three files in the same folder so relative links like <code>href="about.html"</code> resolve.</li>
+      <li>Open <code>index.html</code> in the browser and click every nav link — you should be able to reach all three pages and come back.</li>
+      <li>Validate each page at <a href="https://validator.w3.org/#validate_by_input">validator.w3.org</a>. A frequent miss: a checkbox/radio without a matching <code>&lt;label for&gt;</code>, or a duplicate <code>id</code> on the page.</li>
+    </ul>
+  </section>
+
+  <section class="done">
+    <h2>🎉 Module 1 complete!</h2>
+    <p>You've built a real, validated, semantic 3-page website with navigation and a working form — using nothing but HTML. It's plain by design.</p>
+    <p><strong>Up next → Module 2: CSS &amp; Layout</strong>, where you'll turn this skeleton into something that actually looks good: colors, fonts, spacing, Flexbox, Grid, and responsive design.</p>
+    <p>Don't forget to commit and push your work to GitHub. 🚀</p>
+  </section>
+</main>
+
+<footer>
+  <div class="nav">
+    <a href="lecture.html">← 📖 Lecture</a>
+    <a href="assignment.html">🧪 Assignment</a>
+    <a class="current">✅ Solution</a>
+  </div>
+</footer>
+</body>
+</html>
