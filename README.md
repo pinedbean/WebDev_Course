@@ -28,10 +28,13 @@ By the end of this course you will be able to:
 
 - **Daily commitment:** 1–2 hours per day.
 - **Chunked learning:** the course is split into **chunks**, each completable in one 1–2 hour session.
-- **Every chunk has three parts** (all HTML files you open in a browser):
-  - 📖 `lecture.html` — concepts, the "why", and worked examples.
-  - 🧪 `assignment.html` — the lab you build yourself, with an acceptance checklist.
-  - ✅ `solution.html` — a complete step-by-step walkthrough and answer key.
+- **Every chunk has three parts**, each available in **two formats**:
+  - 📖 `lecture` — concepts, the "why", and worked examples.
+  - 🧪 `assignment` — the lab you build yourself, with an acceptance checklist.
+  - ✅ `solution` — a complete step-by-step walkthrough and answer key.
+- **Two ways to read it:**
+  - **`.md`** — renders directly on GitHub; just click any `lecture.md` / `assignment.md` / `solution.md` to read in your browser, no download needed.
+  - **`.html`** — the same content as a styled, self-contained page (colors, callouts, live demos). Download it (or clone the repo) and double-click to open in any browser.
 - **Checkpoints:** each module ends with a mini-project that ties its skills together.
 - **Capstone:** a real-world app, **TaskFlow** (a team task/project tracker), built incrementally with auth, logging, and a load-balanced production deployment.
 
@@ -159,11 +162,13 @@ See [`course_progress_tracking.md`](./course_progress_tracking.md) for the per-c
    git clone https://github.com/pinedbean/WebDev_Course.git
    cd WebDev_Course
    ```
-2. **Start at the beginning:** open `module-00-setup/chunk-0.1-dev-environment/lecture.html` in your browser (just double-click it).
-3. **For each chunk:** read the `lecture.html`, do the `assignment.html`, then check yourself against `solution.html`.
+2. **Start at the beginning:**
+   - On GitHub, open [`module-00-setup/chunk-0.1-dev-environment/lecture.md`](./module-00-setup/chunk-0.1-dev-environment/lecture.md) — it renders right in the page.
+   - Or open the `.html` version locally in your browser (double-click it) for the styled experience.
+3. **For each chunk:** read the `lecture`, do the `assignment`, then check yourself against the `solution`.
 4. **Commit your own work** as you complete each lab — building the Git habit is part of the course.
 
-> 💡 No build step or install is required to *read* the course — every lesson is a standalone HTML file. You'll install tools (Node, Python, etc.) as part of Chunk 0.1.
+> 💡 No build step or install is required to *read* the course — every lesson is both a GitHub-rendered `.md` and a standalone `.html` file. You'll install tools (Node, Python, etc.) as part of Chunk 0.1.
 
 ---
 
@@ -186,8 +191,10 @@ WebDev_Course/
 ├── module-08-logging/
 ├── module-09-production/
 ├── module-10-capstone/
-└── bonus-track/
-    └── <module>/chunk-X.Y-slug/{lecture,assignment,solution}.html
+├── bonus-track/
+│   └── <module>/chunk-X.Y-slug/{lecture,assignment,solution}.{md,html}
+└── tools/
+    └── html2md.py              # regenerates the .md files from the .html sources
 ```
 
 ---

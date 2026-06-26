@@ -20,15 +20,17 @@ A structured course that teaches: **HTML · CSS · JavaScript · React + Vite ·
 
 ## Per-chunk deliverables
 
-Each chunk lives in its own folder and contains **three self-contained HTML files**:
+Each chunk lives in its own folder and contains **three self-contained HTML files** plus a **Markdown sibling for each** (so it renders directly on GitHub):
 
 ```
 module-XX-name/
 └── chunk-X.Y-slug/
-    ├── lecture.html      # 📖 The teaching material (concepts + worked examples)
-    ├── assignment.html   # 🧪 The lab/assignment the learner does themselves
-    └── solution.html     # ✅ Step-by-step solution to the assignment
+    ├── lecture.html / lecture.md        # 📖 The teaching material (concepts + worked examples)
+    ├── assignment.html / assignment.md  # 🧪 The lab/assignment the learner does themselves
+    └── solution.html / solution.md      # ✅ Step-by-step solution to the assignment
 ```
+
+**The HTML is the source of truth; the `.md` is generated from it.** Author/edit the `.html`, then regenerate the Markdown with `python3 tools/html2md.py .` (converts every `*.html` in the repo to a sibling `*.md`, unescaping code blocks, converting tables/callouts, and rewriting `*.html` nav links to `*.md`). Don't hand-edit the `.md` files — they'll be overwritten.
 
 ### File responsibilities
 - **`lecture.html`** — Concepts, diagrams, worked examples, "why it matters". Ends with a short recap and a pointer to the assignment.
